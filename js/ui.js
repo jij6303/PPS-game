@@ -755,7 +755,10 @@ window.Game = window.Game || {};
           '<button class="btn btn-primary" type="button" data-action="award" data-bidder="' + b.id + '">이 업체로 낙찰</button>' +
           "</article>";
       }).join("");
-      $("award-bubble").textContent = Game.DATA.narmi.awardTip;
+      // 플레이어가 통과시킨 업체 수로 말한다 (정답 수를 드러내지 않게)
+      var N = Game.DATA.narmi;
+      $("award-bubble").innerHTML = candidates.length === 1 ? N.awardTipOne
+        : fillVars(N.awardTip, { count: candidates.length });
     },
 
     // ===== 임시 결과 =====
