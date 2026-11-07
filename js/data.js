@@ -493,7 +493,11 @@ Game.DATA = {
     safety: "안전"
   },
 
-  /* 칭호 (GAME_SPEC 7.2 — 🔲 미정, 제안안). 엔딩 이슈에서 확정한다. */
+  /*
+   * 칭호 (GAME_SPEC 7.2, 2026-11-07 확정).
+   * 같은 칭호를 가진 태그(stable·quality)는 점수를 합쳐서 센다.
+   * 가장 높은 칭호가 둘 이상이면 balanced, 감사 지적 0회면 앞에 perfectPrefix.
+   */
   titles: {
     innovation: "혁신 개척자",
     thrift: "알뜰 살림꾼",
@@ -503,5 +507,26 @@ Game.DATA = {
     green: "초록 조달관",
     safety: "안전 지킴이",
     balanced: "균형 잡힌 조달관"
+  },
+
+  /* 엔딩 (GAME_SPEC 7장). {title}은 사업명, {n}은 감사 지적 수. */
+  ending: {
+    perfectPrefix: "완벽한",
+    paperName: "나르미 신문",
+    paperDate: "2027년 3월 10일",
+    paperSlogan: "1년 후, 그때 그 선택은 어떻게 됐을까요?",
+    failed: { head: "{title}, 맞는 업체가 없어 유찰 — 재공고 예정", sub: "필요한 물품은 몇 달 늦게 도착할 예정" },
+    badAward: { head: "{title}, 조건에 맞지 않는 업체가 낙찰 — 감사에서 지적", sub: "계약 해지 후 다시 입찰 진행 중" },
+    correction: "[정정] {title} 심사에서 판정 실수 {n}건이 감사에서 지적됐습니다. 담당 조달관은 서류 심사 교육을 다시 받았습니다.",
+    finalMessage: "조달은 정답 찾기가 아니라, 무엇을 더 소중히 여길지 고르는 일이에요.",
+    titleBlurb: {
+      innovation: "새로운 기술에 첫 기회를 주는 용기 있는 조달관이에요.",
+      thrift: "국민 세금을 한 푼이라도 아끼는 살림꾼 조달관이에요.",
+      stable: "검증된 품질로 믿고 쓰게 하는 조달관이에요.",
+      coexist: "함께 사는 사회를 생각하는 따뜻한 조달관이에요.",
+      green: "지구와 다음 세대를 먼저 생각하는 조달관이에요.",
+      safety: "일하는 사람과 쓰는 사람의 안전을 지키는 조달관이에요.",
+      balanced: "여러 가치를 고르게 저울질하는 조달관이에요."
+    }
   }
 };

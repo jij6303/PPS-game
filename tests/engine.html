@@ -249,6 +249,50 @@
         eq([s.projects[0].hintsUsed, s.projects[1].hintsUsed, s.hintsUsed], [2, 1, 3], "힌트 사용 집계");
       });
 
+      test("칭호: 최고 칭호 · 감사 지적 0회면 '완벽한' · 동점·없음이면 균형", function () {
+        E.reset();
+        E.state.tags = { innovation: 2, thrift: 1 }; E.state.mistakes = 0;
+        var t = E.title();
+        eq([t.full, t.perfect], ["완벽한 혁신 개척자", true], "완벽한 혁신");
+        E.state.mistakes = 2;
+        eq(E.title().full, "혁신 개척자", "지적 있으면 접두어 없음");
+        E.state.tags = { thrift: 1, green: 1 };
+        eq(E.title().full, "균형 잡힌 조달관", "동점");
+        E.state.tags = {};
+        eq(E.title().base, "균형 잡힌 조달관", "태그 없음");
+      });
+
+      test("칭호: stable·quality는 같은 '믿음직한 조달관'이라 합쳐서 셈", function () {
+        E.reset();
+        E.state.tags = { stable: 1, quality: 1, thrift: 1, green: 1 }; E.state.mistakes = 1;
+        var end = E.ending();
+        eq(end.title, "믿음직한 조달관", "합산 2점이 1등");
+        eq(end.blurb, Game.DATA.ending.titleBlurb.stable, "설명 문구");
+        eq(end.finalMessage, "조달은 정답 찾기가 아니라, 무엇을 더 소중히 여길지 고르는 일이에요.", "마지막 문구");
+      });
+
+      test("엔딩 기사: 적격 낙찰=뉴스 · 유찰=재공고 · 조건 미달 낙찰=감사 기사 · 지적 있으면 정정 기사", function () {
+        E.reset();
+        var P = Game.DATA.projects;
+        // 책상: 예산 초과 업체를 통과시키는 실수 1건, 낙찰은 적격 업체
+        P[0].bidders.forEach(function (b) { E.judge(b.id, b.id === "desk-c" ? "ok" : b.verdict, b.id === "desk-c" ? undefined : b.reason); });
+        E.award("desk-b"); E.nextProject();
+        // 의자: 전부 반려 → 유찰 (적격 2곳 반려 = 실수 2건)
+        P[1].bidders.forEach(function (b) { E.judge(b.id, "reject", b.reason || "LATE"); });
+        E.award(null); E.nextProject();
+        // LED: 브로커 업체를 통과시켜 낙찰 (실수 1건)
+        P[2].bidders.forEach(function (b) { E.judge(b.id, b.id === "led-c" ? "ok" : b.verdict, b.id === "led-c" ? undefined : b.reason); });
+        E.award("led-c"); E.nextProject();
+
+        var a = E.ending().articles;
+        eq(a.map(function (x) { return x.kind; }), ["news", "failed", "badAward"], "기사 종류");
+        eq(a[0].head, P[0].news["desk-b"].head, "적격 낙찰 뉴스");
+        eq(a[1].head.indexOf(P[1].title) === 0, true, "유찰 기사에 사업명");
+        eq(a.map(function (x) { return !!x.correction; }), [true, true, true], "정정 기사");
+        eq(a[1].correction.indexOf("2건") !== -1, true, "정정 기사에 지적 수");
+        eq(E.ending().title.indexOf("완벽한"), -1, "지적 있으면 '완벽한' 없음");
+      });
+
       test("성향 태그 동점·없음이면 balanced", function () {
         E.reset();
         eq(E.topTag(), "balanced", "태그 없음");

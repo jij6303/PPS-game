@@ -593,3 +593,111 @@ html, body {
 .narmi-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
 .narmi-card-text { font-size: 30px; line-height: 1.6; }
 .narmi-card-text b { color: var(--reject); }
+
+.result-actions { display: flex; justify-content: center; gap: 24px; }
+
+/* ===== 엔딩 ① 1년 후 조달 뉴스 (신문 지면) ===== */
+[data-screen="news"] { background: #d9d2c5; }
+.paper-news {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-0.6deg);
+  width: 1560px;
+  height: 880px;
+  background: #fbf8f1;
+  color: #222;
+  padding: 36px 56px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: paper-in 0.7s ease-out;
+}
+@keyframes paper-in {
+  from { opacity: 0; transform: translateX(-50%) rotate(-8deg) scale(0.6); }
+  to   { opacity: 1; transform: translateX(-50%) rotate(-0.6deg) scale(1); }
+}
+.news-mast { border-bottom: 6px double #222; padding-bottom: 10px; text-align: center; }
+.news-mast-top { display: flex; justify-content: space-between; font-size: 20px; color: #555; }
+.news-name { font-size: 72px; letter-spacing: 8px; margin-top: 4px; }
+.news-lead .news-article { border-bottom: 2px solid #222; padding-bottom: 18px; }
+.news-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 44px;
+  flex: 1;
+  min-height: 0;
+}
+.news-article { position: relative; }
+.news-grid .news-article { border-top: 1px solid #999; padding-top: 12px; }
+.news-kicker { font-size: 18px; font-weight: 700; color: var(--primary-dark); }
+.news-article-head { font-size: 30px; line-height: 1.3; margin: 6px 0; letter-spacing: -0.5px; }
+.news-article.is-lead .news-article-head { font-size: 48px; }
+.news-article-sub { font-size: 20px; color: #555; }
+.news-article.is-lead .news-article-sub { font-size: 24px; }
+.news-article.is-failed .news-article-head,
+.news-article.is-badAward .news-article-head { color: #9b2d26; }
+.news-correction {
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 17px;
+  line-height: 1.45;
+  color: #9b2d26;
+  border: 2px solid #c7463e;
+  background: #fdf0ee;
+}
+.news-actions { position: absolute; right: 64px; bottom: 36px; }
+
+/* ===== 엔딩 ② 칭호 카드 ===== */
+[data-screen="ending"] {
+  background:
+    radial-gradient(circle at 12% 88%, var(--mint) 0, transparent 32%),
+    radial-gradient(circle at 88% 15%, var(--sky) 0, transparent 38%),
+    radial-gradient(circle at 80% 92%, var(--peach) 0, transparent 30%),
+    var(--bg);
+}
+.ending-card {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  transform: translateX(-50%);
+  width: 820px;
+  padding: 44px 64px 40px;
+  background: var(--paper);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  border: 4px solid var(--primary);
+  animation: card-in 0.6s ease-out;
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(40px) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.ending-game { font-size: 22px; font-weight: 700; color: var(--primary-dark); }
+.ending-label { font-size: 24px; color: var(--ink-soft); margin-top: 14px; }
+.ending-title { font-size: 76px; letter-spacing: -2px; margin: 6px 0 10px; }
+.ending-title.is-perfect { color: #c98a00; }
+.ending-blurb { font-size: 26px; color: var(--ink-soft); }
+.ending-stats { display: flex; justify-content: center; gap: 48px; margin: 26px 0 18px; }
+.ending-stats div { display: flex; align-items: baseline; gap: 12px; font-size: 22px; color: var(--ink-soft); }
+.ending-stats strong { font-size: 34px; color: var(--ink); }
+.ending-bars { list-style: none; text-align: left; display: grid; gap: 8px; }
+.ending-bars li { display: grid; grid-template-columns: 90px 1fr 32px; align-items: center; gap: 14px; font-size: 22px; }
+.ending-bars .bar { height: 18px; background: #f0ebe2; border-radius: 999px; overflow: hidden; }
+.ending-bars .bar i { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+.ending-bars b { text-align: right; color: var(--primary-dark); }
+.ending-message { margin-top: 26px; font-size: 28px; font-weight: 700; line-height: 1.5; }
+.ending-dali, .ending-narmi { position: absolute; bottom: 0; height: 480px; pointer-events: none; }
+.ending-dali { left: 40px; }
+.ending-narmi { right: 40px; }
+.ending-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
