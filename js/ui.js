@@ -737,6 +737,9 @@ window.Game = window.Game || {};
     // ===== ⑤ 낙찰 =====
     renderAward: function (project, candidates) {
       $("award-dilemma").textContent = project.dilemma || "";
+      // 후보가 3곳 이상이면(부적격 업체를 통과시킨 경우) 카드를 작게 — css .is-many
+      $("award-cards").classList.toggle("is-many", candidates.length > 2);
+      $("award-cards").scrollTop = 0;
       $("award-cards").innerHTML = candidates.map(function (b) {
         var d = b.docs;
         return '<article class="award-card">' +
