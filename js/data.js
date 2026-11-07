@@ -16,6 +16,16 @@
 window.Game = window.Game || {};
 
 Game.DATA = {
+  /* 인트로: 달이 첫 출근 (GAME_SPEC 3장 스토리 뼈대). speaker는 "dali" | "narmi", <b>는 강조. */
+  intro: [
+    { speaker: "dali", text: "오늘은 조달청 첫 출근 날! 떨리지만… 잘할 수 있겠지?" },
+    { speaker: "narmi", text: "안녕하세요, 달이 조달관님! 저는 AI 조달 비서 <b>나르미</b>예요. 조달청은 학교 책상, 도서관 조명처럼 나라에 필요한 물건과 공사를 <b>국민 세금</b>으로 사는 곳이에요." },
+    { speaker: "narmi", text: "업체들이 서류를 내면 공고 조건과 꼼꼼히 비교해 주세요. 조건에 안 맞으면 <b>부적격</b>, 맞으면 <b>적격</b> 도장을 쾅!" },
+    { speaker: "narmi", text: "조건을 갖춘 업체가 둘 남으면 그중 한 곳을 골라요. 정답은 없어요 — <b>무엇을 더 소중히 여길지</b> 고르는 거예요." },
+    { speaker: "dali", text: "좋아, 공정하게! 첫 사업 공고를 열어 볼게!" }
+  ],
+  speakers: { dali: "달이", narmi: "나르미" },
+
   /* 부적격 사유 (GAME_SPEC 5.2). desc는 나르미가 쉬운 말로 설명할 때 쓴다. */
   reasons: {
     OVER_BUDGET:   { name: "예산 초과",          policy: "예산 집행 원칙", desc: "견적 총액이 공고의 예산 상한보다 많아요. 국민 세금은 정해진 만큼만 써야 해요." },

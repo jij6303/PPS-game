@@ -799,3 +799,148 @@ html, body {
   justify-content: center;
   gap: 24px;
 }
+
+/* ===== 타이틀 연출: 등장 + 둥실둥실 (마스코트는 이동·확대만, GAME_SPEC 3장) ===== */
+.screen.is-active .title-card { animation: title-pop 0.6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.screen.is-active .mascot-dali  { animation: rise-in 0.7s ease-out 0.15s both, float 3.2s ease-in-out 0.9s infinite; }
+.screen.is-active .mascot-narmi { animation: rise-in 0.7s ease-out 0.3s both, float 3.2s ease-in-out 1.6s infinite; }
+@keyframes title-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(120px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+/* ===== 인트로: 달이 첫 출근 ===== */
+[data-screen="intro"] {
+  cursor: pointer;
+  background: linear-gradient(180deg, #e8f1ff 0%, #f6f1e7 62%, #e7d8c0 62%, #e2d1b6 100%);
+}
+.intro-office { position: absolute; inset: 0; pointer-events: none; }
+.intro-window {
+  position: absolute;
+  left: 640px;
+  top: 90px;
+  width: 640px;
+  height: 300px;
+  border-radius: 20px;
+  border: 14px solid #fff;
+  background: linear-gradient(180deg, #bfe0ff 0%, #e6f4ff 100%);
+  box-shadow: inset 0 0 0 4px #d6e4f5;
+}
+.intro-window::after {          /* 창틀 가운데 살 */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px;
+  background: #fff;
+}
+.intro-sign {
+  position: absolute;
+  left: 50%;
+  top: 28px;
+  transform: translateX(-50%);
+  padding: 8px 28px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+}
+.intro-desk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 600px;
+  height: 36px;
+  background: #c9a77c;
+  box-shadow: 0 8px 0 #b48f63;
+}
+
+.intro-char {
+  position: absolute;
+  bottom: 300px;
+  height: 520px;
+  transition: transform 0.35s ease, opacity 0.35s ease, filter 0.35s ease;
+  transform-origin: bottom center;
+  transform: scale(0.86);
+  filter: saturate(0.6) brightness(0.96);   /* 듣는 쪽은 살짝 차분하게 (투명하게 하면 책상이 비쳐 보여서) */
+  pointer-events: none;
+}
+.intro-dali { left: 240px; }
+.intro-narmi { right: 240px; opacity: 0; transform: translateX(160px) scale(0.86); }
+.intro-narmi.is-present { opacity: 1; transform: scale(0.86); }
+.intro-char.is-speaking { opacity: 1; filter: none; transform: scale(1); animation: speak-hop 0.45s ease-out; }
+@keyframes speak-hop {
+  0%   { transform: scale(0.9) translateY(0); }
+  45%  { transform: scale(1.03) translateY(-26px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+.intro-skip {
+  position: absolute;
+  right: 48px;
+  top: 32px;
+  font-size: 24px;
+  padding: 14px 32px;
+  z-index: 2;
+}
+.intro-box {
+  position: absolute;
+  left: 160px;
+  right: 160px;
+  bottom: 48px;
+  min-height: 230px;
+  padding: 40px 56px 28px;
+  background: var(--paper);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+  border: 4px solid #f0e6d6;
+}
+.intro-name {
+  position: absolute;
+  top: -26px;
+  left: 48px;
+  padding: 8px 28px;
+  border-radius: 999px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+}
+.intro-name.is-dali { background: #f08a3e; }
+.intro-name.is-narmi { background: var(--primary); }
+.intro-text { font-size: 38px; line-height: 1.55; min-height: 118px; }
+.intro-text b { color: var(--primary-dark); }
+.intro-text.is-in { animation: text-in 0.35s ease-out; }
+@keyframes text-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.intro-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.intro-dots { display: flex; gap: 10px; list-style: none; }
+.intro-dots li { width: 14px; height: 14px; border-radius: 50%; background: #e6dccb; }
+.intro-dots li.is-done { background: #b8c9e8; }
+.intro-dots li.is-on { background: var(--primary); }
+.intro-next { font-size: 24px; font-weight: 700; color: var(--ink-soft); animation: nudge 1.2s ease-in-out infinite; }
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.is-active .title-card,
+  .screen.is-active .mascot-dali,
+  .screen.is-active .mascot-narmi,
+  .intro-char.is-speaking,
+  .intro-text.is-in,
+  .intro-next { animation: none !important; }
+}
