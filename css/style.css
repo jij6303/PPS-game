@@ -1154,7 +1154,7 @@ html, body {
 .intro-char {
   position: absolute;
   bottom: 300px;
-  height: 520px;
+  height: 390px;          /* 장면 속 크기에 맞게 (배경 가구·건물과 어울리게) */
   transition: transform 0.35s ease, opacity 0.35s ease, filter 0.35s ease;
   transform-origin: bottom center;
   transform: scale(0.86);
@@ -1274,7 +1274,7 @@ html, body {
 #stage.is-portrait .mascot-narmi { right: 10px; }
 
 /* --- 인트로 --- */
-#stage.is-portrait .intro-char { bottom: 780px; height: 460px; }
+#stage.is-portrait .intro-char { bottom: 780px; height: 380px; }
 #stage.is-portrait .intro-dali { left: 40px; }
 #stage.is-portrait .intro-narmi { right: 40px; }
 #stage.is-portrait .intro-box { left: 40px; right: 40px; bottom: 80px; min-height: 520px; padding: 56px 48px 36px; }
@@ -1582,31 +1582,113 @@ html, body {
 .bld-tree.is-a { left: 380px; }
 .bld-tree.is-b { left: 1540px; }
 
-/* --- 업무 장소 (사무실) — docs/office_layout.png 좌표(% 단위) 그대로 --- */
-.room { position: absolute; inset: 0; background: linear-gradient(180deg, #f8efe3 0%, #f3e6d4 55%); overflow: hidden; }
-.room-floor { position: absolute; left: 0; right: 0; top: 55%; bottom: 0; background: linear-gradient(180deg, #e6d2b2, #dcc3a0); }
-.room-side { position: absolute; left: 0; top: 0; width: 13.5%; height: 70%; background: #f3e4cf; clip-path: polygon(0 0, 100% 9%, 100% 79%, 0 100%); z-index: 1; }
-.room-door, .room-window, .room-narmi, .room-desk { position: absolute; border: none; padding: 0; font: inherit; color: inherit; }
-.room-door { left: 3%; top: 7%; width: 9.5%; height: 42%; z-index: 2;
-  background: linear-gradient(90deg, #b78755, #c99a68); border-left: 8px solid #8f6a45;
-  clip-path: polygon(0 4%, 100% 0, 100% 100%, 0 93%); }
-.room-door i { position: absolute; right: 16%; top: 55%; width: 18px; height: 18px; border-radius: 50%; background: #f3c94d; box-shadow: 0 0 0 3px #c99a2e; }
-.room-window { left: 23%; top: 6%; width: 27%; height: 15%; border: 12px solid #fff; border-radius: 6px;
-  box-shadow: 0 0 0 4px #d9c2a3; background: linear-gradient(180deg, #bfe0ff, #e6f4ff); overflow: hidden; }
-.room-window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 12px; margin-left: -6px; background: #fff; }
-.room-window i { position: absolute; height: 34px; border-radius: 999px; background: #fff; animation: drift 15s linear infinite alternate; }
-.room-window i:nth-child(1) { left: 12%; top: 26%; width: 22%; }
-.room-window i:nth-child(2) { left: 60%; top: 56%; width: 26%; animation-direction: alternate-reverse; }
-.room-narmi { left: 76%; top: 3%; width: 21%; height: 48%; background: none; }   /* 배치도 그림 크기에 맞춤 */
-.room-narmi img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; animation: float 3.2s ease-in-out infinite; }
-.room-desk { left: 16%; top: 56%; width: 65%; height: 41%; z-index: 2;
-  background: linear-gradient(180deg, #c68b57, #b57c4a); border-top: 12px solid #8f5f36; border-radius: 14px;
-  box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25); }
-.room-desk::before { content: ""; position: absolute; inset: 36px 40px; border: 3px dashed rgba(255, 255, 255, 0.45); border-radius: 10px; pointer-events: none; }
+/* --- 업무 장소 (사무실) — 배치(문·창문·나르미·책상)는 docs/office_layout.png를 따르고 꾸밈을 더함 --- */
+.room { position: absolute; inset: 0; overflow: hidden; background: #f7eee2; }
+.room-door, .room-window, .room-narmi, .room-desk { position: absolute; border: none; padding: 0; font: inherit; color: inherit; background: none; }
 
-/* 이야기 장면의 사무실: 장식용 (사무실 화면처럼 누를 수 없음) */
-.scene-office .room-door, .scene-office .room-window, .scene-office .room-desk { pointer-events: none; }
+/* 벽: 은은한 줄무늬 벽지 + 아래쪽 나무 징두리 */
+.room-wall { position: absolute; left: 0; right: 0; top: 0; height: 42%;
+  background: repeating-linear-gradient(90deg, #f8efe3 0 46px, #f3e7d7 46px 48px); }
+.room-wainscot { position: absolute; left: 0; right: 0; top: 42%; height: 14%;
+  background: repeating-linear-gradient(90deg, #e8d5b9 0 158px, #dcc6a5 158px 162px);
+  border-top: 10px solid #fff7ec; box-shadow: inset 0 -6px 0 #cdb38e; }
+.room-ceiling { position: absolute; left: 0; right: 0; top: 0; height: 3%; z-index: 3;   /* 조명은 창문 앞에 매달림 */ background: #efe2cf; box-shadow: 0 2px 0 #e6d6bf; }
+.room-lamp { position: absolute; top: 100%; width: 2px; height: 70px; background: #b9a487; }
+.room-lamp::after { content: ""; position: absolute; left: -36px; top: 70px; width: 74px; height: 38px; border-radius: 40px 40px 6px 6px; background: #f2a33a;
+  box-shadow: 0 30px 60px 10px rgba(255, 214, 120, 0.35); }
+.room-lamp.is-a { left: 36%; }
+.room-lamp.is-b { left: 66%; }
+
+/* 바닥: 나무 마루 + 러그 */
+.room-floor { position: absolute; left: 0; right: 0; top: 56%; bottom: 0;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 58px, rgba(120, 80, 40, 0.18) 58px 60px),
+    repeating-linear-gradient(90deg, #ddb987 0 220px, #d6b07c 220px 440px); }
+.room-rug { position: absolute; left: 8%; right: 8%; top: 64%; bottom: -12%; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(110, 70, 30, 0.22), rgba(110, 70, 30, 0) 70%); }   /* 책상 그림자 */
+
+/* 문 (x 3–12%) */
+.room-door { left: 3.5%; top: 11%; width: 9.5%; height: 45%; z-index: 2;
+  background: linear-gradient(90deg, #b9875a, #c9976a 60%, #bd8b5d);
+  border-radius: 6px 6px 0 0; box-shadow: 0 0 0 10px #fffaf2, 0 0 0 13px #e2d0b6, inset -8px 0 0 rgba(0, 0, 0, 0.06); }
+.door-glass { position: absolute; left: 20%; right: 20%; top: 9%; height: 26%; border-radius: 6px; background: linear-gradient(160deg, #e6f4ff, #bfe0ff);
+  box-shadow: inset 0 0 0 5px #a87a50; }
+.door-plate { position: absolute; left: 12%; right: 12%; top: 41%; padding: 5px 0; border-radius: 4px; background: #2d3142; color: #f3d9a7;
+  font-size: 16px; font-weight: 700; text-align: center; }
+.room-door i { position: absolute; right: 12%; top: 58%; width: 20px; height: 20px; border-radius: 50%; background: #f3c94d; box-shadow: 0 0 0 4px #c99a2e; }
+
+/* 액자 (정부상징 원본, 흰 바탕) */
+.room-poster { position: absolute; left: 15.5%; top: 12%; width: 6.6%; padding: 10px 10px 8px; background: #fff;
+  border: 8px solid #c9a77c; border-radius: 4px; box-shadow: 0 6px 14px rgba(90, 60, 30, 0.15); text-align: center; }
+.room-poster img { display: block; width: 100%; height: auto; }
+.room-poster span { display: block; margin-top: 4px; font-size: 14px; font-weight: 700; color: #1f3a8a; white-space: nowrap; }
+
+/* 화분 */
+.room-plant { position: absolute; left: 15.5%; top: 41%; width: 64px; height: 120px; z-index: 1; }
+.room-plant::after { content: ""; position: absolute; left: 4px; bottom: 0; width: 56px; height: 52px; border-radius: 6px 6px 16px 16px; background: #ef8f74; box-shadow: inset 0 8px 0 #e57c60; }
+.room-plant i { position: absolute; bottom: 44px; width: 30px; height: 64px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: #6cc4a1; transform-origin: bottom center; }
+.room-plant i:nth-child(1) { left: 0; transform: rotate(-28deg); }
+.room-plant i:nth-child(2) { left: 17px; height: 78px; background: #5bb592; }
+.room-plant i:nth-child(3) { left: 34px; transform: rotate(28deg); }
+
+/* 창문 (x 23–50%): 도시 풍경 + 위쪽 커튼 */
+.room-window { left: 25%; top: 9%; width: 25%; height: 23%; border: 14px solid #fff; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 0 0 4px #e2d0b6, 0 10px 0 -2px #e8d8c0; background: linear-gradient(180deg, #a8d8ff, #e2f2ff); }
+.room-window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 12px; margin-left: -6px; background: #fff; }
+.win-city { position: absolute; left: 0; right: 0; bottom: 0; height: 52%; display: flex; align-items: flex-end; gap: 8px; padding: 0 10px; }
+.win-city i { flex: 1; border-radius: 4px 4px 0 0; background: repeating-linear-gradient(180deg, var(--c) 0 12px, rgba(255,255,255,.75) 12px 16px); }
+.win-city i:nth-child(1) { --c: #c9d8f2; height: 60%; }
+.win-city i:nth-child(2) { --c: #d8cdee; height: 95%; }
+.win-city i:nth-child(3) { --c: #cfe7d8; height: 70%; }
+.win-city i:nth-child(4) { --c: #f3d3c0; height: 100%; }
+.win-city i:nth-child(5) { --c: #c9d8f2; height: 75%; }
+.room-window b { position: absolute; height: 26px; border-radius: 999px; background: #fff; animation: drift 15s linear infinite alternate; }
+.room-window b:nth-of-type(1) { left: 12%; top: 16%; width: 20%; }
+.room-window b:nth-of-type(2) { left: 62%; top: 30%; width: 22%; animation-direction: alternate-reverse; }
+.room-valance { position: absolute; left: 24%; top: 6.5%; width: 27%; height: 5%; border-radius: 10px 10px 30px 30px; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #8fb8ef 0 30px, #a6c7f2 30px 60px); box-shadow: 0 6px 10px rgba(45, 49, 66, 0.12); }
+
+/* 벽시계 */
+.room-clock { position: absolute; left: 53.5%; top: 10%; width: 96px; height: 96px; border-radius: 50%; background: #fff;
+  border: 8px solid #2d3142; box-shadow: 0 6px 12px rgba(45, 49, 66, 0.15); }
+.room-clock i { position: absolute; left: 50%; bottom: 50%; width: 6px; margin-left: -3px; border-radius: 3px; background: #2d3142; transform-origin: bottom center; }
+.room-clock i:nth-child(1) { height: 26px; transform: rotate(0deg); }                 /* 9시 정각: 시침 */
+.room-clock i:nth-child(2) { height: 34px; width: 4px; margin-left: -2px; transform: rotate(-90deg); background: #e5534b; }
+
+/* 서류 보관함 */
+.room-shelf { position: absolute; left: 60%; top: 24%; width: 15%; height: 32%; border-radius: 8px 8px 0 0; background: #c99a6b;
+  box-shadow: inset 0 0 0 10px #b5855a, 0 8px 18px rgba(90, 60, 30, 0.18); display: flex; flex-direction: column; justify-content: space-around; padding: 14px 16px 10px; }
+.shelf-row { display: flex; align-items: flex-end; gap: 6px; height: 40%; border-bottom: 8px solid #a8784e; padding: 0 4px; }
+.shelf-row i { flex: 1; height: 86%; border-radius: 3px 3px 0 0; background: var(--b, #6f9fe6); box-shadow: inset 0 10px 0 rgba(255, 255, 255, 0.35); }
+.shelf-row i:nth-child(1) { --b: #4f8cf7; }
+.shelf-row i:nth-child(2) { --b: #ef8a3c; height: 78%; }
+.shelf-row i:nth-child(3) { --b: #2e9d74; }
+.shelf-row i:nth-child(4) { --b: #8a6fd6; height: 92%; }
+.shelf-row i:nth-child(5) { --b: #d39a12; }
+.shelf-row i:nth-child(6) { --b: #e5534b; height: 70%; }
+.shelf-top { position: absolute; left: 14%; top: -56px; width: 70px; height: 56px; border-radius: 6px 6px 12px 12px; background: #8fb8ef; }   /* 위에 서류 상자 */
+.shelf-top::after { content: "서류"; position: absolute; inset: 14px 8px; border-radius: 4px; background: #fff; font-size: 14px; font-weight: 700; color: #3a6fd1; display: grid; place-items: center; }
+
+/* 나르미: 작은 AI 받침대 위에 자연스럽게 (x 80–93%) */
+.room-narmi { left: 81%; top: 27%; width: 12%; height: 29%; z-index: 1; }
+.room-narmi img { position: absolute; left: 0; right: 0; bottom: 18px; width: 100%; height: calc(100% - 18px); object-fit: contain; object-position: bottom;
+  animation: float 3.2s ease-in-out infinite; }
+.narmi-pad { position: absolute; left: 6%; right: 6%; bottom: 0; height: 30px; border-radius: 50%; background: #dfe8f7;
+  box-shadow: 0 0 0 4px #b7c9e8, 0 0 24px 4px rgba(79, 140, 247, 0.35); color: #3a6fd1; font-size: 14px; font-weight: 700; display: grid; place-items: center; }
+
+/* 책상 (x 16–81%): 나뭇결 상판 + 앞 모서리 */
+.room-desk { left: 14%; top: 60%; width: 72%; height: 40%; z-index: 2; border-radius: 18px 18px 0 0;
+  background:
+    repeating-linear-gradient(176deg, transparent 0 34px, rgba(120, 70, 30, 0.07) 34px 36px),
+    linear-gradient(180deg, #cf9662, #bd8352);
+  box-shadow: inset 0 10px 0 #dba776, 0 -4px 0 #a86f40, 0 22px 40px rgba(90, 60, 30, 0.3); }
+.room-desk::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 14%; background: #a86f40; box-shadow: inset 0 6px 0 #9a6338; }
+.room-desk::before { content: ""; position: absolute; left: 3%; right: 3%; top: 8%; height: 72%; border-radius: 10px;
+  background: #3f6b5a; box-shadow: inset 0 0 0 4px #355b4c; opacity: 0.9; pointer-events: none; }   /* 책상 매트 */
+
 .scene-office .room-desk { top: 74%; }   /* 대화 중에는 책상을 낮게 — 달이·나르미가 보이게 */
+.scene-office .desk-notice { display: none; }
+.scene-office button { pointer-events: none; }
 
 /* --- 업무 장소 화면 --- */
 [data-screen="office"] { background: var(--bg); }
@@ -1615,45 +1697,59 @@ html, body {
 [data-screen="office"] .room-narmi { cursor: pointer; transition: filter 0.15s ease, transform 0.15s ease; }
 [data-screen="office"] .room-door:hover,
 [data-screen="office"] .room-window:hover { filter: brightness(1.06); }
-[data-screen="office"] .room-narmi:hover { transform: scale(1.03); }
+[data-screen="office"] .room-narmi:hover { transform: translateY(-4px); }
 
-/* 책상: 눌러서 심사 시작 — 반짝임으로 눈길 */
-[data-screen="office"] .room-desk { cursor: pointer; animation: desk-glow 1.8s ease-in-out infinite; transition: transform 0.15s ease; }
+/* 책상: 눌러서 심사 시작 — 은은한 반짝임 */
+[data-screen="office"] .room-desk { cursor: pointer; animation: desk-glow 2s ease-in-out infinite; transition: transform 0.15s ease; }
 [data-screen="office"] .room-desk:hover { transform: translateY(-4px); }
 [data-screen="office"] .room-desk:active { transform: translateY(2px); }
 @keyframes desk-glow {
-  0%, 100% { box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25), 0 0 0 0 rgba(255, 225, 77, 0); }
-  50%      { box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25), 0 0 0 14px rgba(255, 225, 77, 0.55); }
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 225, 77, 0)); }
+  50%      { filter: drop-shadow(0 0 16px rgba(255, 225, 77, 0.9)); }
 }
 .desk-label {
-  position: absolute; left: 50%; top: -34px; transform: translateX(-50%);
-  padding: 10px 28px; border-radius: 999px; background: #1f3a8a; color: #fff;
-  font-size: 26px; font-weight: 700; white-space: nowrap; box-shadow: 0 6px 16px rgba(31, 58, 138, 0.25);
+  position: absolute; left: 50%; top: -30px; transform: translateX(-50%); z-index: 3;
+  padding: 8px 26px; border-radius: 999px; background: #1f3a8a; color: #fff;
+  font-size: 24px; font-weight: 700; white-space: nowrap; box-shadow: 0 6px 16px rgba(31, 58, 138, 0.25);
 }
+.room-desk > span { z-index: 1; }
+
 /* 책상 위 오늘의 공고 카드 */
 .desk-notice {
-  position: absolute; left: 32%; top: 12%; width: 36%; height: 76%;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 22px 26px; background: #fff; border-radius: 10px; border-top: 10px solid var(--primary);
-  box-shadow: 0 10px 24px rgba(60, 40, 20, 0.3); transform: rotate(-2.5deg);
+  position: absolute; left: 37%; top: 12%; width: 26%; height: 64%;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 20px; background: #fff; border-radius: 8px; border-top: 10px solid var(--primary);
+  box-shadow: 0 10px 22px rgba(20, 30, 25, 0.35); transform: rotate(-2deg);
 }
-.desk-notice-badge { padding: 4px 14px; border-radius: 6px; background: var(--primary); color: #fff; font-size: 20px; font-weight: 700; }
-.desk-notice-title { font-size: 28px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.3; }
-.item-pic.is-desk { width: 62%; flex: 1; min-height: 0; }
-.desk-stamp { position: absolute; left: 8%; top: 32%; width: 90px; height: 120px; }
-.desk-stamp::before { content: ""; position: absolute; left: 30px; top: 0; width: 30px; height: 70px; border-radius: 15px 15px 6px 6px; background: #8f5f36; }
-.desk-stamp::after { content: ""; position: absolute; left: 0; bottom: 0; width: 90px; height: 50px; border-radius: 10px; background: #e5534b; box-shadow: inset 0 -8px 0 #c43f38; }
-.desk-pens { position: absolute; right: 9%; top: 14%; width: 80px; height: 90px; border-radius: 0 0 14px 14px; background: #6f9fe6; }
-.desk-pens i { position: absolute; bottom: 70px; width: 10px; height: 70px; border-radius: 5px 5px 0 0; }
-.desk-pens i:nth-child(1) { left: 14px; background: #e5534b; transform: rotate(-10deg); }
-.desk-pens i:nth-child(2) { left: 35px; background: #ffe14d; height: 84px; }
-.desk-pens i:nth-child(3) { left: 56px; background: #3bb273; transform: rotate(10deg); }
-.desk-nameplate { position: absolute; right: 6%; bottom: 12%; padding: 10px 22px; background: #2d3142; color: #f3d9a7; font-size: 22px; font-weight: 700;
+.desk-notice-badge { padding: 3px 12px; border-radius: 6px; background: var(--primary); color: #fff; font-size: 18px; font-weight: 700; }
+.desk-notice-title { font-size: 24px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.3; }
+.item-pic.is-desk { width: 70%; flex: 1; min-height: 0; }
+
+/* 서류함 · 도장 · 인주 · 머그컵 · 펜꽂이 · 새싹 화분 · 명패 */
+.desk-tray { position: absolute; left: 6%; top: 14%; width: 15%; height: 46%; border-radius: 8px; background: #8d99ab; box-shadow: inset 0 0 0 6px #6f7b8d; transform: rotate(3deg); }
+.desk-tray i { position: absolute; left: 10%; right: 10%; height: 12%; border-radius: 3px; background: #fff; box-shadow: 0 2px 0 #d9dee6; }
+.desk-tray i:nth-child(1) { top: 16%; }
+.desk-tray i:nth-child(2) { top: 30%; background: #fff6d6; }
+.desk-tray i:nth-child(3) { top: 44%; background: #e7f0ff; }
+.desk-stamp { position: absolute; left: 25%; top: 18%; width: 64px; height: 92px; }
+.desk-stamp::before { content: ""; position: absolute; left: 20px; top: 0; width: 24px; height: 56px; border-radius: 12px 12px 5px 5px; background: #8f5f36; }
+.desk-stamp::after { content: ""; position: absolute; left: 0; bottom: 0; width: 64px; height: 38px; border-radius: 8px; background: #e5534b; box-shadow: inset 0 -7px 0 #c43f38; }
+.desk-ink { position: absolute; left: 24.5%; top: 50%; width: 76px; height: 46px; border-radius: 8px; background: #2d3142; box-shadow: inset 0 0 0 8px #3d4256, inset 0 0 0 30px #c43f38; }
+.desk-mug { position: absolute; left: 67%; top: 20%; width: 58px; height: 64px; border-radius: 6px 6px 14px 14px; background: #fff; box-shadow: inset 0 10px 0 #7a4a2a; }
+.desk-mug::after { content: ""; position: absolute; right: -18px; top: 16px; width: 18px; height: 26px; border: 6px solid #fff; border-left: 0; border-radius: 0 14px 14px 0; }
+.desk-pens { position: absolute; left: 76%; top: 16%; width: 66px; height: 74px; border-radius: 0 0 12px 12px; background: #6f9fe6; }
+.desk-pens i { position: absolute; bottom: 60px; width: 9px; height: 58px; border-radius: 5px 5px 0 0; }
+.desk-pens i:nth-child(1) { left: 11px; background: #e5534b; transform: rotate(-10deg); }
+.desk-pens i:nth-child(2) { left: 29px; background: #ffe14d; height: 70px; }
+.desk-pens i:nth-child(3) { left: 46px; background: #3bb273; transform: rotate(10deg); }
+.desk-sprout { position: absolute; left: 87%; top: 20%; width: 50px; height: 48px; border-radius: 6px 6px 14px 14px; background: #f3c94d; }
+.desk-sprout::before { content: ""; position: absolute; left: 6px; top: -34px; width: 38px; height: 38px; border-radius: 50% 0; background: #6cc4a1; transform: rotate(45deg); }
+.desk-nameplate { position: absolute; right: 7%; top: 58%; padding: 8px 20px; background: #2d3142; color: #f3d9a7; font-size: 20px; font-weight: 700;
   border-radius: 6px; box-shadow: 0 6px 0 #1b1e29; }
 
 /* 안내 (책상 위쪽) */
 .office-prompt {
-  position: absolute; left: 48.5%; top: 47%; transform: translateX(-50%); z-index: 4;
+  position: absolute; left: 50%; top: 47%; transform: translateX(-50%); z-index: 4;
   padding: 16px 34px; border-radius: 18px; background: #fff; color: var(--ink);
   font-size: 30px; font-weight: 700; white-space: nowrap; box-shadow: var(--shadow);
   pointer-events: none; animation: prompt-bob 1.4s ease-in-out infinite;
@@ -1670,12 +1766,12 @@ html, body {
 }
 .office-tip b { color: var(--primary-dark); }
 .office-tip.is-in { animation: text-in 0.3s ease-out; }
-.office-tip.is-door { left: 13%; top: 20%; }
-.office-tip.is-window { left: 30%; top: 24%; }
-.office-tip.is-narmi { right: 24%; top: 14%; }
+.office-tip.is-door { left: 14.5%; top: 30%; }
+.office-tip.is-window { left: 30%; top: 34%; }
+.office-tip.is-narmi { right: 20%; top: 18%; }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-clock, .street-cloud, .bld-cloud, .room-window i, .room-narmi img,
+  .home-clock, .street-cloud, .bld-cloud, .room-window b, .room-narmi img,
   [data-screen="office"] .room-desk, .office-prompt, [data-scene="street"] .intro-dali { animation: none !important; }
 }
 
@@ -1710,19 +1806,33 @@ html, body {
 #stage.is-portrait .bld-ground { top: 1100px; }
 #stage.is-portrait .bld-tree { display: none; }
 #stage.is-portrait [data-scene="building"] .intro-dali { left: 20px; }
-/* 사무실: 세로 배치 (창문 위, 문 왼쪽, 나르미 오른쪽, 큰 책상 아래) */
-#stage.is-portrait .room-side { display: none; }
-#stage.is-portrait .room-floor { top: 46%; }
-#stage.is-portrait .room-window { left: 30%; top: 8%; width: 60%; height: 11%; }
-#stage.is-portrait .room-door { left: 5%; top: 20%; width: 22%; height: 26%; clip-path: none; }
-#stage.is-portrait .room-narmi { left: 58%; top: 21%; width: 38%; height: 25%; }
-#stage.is-portrait .room-desk { left: 4%; top: 52%; width: 92%; height: 40%; }
-#stage.is-portrait .desk-notice { left: 22%; top: 10%; width: 56%; height: 62%; }
-#stage.is-portrait .desk-stamp { left: 5%; top: 18%; }
-#stage.is-portrait .desk-pens { right: 5%; top: 16%; }
-#stage.is-portrait .desk-nameplate { right: 50%; transform: translateX(50%); bottom: 6%; }
-#stage.is-portrait .office-prompt { left: 50%; top: 47%; font-size: 32px; }
+/* 사무실: 세로 배치 (창문 위, 문 왼쪽, 보관함·나르미 오른쪽, 큰 책상 아래) */
+#stage.is-portrait .room-wall { height: 36%; }
+#stage.is-portrait .room-wainscot { top: 36%; height: 11%; }
+#stage.is-portrait .room-floor { top: 47%; }
+#stage.is-portrait .room-rug { top: 52%; }
+#stage.is-portrait .room-lamp.is-a { left: 30%; }
+#stage.is-portrait .room-lamp.is-b { left: 70%; }
+#stage.is-portrait .room-window { left: 34%; top: 8%; width: 58%; height: 12%; }
+#stage.is-portrait .room-valance { left: 33%; top: 6.5%; width: 60%; height: 3%; }
+#stage.is-portrait .room-door { left: 6%; top: 18%; width: 20%; height: 29%; }
+#stage.is-portrait .room-poster { left: 6%; top: 4.5%; width: 12%; }
+#stage.is-portrait .room-plant { left: 29%; top: 40.5%; }
+#stage.is-portrait .room-clock { left: 22%; top: 8%; }
+#stage.is-portrait .room-shelf { left: 36%; top: 26%; width: 26%; height: 21%; }
+#stage.is-portrait .room-narmi { left: 68%; top: 26%; width: 26%; height: 21%; }
+#stage.is-portrait .room-desk { left: 3%; top: 53%; width: 94%; height: 47%; }
+#stage.is-portrait .desk-notice { left: 24%; top: 10%; width: 52%; height: 50%; }
+#stage.is-portrait .desk-notice-title { font-size: 30px; }
+#stage.is-portrait .desk-tray { left: 5%; top: 12%; width: 16%; height: 30%; }
+#stage.is-portrait .desk-stamp { left: 6%; top: 50%; }
+#stage.is-portrait .desk-ink { left: 14%; top: 56%; }
+#stage.is-portrait .desk-mug { left: 82%; top: 12%; }
+#stage.is-portrait .desk-pens { left: 81%; top: 34%; }
+#stage.is-portrait .desk-sprout { left: 84%; top: 56%; }
+#stage.is-portrait .desk-nameplate { right: auto; left: 50%; top: 66%; transform: translateX(-50%); font-size: 24px; }
+#stage.is-portrait .office-prompt { left: 50%; top: 47.5%; font-size: 32px; }
 #stage.is-portrait .office-tip { font-size: 30px; max-width: 760px; }
-#stage.is-portrait .office-tip.is-door { left: 5%; top: 47%; }
-#stage.is-portrait .office-tip.is-window { left: 15%; top: 20%; }
-#stage.is-portrait .office-tip.is-narmi { right: 5%; top: 14%; }
+#stage.is-portrait .office-tip.is-door { left: 6%; top: 48%; }
+#stage.is-portrait .office-tip.is-window { left: 20%; top: 22%; }
+#stage.is-portrait .office-tip.is-narmi { right: 6%; top: 17%; }

@@ -375,6 +375,27 @@ window.Game = window.Game || {};
       this.hideOfficeTip();
     },
 
+    /**
+     * 이야기의 "업무 장소" 장면 배경 = 업무 장소 화면의 방을 복사 (두 곳 그림이 항상 같게).
+     * 복사본은 장식용: 누를 수 없게, id 없이, 나르미는 이야기 쪽 캐릭터가 따로 나오므로 뺀다.
+     */
+    buildIntroRoom: function () {
+      var room = $("office-room").cloneNode(true);
+      room.removeAttribute("id");
+      var narmi = room.querySelector(".room-narmi");
+      if (narmi) narmi.parentNode.removeChild(narmi);
+      var label = room.querySelector(".desk-label");
+      if (label) label.parentNode.removeChild(label);
+      var all = room.querySelectorAll("[id], [data-action], button");
+      for (var i = 0; i < all.length; i++) {
+        all[i].removeAttribute("id");
+        all[i].removeAttribute("data-action");
+        all[i].setAttribute("tabindex", "-1");
+      }
+      $("intro-room").innerHTML = "";
+      $("intro-room").appendChild(room);
+    },
+
     /** 문·창문·나르미를 눌렀을 때 그 근처에 말풍선 (html: data.js 문구) */
     showOfficeTip: function (spot, html) {
       var tip = $("office-tip");

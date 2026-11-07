@@ -423,6 +423,7 @@ window.Game = window.Game || {};
 
   ui.fitStage();
   ui.setTool(tool);
+  ui.buildIntroRoom();
   ui.renderSoundButton(sound.enabled);
   ui.show("title");
 })();
