@@ -29,6 +29,10 @@
 # 이슈 생성
 python github/create_issue.py --title "제목" --body "내용"
 
+# 이슈/PR 코멘트 (여러 줄은 --body-file 권장)
+python github/comment_issue.py --issue N --body "내용"
+python github/comment_issue.py --issue N --body-file plan.md
+
 # 브랜치 생성
 python github/create_branch.py --branch feature-#N
 
@@ -49,7 +53,7 @@ python github/request_review.py --pr N --reviewers username
 2. 이슈 생성 — `github/create_issue.py` 사용, 제목·본문 **한글**
 3. 브랜치 생성 — `github/create_branch.py` 사용 (`feature-#N`)
 4. 로컬에서 브랜치 체크아웃
-5. 이슈에 개발 계획 코멘트 작성 (한글, GitHub API 직접 또는 봇 활용)
+5. 이슈에 개발 계획 코멘트 작성 — `github/comment_issue.py` 사용, **한글**
 6. 개발
 7. PR 생성 — `github/create_pr.py` 사용
 8. 리뷰 요청 — `github/request_review.py` 사용
