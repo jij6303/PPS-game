@@ -1,0 +1,26 @@
+<!doctype html><meta charset=utf-8><title>Dodge</title>
+<style>body{margin:0;background:#111;display:grid;place-items:center;height:100vh}canvas{background:#222;max-width:100%}</style>
+<canvas id=c width=400 height=600></canvas>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),W=400,H=600,k={};
+let p,b,t,s,over,best=+localStorage.best||0;
+function reset(){p=200;b=[];t=0;s=0;over=0}
+onkeydown=e=>{k[e.key]=1;if(e.key==' '&&over)reset()};onkeyup=e=>k[e.key]=0;
+c.onpointermove=e=>{const r=c.getBoundingClientRect();p=(e.clientX-r.left)/r.width*W};
+c.onpointerdown=()=>over&&reset();
+function loop(){
+ if(!over){
+  t++;s=t/60|0;const v=3+t/600;
+  if(k.ArrowLeft||k.a)p-=6;if(k.ArrowRight||k.d)p+=6;p=Math.max(15,Math.min(W-15,p));
+  if(Math.random()<.03+t/30000)b.push({x:Math.random()*(W-30),y:-30,w:20+Math.random()*40});
+  for(const o of b){o.y+=v;if(o.y+30>H-40&&o.y<H-20&&o.x<p+15&&o.x+o.w>p-15){over=1;best=Math.max(best,s);localStorage.best=best}}
+  b=b.filter(o=>o.y<H);
+ }
+ x.clearRect(0,0,W,H);x.fillStyle='#e55';for(const o of b)x.fillRect(o.x,o.y,o.w,30);
+ x.fillStyle='#5ce';x.fillRect(p-15,H-40,30,20);
+ x.fillStyle='#fff';x.font='20px sans-serif';x.textAlign='left';x.fillText(`점수 ${s}  최고 ${best}`,10,30);
+ if(over){x.textAlign='center';x.fillText('게임 오버 - 스페이스/클릭으로 재시작',W/2,H/2)}
+ requestAnimationFrame(loop)
+}
+reset();loop();
+</script>
