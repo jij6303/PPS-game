@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>달이의 조달 창구 (가제)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 기준 해상도 1920×1080 무대. main.js가 창 크기에 맞춰 비율 유지 스케일한다. -->
+  <div id="stage">
+
+    <section class="screen" data-screen="title">
+      <div class="title-card">
+        <p class="title-badge">2026 조달청 AI 게임 공모전</p>
+        <h1 class="title-name">달이의 조달 창구<span class="title-tentative">가제</span></h1>
+        <p class="title-sub">신입 조달관 달이와 AI 비서 나르미의 공정 심사</p>
+        <button class="btn btn-primary" type="button" data-action="start">시작하기</button>
+      </div>
+      <img class="mascot mascot-dali" src="assets/img/dali_3d.png" alt="달이">
+      <img class="mascot mascot-narmi" src="assets/img/narmi_3d.png" alt="나르미">
+    </section>
+
+    <section class="screen" data-screen="placeholder">
+      <div class="title-card">
+        <h2 class="title-name">준비 중</h2>
+        <p class="title-sub">사업 공고와 심사 화면은 다음 작업에서 만들어집니다.</p>
+        <button class="btn" type="button" data-action="back-to-title">처음으로</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- file://에서도 동작하도록 type="module" 없이 순서대로 로드한다 (GAME_SPEC 9장). -->
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

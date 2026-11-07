@@ -1,0 +1,147 @@
+/* ===== 폰트 (Pretendard, SIL OFL — assets/fonts/Pretendard-OFL.txt) ===== */
+@font-face {
+  font-family: "Pretendard";
+  src: url("../assets/fonts/Pretendard-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("../assets/fonts/Pretendard-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ===== 색상·크기 토큰 (밝은 파스텔 톤) ===== */
+:root {
+  --stage-w: 1920px;
+  --stage-h: 1080px;
+
+  --bg-outer: #2f3b4c;      /* 레터박스 바깥 */
+  --bg: #fdf6ec;            /* 무대 기본 배경 (크림) */
+  --paper: #ffffff;
+  --ink: #2d3142;
+  --ink-soft: #6b7083;
+  --primary: #4f8cf7;       /* 조달 블루 */
+  --primary-dark: #3a6fd1;
+  --mint: #bfe8d9;
+  --peach: #ffd8c2;
+  --sky: #cfe3ff;
+  --ok: #3bb273;
+  --reject: #e5534b;
+
+  --radius: 24px;
+  --shadow: 0 12px 32px rgba(45, 49, 66, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-outer);
+  font-family: "Pretendard", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+  color: var(--ink);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* ===== 무대: 1920×1080 고정, main.js가 transform으로 스케일 ===== */
+#stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--stage-w);
+  height: var(--stage-h);
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ===== 화면 전환: .is-active인 화면만 보인다 ===== */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.screen.is-active { display: block; }
+
+/* ===== 버튼 ===== */
+.btn {
+  font: inherit;
+  font-size: 36px;
+  font-weight: 700;
+  padding: 22px 64px;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px) scale(0.98); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+
+/* ===== 타이틀 화면 ===== */
+[data-screen="title"] {
+  background:
+    radial-gradient(circle at 15% 85%, var(--mint) 0, transparent 35%),
+    radial-gradient(circle at 85% 20%, var(--sky) 0, transparent 40%),
+    radial-gradient(circle at 70% 90%, var(--peach) 0, transparent 30%),
+    var(--bg);
+}
+
+.title-card {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: 960px;
+  padding: 64px 72px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 40px;
+  box-shadow: var(--shadow);
+}
+.title-badge {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: var(--sky);
+  padding: 8px 24px;
+  border-radius: 999px;
+}
+.title-name {
+  margin-top: 28px;
+  font-size: 96px;
+  font-weight: 700;
+  letter-spacing: -2px;
+}
+.title-tentative {
+  margin-left: 16px;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  vertical-align: middle;
+}
+.title-sub {
+  margin: 20px 0 48px;
+  font-size: 32px;
+  color: var(--ink-soft);
+}
+
+.mascot {
+  position: absolute;
+  bottom: 0;
+  height: 620px;
+  pointer-events: none;
+}
+.mascot-dali  { left: 60px; }
+.mascot-narmi { right: 60px; }
