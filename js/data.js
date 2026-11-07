@@ -129,7 +129,7 @@ Game.DATA = {
       deadline: "2026-03-10",
       requiredSpec: { size: "600×400mm", heightAdjustable: true },
       introducesReason: "COLLUSION",
-      dilemma: "실적 많은 대기업과 실적 없는 혁신 스타트업 — 정부가 첫 구매자가 되어 줄까요?",
+      dilemma: "검증된 안정과 새로운 혁신 — 나라가 새 기술의 첫 구매자가 되어 줄 수도 있어요. 무엇을 더 소중히 여길까요?",
 
       bidders: [
         {
@@ -209,7 +209,7 @@ Game.DATA = {
       deadline: "2026-04-15",
       requiredSpec: { seatHeight: "45cm", armrest: true },
       introducesReason: "INFO_MISMATCH",
-      dilemma: "가장 싼 의자와 조금 비싸지만 오래가는 의자 — 어느 쪽이 진짜 알뜰한 선택일까요?",
+      dilemma: "지금 아끼는 돈과 오래 쓰는 튼튼함 — 어느 쪽이 진짜 알뜰한 선택일까요?",
 
       bidders: [
         {
@@ -288,7 +288,7 @@ Game.DATA = {
       deadline: "2026-05-20",
       requiredSpec: { power: "40W", colorTemp: "5000K" },
       introducesReason: "BROKER",
-      dilemma: "값싼 일반 조명과 비싸지만 전기를 덜 쓰고 재활용되는 친환경 조명 — 지구를 위해 돈을 더 쓸까요?",
+      dilemma: "오늘의 가격과 지구의 내일 — 환경을 위해 돈을 조금 더 쓸까요?",
 
       bidders: [
         {
@@ -380,7 +380,7 @@ Game.DATA = {
       deadline: "2026-06-10",
       requiredSpec: { grade: "KF94", packaging: "개별 포장" },
       introducesReason: null,
-      dilemma: "사흘 만에 전부 납품하는 업체와 장애인 일자리를 만드는 업체 — 속도와 함께 사는 가치 중 무엇을 고를까요?",
+      dilemma: "빠른 납품과 함께 사는 사회 — 속도와 사회적 가치 중 무엇을 고를까요?",
 
       bidders: [
         {
@@ -460,7 +460,7 @@ Game.DATA = {
       deadline: "2026-07-15",
       requiredSpec: { roofPanel: "단열 샌드위치 패널", period: "45일 이내" },
       introducesReason: "SAFETY",
-      dilemma: "더 싸고 빠른 시공사와 조금 비싸도 사고 없는 시공사 — 아이들이 쓸 체육관, 무엇을 먼저 볼까요?",
+      dilemma: "아끼는 비용과 지키는 안전 — 아이들이 쓸 체육관, 무엇을 먼저 볼까요?",
 
       bidders: [
         {
