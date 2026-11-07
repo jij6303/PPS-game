@@ -218,12 +218,12 @@ PPS-game/
 ├── js/
 │   ├── data.js        # 시나리오 데이터 (사업, 업체, 서류, 뉴스, 칭호)
 │   ├── engine.js      # 상태 관리, 판정 로직, 점수/태그 누적
+│   ├── sound.js       # 효과음 (Web Audio 직접 합성, 음원 파일 없음)
 │   ├── ui.js          # 화면 렌더링, 드래그, 도장 애니메이션
 │   └── main.js        # 진입점, 화면 전환
 ├── assets/
 │   ├── img/           # narmi_3d.png, dali_3d.png, 서류 배경 등
-│   ├── fonts/         # Pretendard (OFL)
-│   └── sfx/           # CC0 효과음
+│   └── fonts/         # Pretendard (OFL)
 ├── docs/
 │   ├── GAME_SPEC.md   # 이 문서
 │   └── AI_LOG.md      # AI 활용 기록 (신청서용)
@@ -282,7 +282,7 @@ Game.DATA = {
 |---|---|---|
 | 마스코트 | 조달청 제공 공식 이미지 (공모전 활용 목적 제공) | `CREDITS.md` |
 | 폰트 | Pretendard (SIL Open Font License) — woff2를 `assets/fonts/`에 포함 | `CREDITS.md` |
-| 효과음 | CC0 라이선스 음원만 (도장, 종이 넘김, 성공/실패 등) | 파일별 출처 URL `CREDITS.md` |
+| 효과음 | **Web Audio API로 직접 합성** — 외부 음원 파일 없음 (2026-11-07 결정, 원래 계획: CC0 음원) | `CREDITS.md` |
 | 그 외 그래픽 | CSS/SVG로 직접 그리기 우선. AI 이미지 생성 시 상업 이용 허용 도구만 사용하고 도구명 기록 | `CREDITS.md`, `docs/AI_LOG.md` |
 
 - 실존 기업명·실존 인물·실제 상표를 업체 이름이나 서류에 쓰지 않는다. 모든 업체명은 가상.

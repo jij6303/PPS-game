@@ -7,6 +7,7 @@ window.Game = window.Game || {};
 (function () {
   var ui = Game.ui;
   var engine = Game.engine;
+  var sound = Game.sound;
 
   // 화면 진행 상태 (판정 결과 자체는 engine.state에 있다)
   var view = null;
@@ -55,6 +56,7 @@ window.Game = window.Game || {};
     };
     ui.renderDesk(view);
     ui.show("desk");
+    sound.play("enter", 0.1);   // 새 업체가 창구에 "띵동"
   }
 
   function afterStamp() {
@@ -96,6 +98,7 @@ window.Game = window.Game || {};
       // 적격/부적격 자체를 틀린 경우(감사 지적)는 끝날 때까지 알려 주지 않는다.
       if (record.verdictCorrect && record.reasonCorrect === false) {
         ui.showReasonFix(record.expectedReason);
+        sound.play("pop");
         return;   // "알겠어요"를 누르면 afterStamp
       }
       afterStamp();
@@ -116,6 +119,7 @@ window.Game = window.Game || {};
   function showResult() {
     ui.renderNews(engine.ending());
     ui.show("news");
+    sound.play("flip", 0.45);   // 낙찰 소리 뒤에 신문이 "촤악"
   }
 
   function findSeen(id) {
@@ -206,20 +210,54 @@ window.Game = window.Game || {};
       nextProjectOrFinish();
     },
 
-    "restart": function () { ui.show("title"); }
+    "restart": function () { ui.show("title"); },
+
+    "toggle-sound": function () {
+      sound.setEnabled(!sound.enabled);
+      ui.renderSoundButton(sound.enabled);
+    }
+  };
+
+  /*
+   * 버튼마다 나는 효과음. 도장("쾅")은 ui.stamp(), 업체 입장("띵동")은 enterBidder()에서 따로 낸다.
+   * 판정 결과에 따라 소리가 달라지지 않는다 (GAME_SPEC 4.2).
+   */
+  var ACTION_SOUNDS = {
+    "start": "click",
+    "intro-next": "pop",
+    "intro-skip": "click",
+    "begin-review": "paper",
+    "tab": "paper",
+    "compare": "paper",
+    "stamp-reject": "click",
+    "pick-reason": "click",
+    "cancel-reject": "click",
+    "hint": "hint",
+    "narmi-ok": "click",
+    "award": "success",
+    "show-title": "fanfare",
+    "show-record": "paper",
+    "back-to-ending": "click",
+    "restart": "click"
   };
 
   document.addEventListener("click", function (e) {
+    sound.unlock();           // 브라우저 정책: 첫 클릭 뒤에야 소리 장치를 켤 수 있다
     var target = e.target.closest("[data-action]");
     if (!target || target.disabled) return;
-    var fn = actions[target.getAttribute("data-action")];
-    if (fn) fn(target);
+    var name = target.getAttribute("data-action");
+    var fn = actions[name];
+    if (!fn) return;
+    if (ACTION_SOUNDS[name]) sound.play(ACTION_SOUNDS[name]);
+    fn(target);
   });
 
   // 인트로는 Enter·Space로도 넘길 수 있다 (시연영상 녹화용)
   document.addEventListener("keydown", function (e) {
+    sound.unlock();
     if (introIndex >= 0 && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
+      sound.play("pop");
       nextIntro();
     }
   });
@@ -227,5 +265,6 @@ window.Game = window.Game || {};
   window.addEventListener("resize", function () { ui.fitStage(); });
 
   ui.fitStage();
+  ui.renderSoundButton(sound.enabled);
   ui.show("title");
 })();

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>효과음 테스트</title>
+  <style>
+    :root { --bg: #fdf6ec; --ink: #2d3142; --pass: #2f9e63; --fail: #d6453d; }
+    body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--ink);
+           font-family: system-ui, -apple-system, "Malgun Gothic", sans-serif; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    #total { font-weight: 700; margin: 12px 0 16px; }
+    table { border-collapse: collapse; }
+    th, td { text-align: left; padding: 6px 12px; border-bottom: 1px solid #e6dccb; }
+    .pass { color: var(--pass); }
+    .fail { color: var(--fail); }
+    button { font: inherit; padding: 4px 12px; }
+  </style>
+</head>
+<body>
+  <h1>효과음 테스트</h1>
+  <p>소리마다 미리 렌더링해서 <b>무음이 아닌지</b>(최대 음량 &gt; 0.05)와 <b>찢어지지 않는지</b>(최대 음량 ≤ 1.0)를 확인합니다. "듣기"로 직접 들어볼 수 있어요.</p>
+  <div id="total">렌더링 중…</div>
+  <table>
+    <thead><tr><th>소리</th><th>길이</th><th>최대 음량</th><th>결과</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script src="../js/sound.js"></script>
+  <script>
+    (async function () {
+      var S = Game.sound;
+      var results = [];
+      var rows = document.getElementById("rows");
+
+      for (var i = 0; i < S.NAMES.length; i++) {
+        var name = S.NAMES[i];
+        var r = { name: name };
+        try {
+          var buf = await S.render(name);
+          var data = buf.getChannelData(0);
+          var peak = 0;
+          for (var k = 0; k < data.length; k++) { var a = Math.abs(data[k]); if (a > peak) peak = a; }
+          r.peak = peak;
+          r.dur = buf.duration;
+          r.ok = peak > 0.05 && peak <= 1.0;
+          if (!r.ok) r.msg = peak <= 0.05 ? "너무 작음(무음)" : "찢어짐(1.0 초과)";
+        } catch (e) {
+          r.ok = false; r.msg = e.message;
+        }
+        results.push(r);
+
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + name + "</td><td>" + (r.dur ? r.dur.toFixed(2) + "초" : "-") + "</td>" +
+          "<td>" + (r.peak !== undefined ? r.peak.toFixed(3) : "-") + "</td>" +
+          '<td class="' + (r.ok ? "pass" : "fail") + '">' + (r.ok ? "✔ 통과" : "✘ " + r.msg) + "</td>" +
+          '<td><button type="button" data-name="' + name + '">듣기</button></td>';
+        rows.appendChild(tr);
+      }
+
+      rows.addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-name]");
+        if (b) { S.enabled = true; S.play(b.getAttribute("data-name")); }
+      });
+
+      var passed = results.filter(function (r) { return r.ok; }).length;
+      var total = document.getElementById("total");
+      total.textContent = passed + " / " + results.length + " 통과";
+      total.className = passed === results.length ? "pass" : "fail";
+      window.TEST_RESULTS = { passed: passed, total: results.length, results: results };
+    })();
+  </script>
+</body>
+</html>

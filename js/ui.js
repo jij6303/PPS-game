@@ -316,10 +316,22 @@ window.Game = window.Game || {};
       mark.className = "stamp-mark is-" + verdict;
       void mark.offsetWidth;            // 애니메이션 재시작
       mark.classList.add("is-on");
+      // 도장이 종이에 닿는 순간(애니메이션 25% ≈ 0.22초)에 "쾅" — 적격/부적격 같은 소리
+      if (Game.sound) Game.sound.play("stamp", 0.2);
       setTimeout(function () {
         mark.className = "stamp-mark";
         done();
       }, 900);
+    },
+
+    /** 소리 켜기/끄기 버튼 모양 */
+    renderSoundButton: function (on) {
+      var btn = $("sound-btn");
+      if (!btn) return;
+      btn.classList.toggle("is-off", !on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.title = on ? "소리 끄기" : "소리 켜기";
+      btn.setAttribute("aria-label", btn.title);
     },
 
     // ===== ⑤ 낙찰 =====
