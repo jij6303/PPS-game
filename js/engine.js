@@ -106,8 +106,11 @@ window.Game = window.Game || {};
       if (reasonCodes.indexOf(code) === -1) err("startingReasons", "알 수 없는 사유 " + code);
     });
 
+    var available = (data.startingReasons || []).slice();
+
     data.projects.forEach(function (p) {
       var where = "사업 " + p.id;
+      if (p.introducesReason && available.indexOf(p.introducesReason) === -1) available.push(p.introducesReason);
       var ids = p.bidders.map(function (b) { return b.id; });
       var okCount = 0;
 
@@ -131,6 +134,7 @@ window.Game = window.Game || {};
           if (!p.news || !p.news[b.id]) err(bw, "적격 업체의 뉴스 문구가 없음");
         } else if (b.verdict === "reject") {
           if (reasonCodes.indexOf(b.reason) === -1) err(bw, "알 수 없는 사유 " + b.reason);
+          else if (available.indexOf(b.reason) === -1) err(bw, "정답 사유 " + b.reason + "가 이 사업 시점엔 아직 등장하지 않음");
           else if (issues.indexOf(b.reason) === -1) {
             err(bw, "정답 사유 " + b.reason + "의 근거가 서류에 없음 (발견: " + (issues.join(", ") || "없음") + ")");
           }

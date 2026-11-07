@@ -51,8 +51,20 @@ window.Game = window.Game || {};
       ui.show("award");
     } else {
       engine.award(null);   // 유찰
-      showResult();
+      nextProjectOrFinish();
     }
+  }
+
+  /** 다음 사업 공고로, 마지막 사업이면 전체 결과로. 판정 결과는 끝날 때까지 공개하지 않는다 (GAME_SPEC 4.2). */
+  function nextProjectOrFinish() {
+    engine.nextProject();
+    if (engine.isFinished()) {
+      showResult();
+      return;
+    }
+    view = null;
+    ui.renderNotice(project());
+    ui.show("notice");
   }
 
   function doJudge(verdict, reason) {
@@ -121,7 +133,7 @@ window.Game = window.Game || {};
 
     "award": function (el) {
       engine.award(el.getAttribute("data-bidder"));
-      showResult();
+      nextProjectOrFinish();
     },
 
     "restart": function () { ui.show("title"); }
