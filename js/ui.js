@@ -5,12 +5,13 @@
 window.Game = window.Game || {};
 
 (function () {
+  /* 서류 종류. badge는 서류 머리의 작은 표식 — 색·무늬(css의 .paper.is-<key>)와 함께 서류끼리 한눈에 구분되게. */
   var DOC_TABS = [
-    { key: "application", label: "입찰참가 신청서" },
-    { key: "quote", label: "견적서" },
-    { key: "certs", label: "인증서" },
-    { key: "spec", label: "제품 사양서" },
-    { key: "status", label: "업체 현황" }
+    { key: "application", label: "입찰참가 신청서", badge: "신청" },
+    { key: "quote", label: "견적서", badge: "₩" },
+    { key: "certs", label: "인증서", badge: "인증" },
+    { key: "spec", label: "제품 사양서", badge: "규격" },
+    { key: "status", label: "업체 현황", badge: "현황" }
   ];
 
   function $(id) { return document.getElementById(id); }
@@ -79,11 +80,13 @@ window.Game = window.Game || {};
   function docHtml(project, bidder, key, hl) {
     var d = bidder.docs;
     var labels = Game.DATA.specLabels;
-    var title = "";
+    var title = "", badge = "";
     var body = "";
     hl = hl || [];
 
-    for (var i = 0; i < DOC_TABS.length; i++) if (DOC_TABS[i].key === key) title = DOC_TABS[i].label;
+    for (var i = 0; i < DOC_TABS.length; i++) {
+      if (DOC_TABS[i].key === key) { title = DOC_TABS[i].label; badge = DOC_TABS[i].badge; }
+    }
 
     if (key === "application") {
       body = rowsHtml([
@@ -132,8 +135,9 @@ window.Game = window.Game || {};
 
     // 서류 전체가 근거일 때 (예: 필수 인증서 누락) 종이 전체에 형광펜
     var whole = hl.indexOf(key) !== -1;
-    return '<article class="paper' + (whole ? " is-hl" : "") + '">' +
-      '<header class="paper-head"><span class="paper-title">' + esc(title) + "</span>" +
+    return '<article class="paper is-' + key + (whole ? " is-hl" : "") + '">' +
+      '<header class="paper-head"><span class="paper-badge">' + esc(badge) + "</span>" +
+      '<span class="paper-title">' + esc(title) + "</span>" +
       '<span class="paper-company">' + esc(bidder.name) + "</span></header>" +
       body + "</article>";
   }
@@ -221,6 +225,15 @@ window.Game = window.Game || {};
       var first = Game.engine.state.projectIndex === 0;
       $("notice-bubble").innerHTML = (first ? "첫 사업 공고가 도착했어요! " : "다음 사업 공고예요! ") +
         "업체 <b>" + project.bidders.length + "곳</b>이 입찰했대요. 조건을 잘 기억해 두세요.";
+
+      // 나르미 안내는 심사 전에만: 새 확인 사항이 생긴 사업이면 그 설명(GAME_SPEC 5.3), 첫 사업이면 조작 방법
+      var code = Game.engine.newReason();
+      var parts = [];
+      if (first) parts.push(Game.DATA.narmi.howTo);
+      if (code) parts.push(fill(Game.DATA.narmi.newReason, Game.DATA.reasons[code]));
+      var note = parts.join("<br><br>");
+      $("notice-narmi-bubble").innerHTML = note;
+      $("notice-narmi").hidden = !note;
     },
 
     // ===== ②~④ 심사 데스크 =====
@@ -235,7 +248,7 @@ window.Game = window.Game || {};
       var open = {};
       view.papers.forEach(function (pp) { if (pp.bidderId === b.id) open[pp.docKey] = true; });
       $("doc-tabs").innerHTML = DOC_TABS.map(function (t) {
-        var cls = "doc-tab" + (open[t.key] ? " is-open" : "") + (t.key === view.docKey ? " is-active" : "");
+        var cls = "doc-tab is-" + t.key + (open[t.key] ? " is-open" : "") + (t.key === view.docKey ? " is-active" : "");
         return '<button type="button" class="' + cls + '" data-action="tab" data-doc="' + t.key + '">' + esc(t.label) + "</button>";
       }).join("") + (view.seen.length ? '<span class="compare-label">견적서 비교</span>' + view.seen.map(function (s) {
         var on = view.papers.some(function (pp) { return pp.bidderId === s.id; });
@@ -345,14 +358,10 @@ window.Game = window.Game || {};
 
       $("conditions").innerHTML = '<h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p));
 
-      var reasons = Game.DATA.reasons;
-      var narmi = Game.DATA.narmi;
-      var newCode = view.index === 0 ? Game.engine.newReason() : null;
-      var tip;
-      if (hint) tip = fillVars(narmi.hints[hint.code || "none"], hint.vars);
-      else if (newCode) tip = fill(narmi.newReason, reasons[newCode]);
-      else tip = esc(view.docKey === "quote" && view.seen.length ? narmi.compareTip : narmi.deskTip);
-      $("narmi-bubble").innerHTML = tip;
+      // 심사 중 나르미는 조용히 — 힌트를 눌렀을 때만 그 업체의 힌트 한 줄
+      var bubble = $("narmi-bubble");
+      bubble.innerHTML = hint ? fillVars(Game.DATA.narmi.hints[hint.code || "none"], hint.vars) : "";
+      bubble.hidden = !hint;
 
       var left = Game.engine.hintsLeft();
       var btn = $("hint-btn");

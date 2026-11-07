@@ -130,8 +130,9 @@ window.Game = window.Game || {};
 
   // ===== 책상 위 서류 (펼치기·겹치기·끌기, GAME_SPEC 8장) =====
 
-  var PAPER_STEP = 36;        // 새로 펼친 서류가 비켜 놓이는 간격
-  var COMPARE_X = 440;        // 비교용 다른 업체 견적서를 놓는 x 위치
+  var PAPER_STEP_X = 110;     // 새로 펼친 서류가 비켜 놓이는 간격 (머리의 서류 표식이 보이게 가로로 넉넉히)
+  var PAPER_STEP_Y = 44;
+  var COMPARE_X = 500;        // 비교용 다른 업체 견적서를 놓는 x 위치 (서류 폭 460 + 여백)
 
   function paperId(bidderId, docKey) { return bidderId + ":" + docKey; }
 
@@ -156,7 +157,7 @@ window.Game = window.Game || {};
     if (i === -1) {
       var n = view.papers.filter(function (pp) { return pp.bidderId === view.bidder.id; }).length;
       paper = { id: id, bidderId: bidderId, docKey: docKey,
-        x: pos ? pos.x : (n % 6) * PAPER_STEP, y: pos ? pos.y : (n % 6) * PAPER_STEP };
+        x: pos ? pos.x : (n % 5) * PAPER_STEP_X, y: pos ? pos.y : (n % 5) * PAPER_STEP_Y };
     } else {
       paper = view.papers.splice(i, 1)[0];
       if (pos) { paper.x = pos.x; paper.y = pos.y; }
