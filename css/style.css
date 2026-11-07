@@ -1149,53 +1149,7 @@ html, body {
 }
 
 /* ===== 인트로: 달이 첫 출근 ===== */
-[data-screen="intro"] {
-  cursor: pointer;
-  background: linear-gradient(180deg, #e8f1ff 0%, #f6f1e7 62%, #e7d8c0 62%, #e2d1b6 100%);
-}
-.intro-office { position: absolute; inset: 0; pointer-events: none; }
-.intro-window {
-  position: absolute;
-  left: 640px;
-  top: 90px;
-  width: 640px;
-  height: 300px;
-  border-radius: 20px;
-  border: 14px solid #fff;
-  background: linear-gradient(180deg, #bfe0ff 0%, #e6f4ff 100%);
-  box-shadow: inset 0 0 0 4px #d6e4f5;
-}
-.intro-window::after {          /* 창틀 가운데 살 */
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 12px;
-  margin-left: -6px;
-  background: #fff;
-}
-.intro-sign {
-  position: absolute;
-  left: 50%;
-  top: 28px;
-  transform: translateX(-50%);
-  padding: 8px 28px;
-  border-radius: 10px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 26px;
-  font-weight: 700;
-}
-.intro-desk {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 600px;
-  height: 36px;
-  background: #c9a77c;
-  box-shadow: 0 8px 0 #b48f63;
-}
+[data-screen="intro"] { cursor: pointer; background: var(--bg); }
 
 .intro-char {
   position: absolute;
@@ -1320,12 +1274,6 @@ html, body {
 #stage.is-portrait .mascot-narmi { right: 10px; }
 
 /* --- 인트로 --- */
-#stage.is-portrait [data-screen="intro"] {
-  background: linear-gradient(180deg, #e8f1ff 0%, #f6f1e7 58%, #e7d8c0 58%, #e2d1b6 100%);
-}
-#stage.is-portrait .intro-sign { top: 120px; }
-#stage.is-portrait .intro-window { left: 220px; top: 220px; }
-#stage.is-portrait .intro-desk { top: 1090px; }
 #stage.is-portrait .intro-char { bottom: 780px; height: 460px; }
 #stage.is-portrait .intro-dali { left: 40px; }
 #stage.is-portrait .intro-narmi { right: 40px; }
@@ -1502,3 +1450,279 @@ html, body {
 #stage.is-portrait .result-legend { font-size: 22px; }
 #stage.is-portrait .result-side { flex-direction: row; align-items: flex-start; }
 #stage.is-portrait .result-side > * { flex: 1; }
+
+
+/* =====================================================================
+ * 달이의 하루: 이야기 장면(집·출근길·조달청·업무 장소)과 업무 장소(사무실) 화면
+ * 모두 CSS로 직접 그림 (GAME_SPEC 10장). 마스코트는 공식 이미지를 이동·확대만.
+ * ===================================================================== */
+
+/* --- 장면 전환: [data-scene]에 맞는 배경만 보임 --- */
+.scene { position: absolute; inset: 0; z-index: 0; display: none; overflow: hidden; pointer-events: none; }   /* 캐릭터·대화창은 항상 그 위 */
+[data-scene="home"] .scene-home,
+[data-scene="street"] .scene-street,
+[data-scene="building"] .scene-building,
+[data-scene="office"] .scene-office { display: block; }
+.is-scene-in .scene { animation: scene-in 0.5s ease-out; }
+@keyframes scene-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* 장면 이름표 (왼쪽 위) — layout 배치도의 라벨 칩과 같은 남색 */
+.scene-tag {
+  position: absolute;
+  left: 32px;
+  top: 28px;
+  z-index: 3;
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: #1f3a8a;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(31, 58, 138, 0.25);
+}
+.scene-tag:empty { display: none; }
+
+/* --- 장면별 캐릭터 자리 --- */
+[data-scene="home"] .intro-dali { left: 300px; }
+[data-scene="building"] .intro-dali { left: 260px; }
+[data-scene="street"] .intro-dali { animation: walk-in 1.6s ease-out both, walk-bob 0.4s ease-in-out 4; }
+@keyframes walk-in {
+  from { left: -420px; }
+  to   { left: 360px; }
+}
+@keyframes walk-bob {
+  0%, 100% { margin-bottom: 0; }
+  50%      { margin-bottom: 18px; }
+}
+
+/* --- 달이의 집 (아침) --- */
+.scene-home { background: linear-gradient(180deg, #fff1e0 0%, #fde3c8 60%); }
+.home-window {
+  position: absolute; left: 760px; top: 100px; width: 440px; height: 300px;
+  border: 16px solid #fff; border-radius: 18px;
+  background: linear-gradient(180deg, #ffd99a 0%, #ffeccc 45%, #cfe8ff 100%);
+  box-shadow: 0 0 0 4px #e8cfae, 0 0 80px rgba(255, 210, 120, 0.6);
+  overflow: hidden;
+}
+.home-window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 12px; margin-left: -6px; background: #fff; }
+.home-sun { position: absolute; left: 70px; top: 60px; width: 110px; height: 110px; border-radius: 50%; background: #ffcf4d; box-shadow: 0 0 60px #ffd66b; }
+.home-frame { position: absolute; left: 260px; top: 150px; width: 170px; height: 130px; border: 12px solid #c9a77c; border-radius: 6px;
+  background: linear-gradient(160deg, #bfe0ff 0 55%, #9fd8b0 55%); }
+.home-floor { position: absolute; left: 0; right: 0; top: 640px; bottom: 0; background: linear-gradient(180deg, #e8cba0, #dfbd8e); }
+.home-rug { position: absolute; left: 520px; top: 700px; width: 700px; height: 110px; border-radius: 50%; background: #f5b9a8; opacity: 0.7; }
+.home-bed { position: absolute; left: 1250px; top: 470px; width: 560px; height: 220px; }
+.home-bed::before { content: ""; position: absolute; left: 0; top: -80px; width: 34px; height: 300px; border-radius: 14px; background: #a87d55; }  /* 머리판 */
+.home-bed::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 90px; border-radius: 16px; background: #c49268; }   /* 침대 틀 */
+.home-pillow { position: absolute; left: 50px; top: 40px; width: 150px; height: 70px; border-radius: 30px; background: #fff; z-index: 1; box-shadow: 0 4px 0 #e6e0d6; }
+.home-blanket { position: absolute; left: 170px; right: 0; top: 50px; height: 110px; border-radius: 30px 18px 10px 10px; background: #8fb8ef; z-index: 1;
+  background-image: radial-gradient(circle at 20px 20px, rgba(255,255,255,.5) 6px, transparent 7px); background-size: 50px 50px; }
+.home-table { position: absolute; left: 1060px; top: 560px; width: 150px; height: 110px; border-radius: 10px 10px 4px 4px; background: #c49268; }
+.home-clock { position: absolute; left: 30px; top: -78px; width: 90px; height: 84px; border-radius: 50% 50% 18px 18px; background: #f2a33a;
+  display: grid; place-items: center; animation: clock-ring 0.18s ease-in-out infinite alternate; }
+.home-clock span { display: grid; place-items: center; width: 64px; height: 44px; border-radius: 10px; background: #fff; font-size: 20px; font-weight: 700; color: #e5534b; }
+@keyframes clock-ring { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+
+/* --- 출근길 --- */
+.scene-street { background: linear-gradient(180deg, #a8d8ff 0%, #def1ff 62%); }
+.street-sun { position: absolute; right: 220px; top: 80px; width: 130px; height: 130px; border-radius: 50%; background: #ffd66b; box-shadow: 0 0 70px #ffe08a; }
+.street-cloud, .bld-cloud { position: absolute; height: 56px; border-radius: 999px; background: #fff; }
+.street-cloud::before, .bld-cloud::before { content: ""; position: absolute; left: 30%; top: -32px; width: 40%; height: 70px; border-radius: 50%; background: #fff; }
+.street-cloud.is-a { left: 220px; top: 120px; width: 220px; animation: drift 18s linear infinite alternate; }
+.street-cloud.is-b { left: 980px; top: 200px; width: 170px; animation: drift 14s linear infinite alternate-reverse; }
+@keyframes drift { from { transform: translateX(0); } to { transform: translateX(120px); } }
+.street-city { position: absolute; left: 0; right: 0; bottom: 380px; height: 330px; display: flex; align-items: flex-end; gap: 22px; padding: 0 40px; }
+.street-city i { flex: 1; border-radius: 10px 10px 0 0;
+  background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.55) 22px 44px), var(--c);
+  -webkit-mask: repeating-linear-gradient(180deg, #000 0 34px, rgba(0,0,0,.85) 34px 40px); mask: repeating-linear-gradient(180deg, #000 0 34px, rgba(0,0,0,.85) 34px 40px); }
+.street-city i:nth-child(1) { --c: #c9d8f2; height: 62%; }
+.street-city i:nth-child(2) { --c: #f3d3c0; height: 92%; }
+.street-city i:nth-child(3) { --c: #cfe7d8; height: 74%; }
+.street-city i:nth-child(4) { --c: #e4d6f2; height: 100%; }
+.street-city i:nth-child(5) { --c: #f6e2b0; height: 68%; }
+.street-city i:nth-child(6) { --c: #c9d8f2; height: 84%; }
+.street-walk { position: absolute; left: 0; right: 0; top: 700px; height: 160px; background: #e9dfcf;
+  background-image: repeating-linear-gradient(90deg, transparent 0 118px, #d9cdb9 118px 122px); }
+.street-road { position: absolute; left: 0; right: 0; top: 860px; bottom: 0; background: #8d96a6;
+  background-image: repeating-linear-gradient(90deg, #fff 0 90px, transparent 90px 180px); background-size: 180px 10px; background-repeat: repeat-x; background-position: 0 90px; }
+.street-tree, .street-lamp, .street-stop { z-index: 1; }   /* 인도 위에 서 있게 */
+.street-tree { position: absolute; bottom: 330px; width: 26px; height: 120px; background: #a87d55; border-radius: 6px; }
+.street-tree::before { content: ""; position: absolute; left: -77px; top: -150px; width: 180px; height: 180px; border-radius: 50%; background: #8fd3a5; box-shadow: inset -16px -16px 0 #74c08f; }
+.street-tree.is-a { left: 120px; }
+.street-tree.is-b { left: 920px; }
+.street-tree.is-c { left: 1700px; }
+.street-lamp { position: absolute; left: 1210px; bottom: 300px; width: 12px; height: 330px; background: #6f7b8d; border-radius: 6px; }
+.street-lamp::before { content: ""; position: absolute; left: -10px; top: -14px; width: 70px; height: 24px; border-radius: 12px 12px 4px 4px; background: #6f7b8d; }
+.street-lamp::after { content: ""; position: absolute; left: 30px; top: 8px; width: 34px; height: 16px; border-radius: 0 0 16px 16px; background: #ffe58a; box-shadow: 0 8px 30px #ffe58a; }
+.street-stop { position: absolute; left: 1400px; bottom: 290px; width: 260px; height: 250px; }
+.street-stop-sign { position: absolute; left: 0; top: 0; width: 84px; height: 84px; border-radius: 50%; background: #4f8cf7; color: #fff; font-size: 24px; font-weight: 700; display: grid; place-items: center; border: 6px solid #fff; }
+.street-stop-sign::after { content: ""; position: absolute; left: 33px; top: 84px; width: 8px; height: 160px; background: #6f7b8d; }
+.street-bench { position: absolute; left: 100px; bottom: 0; width: 160px; height: 70px; }
+.street-bench::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 20px; border-radius: 6px; background: #f2a33a; }
+.street-bench::after { content: ""; position: absolute; left: 14px; right: 14px; top: 20px; bottom: 0; border-left: 10px solid #6f7b8d; border-right: 10px solid #6f7b8d; }
+
+/* --- 조달청 건물 (일하는 곳) --- */
+.scene-building { background: linear-gradient(180deg, #b8e0ff 0%, #e6f4ff 70%); }
+.bld-cloud.is-a { left: 140px; top: 110px; width: 200px; animation: drift 16s linear infinite alternate; }
+.bld-cloud.is-b { right: 180px; top: 170px; width: 160px; animation: drift 12s linear infinite alternate-reverse; }
+.bld { position: absolute; left: 520px; width: 900px; top: 70px; height: 640px; border-radius: 18px 18px 0 0; background: #f5f7fb;
+  box-shadow: inset 0 -20px 0 #e3e8f0, 0 20px 50px rgba(45, 49, 66, 0.12); }
+.bld-windows { position: absolute; left: 50px; right: 50px; top: 170px; height: 232px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 70px, #f5f7fb 70px 100px),
+    repeating-linear-gradient(180deg, #bcd9f5 0 56px, #f5f7fb 56px 86px); }
+.bld-plate { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); padding: 10px 26px; background: #fff; border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(45, 49, 66, 0.12); }
+.bld-plate img { display: block; height: 80px; width: auto; }
+.bld-door { position: absolute; left: 50%; bottom: 20px; width: 260px; height: 170px; margin-left: -130px; border-radius: 10px 10px 0 0;
+  background: linear-gradient(90deg, #9fd0f5 0 49%, #6f7b8d 49% 51%, #9fd0f5 51%); border: 10px solid #8d99ab; border-bottom: 0; }
+.bld-steps { position: absolute; left: 640px; width: 660px; top: 710px; height: 40px; background: repeating-linear-gradient(180deg, #d6dbe4 0 12px, #c4cbd6 12px 14px); }
+.bld-ground { position: absolute; left: 0; right: 0; top: 750px; bottom: 0; background: #cfe8d6; }
+.bld-tree { position: absolute; top: 470px; width: 26px; height: 260px; background: #a87d55; border-radius: 6px; }
+.bld-tree::before { content: ""; position: absolute; left: -87px; top: -160px; width: 200px; height: 220px; border-radius: 50%; background: #8fd3a5; box-shadow: inset -18px -18px 0 #74c08f; }
+.bld-tree.is-a { left: 380px; }
+.bld-tree.is-b { left: 1540px; }
+
+/* --- 업무 장소 (사무실) — docs/office_layout.png 좌표(% 단위) 그대로 --- */
+.room { position: absolute; inset: 0; background: linear-gradient(180deg, #f8efe3 0%, #f3e6d4 55%); overflow: hidden; }
+.room-floor { position: absolute; left: 0; right: 0; top: 55%; bottom: 0; background: linear-gradient(180deg, #e6d2b2, #dcc3a0); }
+.room-side { position: absolute; left: 0; top: 0; width: 13.5%; height: 70%; background: #f3e4cf; clip-path: polygon(0 0, 100% 9%, 100% 79%, 0 100%); z-index: 1; }
+.room-door, .room-window, .room-narmi, .room-desk { position: absolute; border: none; padding: 0; font: inherit; color: inherit; }
+.room-door { left: 3%; top: 7%; width: 9.5%; height: 42%; z-index: 2;
+  background: linear-gradient(90deg, #b78755, #c99a68); border-left: 8px solid #8f6a45;
+  clip-path: polygon(0 4%, 100% 0, 100% 100%, 0 93%); }
+.room-door i { position: absolute; right: 16%; top: 55%; width: 18px; height: 18px; border-radius: 50%; background: #f3c94d; box-shadow: 0 0 0 3px #c99a2e; }
+.room-window { left: 23%; top: 6%; width: 27%; height: 15%; border: 12px solid #fff; border-radius: 6px;
+  box-shadow: 0 0 0 4px #d9c2a3; background: linear-gradient(180deg, #bfe0ff, #e6f4ff); overflow: hidden; }
+.room-window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 12px; margin-left: -6px; background: #fff; }
+.room-window i { position: absolute; height: 34px; border-radius: 999px; background: #fff; animation: drift 15s linear infinite alternate; }
+.room-window i:nth-child(1) { left: 12%; top: 26%; width: 22%; }
+.room-window i:nth-child(2) { left: 60%; top: 56%; width: 26%; animation-direction: alternate-reverse; }
+.room-narmi { left: 76%; top: 3%; width: 21%; height: 48%; background: none; }   /* 배치도 그림 크기에 맞춤 */
+.room-narmi img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; animation: float 3.2s ease-in-out infinite; }
+.room-desk { left: 16%; top: 56%; width: 65%; height: 41%; z-index: 2;
+  background: linear-gradient(180deg, #c68b57, #b57c4a); border-top: 12px solid #8f5f36; border-radius: 14px;
+  box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25); }
+.room-desk::before { content: ""; position: absolute; inset: 36px 40px; border: 3px dashed rgba(255, 255, 255, 0.45); border-radius: 10px; pointer-events: none; }
+
+/* 이야기 장면의 사무실: 장식용 (사무실 화면처럼 누를 수 없음) */
+.scene-office .room-door, .scene-office .room-window, .scene-office .room-desk { pointer-events: none; }
+.scene-office .room-desk { top: 74%; }   /* 대화 중에는 책상을 낮게 — 달이·나르미가 보이게 */
+
+/* --- 업무 장소 화면 --- */
+[data-screen="office"] { background: var(--bg); }
+[data-screen="office"] .room-door,
+[data-screen="office"] .room-window,
+[data-screen="office"] .room-narmi { cursor: pointer; transition: filter 0.15s ease, transform 0.15s ease; }
+[data-screen="office"] .room-door:hover,
+[data-screen="office"] .room-window:hover { filter: brightness(1.06); }
+[data-screen="office"] .room-narmi:hover { transform: scale(1.03); }
+
+/* 책상: 눌러서 심사 시작 — 반짝임으로 눈길 */
+[data-screen="office"] .room-desk { cursor: pointer; animation: desk-glow 1.8s ease-in-out infinite; transition: transform 0.15s ease; }
+[data-screen="office"] .room-desk:hover { transform: translateY(-4px); }
+[data-screen="office"] .room-desk:active { transform: translateY(2px); }
+@keyframes desk-glow {
+  0%, 100% { box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25), 0 0 0 0 rgba(255, 225, 77, 0); }
+  50%      { box-shadow: 0 18px 30px rgba(90, 60, 30, 0.25), 0 0 0 14px rgba(255, 225, 77, 0.55); }
+}
+.desk-label {
+  position: absolute; left: 50%; top: -34px; transform: translateX(-50%);
+  padding: 10px 28px; border-radius: 999px; background: #1f3a8a; color: #fff;
+  font-size: 26px; font-weight: 700; white-space: nowrap; box-shadow: 0 6px 16px rgba(31, 58, 138, 0.25);
+}
+/* 책상 위 오늘의 공고 카드 */
+.desk-notice {
+  position: absolute; left: 32%; top: 12%; width: 36%; height: 76%;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 22px 26px; background: #fff; border-radius: 10px; border-top: 10px solid var(--primary);
+  box-shadow: 0 10px 24px rgba(60, 40, 20, 0.3); transform: rotate(-2.5deg);
+}
+.desk-notice-badge { padding: 4px 14px; border-radius: 6px; background: var(--primary); color: #fff; font-size: 20px; font-weight: 700; }
+.desk-notice-title { font-size: 28px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.3; }
+.item-pic.is-desk { width: 62%; flex: 1; min-height: 0; }
+.desk-stamp { position: absolute; left: 8%; top: 32%; width: 90px; height: 120px; }
+.desk-stamp::before { content: ""; position: absolute; left: 30px; top: 0; width: 30px; height: 70px; border-radius: 15px 15px 6px 6px; background: #8f5f36; }
+.desk-stamp::after { content: ""; position: absolute; left: 0; bottom: 0; width: 90px; height: 50px; border-radius: 10px; background: #e5534b; box-shadow: inset 0 -8px 0 #c43f38; }
+.desk-pens { position: absolute; right: 9%; top: 14%; width: 80px; height: 90px; border-radius: 0 0 14px 14px; background: #6f9fe6; }
+.desk-pens i { position: absolute; bottom: 70px; width: 10px; height: 70px; border-radius: 5px 5px 0 0; }
+.desk-pens i:nth-child(1) { left: 14px; background: #e5534b; transform: rotate(-10deg); }
+.desk-pens i:nth-child(2) { left: 35px; background: #ffe14d; height: 84px; }
+.desk-pens i:nth-child(3) { left: 56px; background: #3bb273; transform: rotate(10deg); }
+.desk-nameplate { position: absolute; right: 6%; bottom: 12%; padding: 10px 22px; background: #2d3142; color: #f3d9a7; font-size: 22px; font-weight: 700;
+  border-radius: 6px; box-shadow: 0 6px 0 #1b1e29; }
+
+/* 안내 (책상 위쪽) */
+.office-prompt {
+  position: absolute; left: 48.5%; top: 47%; transform: translateX(-50%); z-index: 4;
+  padding: 16px 34px; border-radius: 18px; background: #fff; color: var(--ink);
+  font-size: 30px; font-weight: 700; white-space: nowrap; box-shadow: var(--shadow);
+  pointer-events: none; animation: prompt-bob 1.4s ease-in-out infinite;
+}
+.office-prompt::after { content: ""; position: absolute; left: 50%; bottom: -14px; margin-left: -14px; border: 14px solid transparent; border-bottom: 0; border-top-color: #fff; }
+@keyframes prompt-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, -10px); }
+}
+/* 문·창문·나르미 말풍선 */
+.office-tip {
+  position: absolute; z-index: 5; max-width: 520px; padding: 20px 26px; border-radius: 20px;
+  background: #fff; font-size: 26px; line-height: 1.5; box-shadow: var(--shadow); pointer-events: none;
+}
+.office-tip b { color: var(--primary-dark); }
+.office-tip.is-in { animation: text-in 0.3s ease-out; }
+.office-tip.is-door { left: 13%; top: 20%; }
+.office-tip.is-window { left: 30%; top: 24%; }
+.office-tip.is-narmi { right: 24%; top: 14%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-clock, .street-cloud, .bld-cloud, .room-window i, .room-narmi img,
+  [data-screen="office"] .room-desk, .office-prompt, [data-scene="street"] .intro-dali { animation: none !important; }
+}
+
+/* --- 세로 화면 (1080×1920) --- */
+#stage.is-portrait .scene-tag { left: 24px; top: 24px; font-size: 28px; }
+/* 집 */
+#stage.is-portrait .home-window { left: 330px; top: 170px; width: 420px; height: 300px; }
+#stage.is-portrait .home-frame { left: 60px; top: 220px; }
+#stage.is-portrait .home-floor { top: 1050px; }
+#stage.is-portrait .home-rug { left: 180px; top: 1110px; }
+#stage.is-portrait .home-bed { left: 560px; top: 880px; width: 480px; }
+#stage.is-portrait .home-table { left: 410px; top: 960px; width: 130px; }
+#stage.is-portrait [data-scene="home"] .intro-dali { left: 20px; }
+/* 출근길 */
+#stage.is-portrait .street-city { bottom: auto; top: 720px; height: 330px; padding: 0 20px; gap: 14px; }
+#stage.is-portrait .street-walk { top: 1050px; height: 200px; }
+#stage.is-portrait .street-road { top: 1250px; }
+#stage.is-portrait .street-tree { bottom: auto; top: 930px; }
+#stage.is-portrait .street-tree.is-a { left: 60px; }
+#stage.is-portrait .street-tree.is-b { left: 560px; }
+#stage.is-portrait .street-tree.is-c { left: 980px; }
+#stage.is-portrait .street-lamp { left: 760px; bottom: auto; top: 760px; }
+#stage.is-portrait .street-stop { left: 800px; bottom: auto; top: 900px; }
+#stage.is-portrait .street-sun { right: 80px; top: 140px; }
+#stage.is-portrait .street-cloud.is-b { left: 520px; }
+@keyframes walk-in-portrait { from { left: -420px; } to { left: 120px; } }
+#stage.is-portrait [data-scene="street"] .intro-dali { animation-name: walk-in-portrait, walk-bob; }
+/* 조달청 */
+#stage.is-portrait .bld { left: 90px; width: 900px; top: 300px; height: 760px; }
+#stage.is-portrait .bld-windows { top: 190px; height: 380px; }
+#stage.is-portrait .bld-steps { left: 210px; top: 1060px; }
+#stage.is-portrait .bld-ground { top: 1100px; }
+#stage.is-portrait .bld-tree { display: none; }
+#stage.is-portrait [data-scene="building"] .intro-dali { left: 20px; }
+/* 사무실: 세로 배치 (창문 위, 문 왼쪽, 나르미 오른쪽, 큰 책상 아래) */
+#stage.is-portrait .room-side { display: none; }
+#stage.is-portrait .room-floor { top: 46%; }
+#stage.is-portrait .room-window { left: 30%; top: 8%; width: 60%; height: 11%; }
+#stage.is-portrait .room-door { left: 5%; top: 20%; width: 22%; height: 26%; clip-path: none; }
+#stage.is-portrait .room-narmi { left: 58%; top: 21%; width: 38%; height: 25%; }
+#stage.is-portrait .room-desk { left: 4%; top: 52%; width: 92%; height: 40%; }
+#stage.is-portrait .desk-notice { left: 22%; top: 10%; width: 56%; height: 62%; }
+#stage.is-portrait .desk-stamp { left: 5%; top: 18%; }
+#stage.is-portrait .desk-pens { right: 5%; top: 16%; }
+#stage.is-portrait .desk-nameplate { right: 50%; transform: translateX(50%); bottom: 6%; }
+#stage.is-portrait .office-prompt { left: 50%; top: 47%; font-size: 32px; }
+#stage.is-portrait .office-tip { font-size: 30px; max-width: 760px; }
+#stage.is-portrait .office-tip.is-door { left: 5%; top: 47%; }
+#stage.is-portrait .office-tip.is-window { left: 15%; top: 20%; }
+#stage.is-portrait .office-tip.is-narmi { right: 5%; top: 14%; }
