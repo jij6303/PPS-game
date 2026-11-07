@@ -435,7 +435,72 @@ html, body {
   cursor: pointer;
 }
 .doc-tab.is-active { background: var(--paper); color: var(--ink); box-shadow: 0 4px 10px rgba(45, 49, 66, 0.12); }
-.doc-area { flex: 1; overflow: auto; }
+.doc-tab.is-open::after {        /* 책상에 펼쳐진 서류 표시 */
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.doc-tabs .compare-label { margin-left: 12px; align-self: center; font-size: 20px; font-weight: 700; color: #8a6a3f; }
+
+/* ===== 책상 위 서류: 펼치기·겹치기·끌기 ===== */
+.doc-area { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+.desk-paper {
+  position: absolute;
+  width: 420px;
+  transition: box-shadow 0.15s ease;
+}
+.desk-paper .paper {
+  max-height: 590px;
+  overflow: auto;
+  padding: 0 24px 22px;
+  box-shadow: 0 8px 22px rgba(45, 49, 66, 0.16);
+}
+.desk-paper .paper-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -24px 6px;
+  padding: 16px 52px 10px 24px;
+  background: var(--paper);
+  cursor: grab;
+  touch-action: none;           /* 머리 부분은 끌기 전용 (터치 스크롤 대신 이동) */
+  border-bottom: 1px dashed #e8dfd0;
+}
+.desk-paper .paper-head::before {  /* 잡는 곳 표시 */
+  content: "⋮⋮";
+  margin-right: 8px;
+  color: #c9bba3;
+  letter-spacing: -3px;
+}
+.desk-paper .paper-title { font-size: 24px; }
+.desk-paper .paper-company { font-size: 18px; }
+.desk-paper .doc-table { font-size: 20px; }
+.desk-paper .doc-table th, .desk-paper .doc-table td { padding: 9px 8px; }
+.desk-paper .doc-table th { width: 38%; }
+.desk-paper.is-other .paper { border-top-color: var(--peach); }
+.desk-paper.is-dragging .paper { box-shadow: 0 18px 40px rgba(45, 49, 66, 0.28); }
+.desk-paper.is-dragging .paper-head { cursor: grabbing; }
+.paper-close {
+  position: absolute;
+  top: 18px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #f1ebe1;
+  color: var(--ink-soft);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.desk-empty { position: absolute; inset: 0; display: grid; place-items: center; font-size: 24px; color: #8a6a3f; }
 .compare-bar {
   display: flex;
   align-items: center;

@@ -138,6 +138,11 @@ window.Game = window.Game || {};
       body + "</article>";
   }
 
+  function findIn(project, bidderId) {
+    for (var i = 0; i < project.bidders.length; i++) if (project.bidders[i].id === bidderId) return project.bidders[i];
+    return null;
+  }
+
   /** 힌트 문구 채우기: {키}를 vars 값으로. */
   function fillVars(template, vars) {
     return template.replace(/\{(\w+)\}/g, function (m, k) {
@@ -173,6 +178,7 @@ window.Game = window.Game || {};
     /** 창 크기에 맞춰 1920×1080 무대를 비율 유지(레터박스)로 스케일한다. */
     fitStage: function () {
       var scale = Math.min(window.innerWidth / this.STAGE_W, window.innerHeight / this.STAGE_H);
+      this.scale = scale;     // 서류 끌기에서 화면 이동량 → 무대 좌표로 바꿀 때 사용
       $("stage").style.setProperty("--stage-scale", scale);
     },
 
@@ -219,8 +225,104 @@ window.Game = window.Game || {};
 
     // ===== ②~④ 심사 데스크 =====
     /**
-     * view: { project, bidder, index, docKey, compareWith(업체|null), seen(앞서 본 업체들), stamps({id: verdict}) }
+     * view: { project, bidder, index, docKey(맨 위 서류), papers(책상 위 서류), seen(앞서 본 업체들), stamps({id: verdict}) }
+     * papers: [{ id, bidderId, docKey, x, y }] — 배열 순서 = 쌓인 순서(마지막이 맨 위)
      */
+
+    /** 서류 탭: 펼쳐진 서류는 점 표시, 맨 위 서류는 강조. 견적서 비교 칩도 여기서. */
+    renderTabs: function (view) {
+      var b = view.bidder;
+      var open = {};
+      view.papers.forEach(function (pp) { if (pp.bidderId === b.id) open[pp.docKey] = true; });
+      $("doc-tabs").innerHTML = DOC_TABS.map(function (t) {
+        var cls = "doc-tab" + (open[t.key] ? " is-open" : "") + (t.key === view.docKey ? " is-active" : "");
+        return '<button type="button" class="' + cls + '" data-action="tab" data-doc="' + t.key + '">' + esc(t.label) + "</button>";
+      }).join("") + (view.seen.length ? '<span class="compare-label">견적서 비교</span>' + view.seen.map(function (s) {
+        var on = view.papers.some(function (pp) { return pp.bidderId === s.id; });
+        return '<button type="button" class="chip' + (on ? " is-active" : "") +
+          '" data-action="compare" data-bidder="' + s.id + '">' + esc(s.name) + "</button>";
+      }).join("") : "");
+    },
+
+    /** 책상 위 서류들을 그린다 (위치·쌓인 순서·형광펜). */
+    renderPapers: function (view) {
+      var p = view.project, b = view.bidder;
+      var hint = Game.engine.hintOf(b.id);
+      $("doc-area").innerHTML = view.papers.map(function (pp, i) {
+        var owner = pp.bidderId === b.id ? b : findIn(p, pp.bidderId);
+        // 나르미 힌트: 근거 서류에 형광펜. 담합이면 비교 중인 상대 견적서에도.
+        var hl = [];
+        if (hint && hint.docKey === pp.docKey && (owner === b || hint.code === "COLLUSION")) hl = hint.fields;
+        return '<div class="desk-paper' + (owner !== b ? " is-other" : "") + '" data-paper="' + pp.id + '" ' +
+          'style="left:' + pp.x + "px;top:" + pp.y + "px;z-index:" + (i + 1) + '">' +
+          '<button type="button" class="paper-close" data-action="close-paper" data-paper="' + pp.id + '" aria-label="서류 닫기">×</button>' +
+          docHtml(p, owner, pp.docKey, hl) + "</div>";
+      }).join("") + (view.papers.length ? "" : '<p class="desk-empty">위의 서류 탭을 눌러 책상에 펼쳐 보세요.</p>');
+    },
+
+    /** 끌기 없이 쌓인 순서만 바꿀 때 (다시 그리지 않아 끌기가 끊기지 않음). */
+    restack: function (view) {
+      view.papers.forEach(function (pp, i) {
+        var el = document.querySelector('.desk-paper[data-paper="' + pp.id + '"]');
+        if (el) el.style.zIndex = i + 1;
+      });
+      this.renderTabs(view);
+    },
+
+    /**
+     * 서류 끌기 (Pointer Events — 마우스·터치 공통). 서류 머리(.paper-head)를 잡고 끈다.
+     * handlers.front(id): 서류를 눌렀을 때(맨 위로), handlers.moved(id, x, y): 다 옮겼을 때.
+     */
+    enablePaperDrag: function (handlers) {
+      var area = $("doc-area");
+      var drag = null;
+
+      area.addEventListener("pointerdown", function (e) {
+        var el = e.target.closest(".desk-paper");
+        if (!el || e.target.closest("button")) return;
+        handlers.front(el.getAttribute("data-paper"));
+        if (!e.target.closest(".paper-head")) return;        // 끌기는 머리 부분만 (본문은 스크롤)
+        e.preventDefault();
+        drag = {
+          el: el,
+          id: el.getAttribute("data-paper"),
+          startX: e.clientX,
+          startY: e.clientY,
+          x: el.offsetLeft,
+          y: el.offsetTop,
+          scale: Game.ui.scale || 1
+        };
+        el.classList.add("is-dragging");
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+      });
+
+      area.addEventListener("pointermove", function (e) {
+        if (!drag) return;
+        var pos = Game.ui.clampPaper(drag.el,
+          drag.x + (e.clientX - drag.startX) / drag.scale,
+          drag.y + (e.clientY - drag.startY) / drag.scale);
+        drag.el.style.left = pos.x + "px";
+        drag.el.style.top = pos.y + "px";
+      });
+
+      function end() {
+        if (!drag) return;
+        drag.el.classList.remove("is-dragging");
+        handlers.moved(drag.id, drag.el.offsetLeft, drag.el.offsetTop);
+        drag = null;
+      }
+      area.addEventListener("pointerup", end);
+      area.addEventListener("pointercancel", end);
+    },
+
+    /** 서류가 책상 밖으로 나가지 않게 (머리 부분은 항상 보이게). */
+    clampPaper: function (el, x, y) {
+      var area = $("doc-area");
+      var maxX = Math.max(0, area.clientWidth - el.offsetWidth);
+      var maxY = Math.max(0, area.clientHeight - 64);
+      return { x: Math.round(Math.min(Math.max(0, x), maxX)), y: Math.round(Math.min(Math.max(0, y), maxY)) };
+    },
+
     renderDesk: function (view) {
       var p = view.project, b = view.bidder;
 
@@ -237,29 +339,9 @@ window.Game = window.Game || {};
         '<div class="rep-name">' + esc(b.name) + " 대표</div>";
       $("rep-bubble").textContent = b.pitch;
 
-      $("doc-tabs").innerHTML = DOC_TABS.map(function (t) {
-        return '<button type="button" class="doc-tab' + (t.key === view.docKey ? " is-active" : "") +
-          '" data-action="tab" data-doc="' + t.key + '">' + esc(t.label) + "</button>";
-      }).join("");
-
-      var area = "";
-      if (view.docKey === "quote" && view.seen.length) {
-        area += '<div class="compare-bar"><span>견적서 비교</span>' + view.seen.map(function (s) {
-          var on = view.compareWith && view.compareWith.id === s.id;
-          return '<button type="button" class="chip' + (on ? " is-active" : "") +
-            '" data-action="compare" data-bidder="' + s.id + '">' + esc(s.name) + "</button>";
-        }).join("") + "</div>";
-      }
-      // 나르미 힌트: 지금 업체에 쓴 힌트가 있으면 해당 서류의 근거 항목에 형광펜
+      this.renderTabs(view);
+      this.renderPapers(view);
       var hint = Game.engine.hintOf(b.id);
-      var hl = hint && hint.docKey === view.docKey ? hint.fields : [];
-
-      if (view.docKey === "quote" && view.compareWith) {
-        area += '<div class="paper-pair">' + docHtml(p, b, "quote", hl) + docHtml(p, view.compareWith, "quote", hl) + "</div>";
-      } else {
-        area += docHtml(p, b, view.docKey, hl);
-      }
-      $("doc-area").innerHTML = area;
 
       $("conditions").innerHTML = '<h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p));
 
