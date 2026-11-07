@@ -186,16 +186,116 @@ html, body {
 .paper-company { font-size: 22px; color: var(--ink-soft); }
 .doc-empty { font-size: 26px; color: var(--reject); padding: 24px 0; }
 
-.rep-icon {
-  width: 120px;
-  height: 120px;
+/* ===== 업체 대표 캐릭터 (CSS 도형, GAME_SPEC 3장) =====
+ * 모든 크기는 em 단위 → .npc의 font-size 하나로 전체 크기를 조절한다.
+ * 색은 --suit(정장), --tie(넥타이) 변수로 업체마다 다르게. */
+.npc {
+  --skin: #ffdcc2;
+  --hair: #4b3a33;
+  position: relative;
+  font-size: 220px;
+  width: 1em;
+  height: 1.05em;
+  flex: none;
+}
+.npc.is-small { font-size: 96px; }
+.npc-head {
+  position: absolute;
+  left: 0.21em;
+  top: 0;
+  width: 0.58em;
+  height: 0.56em;
   border-radius: 50%;
-  background: var(--peach);
-  display: grid;
-  place-items: center;
-  font-size: 56px;
-  font-weight: 700;
-  color: #b0603a;
+  background: var(--skin);
+  box-shadow: inset -0.03em -0.03em 0 rgba(0, 0, 0, 0.06);
+  z-index: 2;
+}
+.npc-hair {
+  position: absolute;
+  left: -0.02em;
+  top: -0.03em;
+  width: 0.62em;
+  height: 0.21em;
+  background: var(--hair);
+  border-radius: 0.3em 0.3em 0.08em 0.08em;
+}
+.npc-eye {
+  position: absolute;
+  top: 0.29em;
+  width: 0.06em;
+  height: 0.075em;
+  border-radius: 50%;
+  background: #2d3142;
+  animation: npc-blink 4.2s infinite;
+}
+.npc-eye.is-l { left: 0.16em; }
+.npc-eye.is-r { right: 0.16em; }
+.npc-cheek {
+  position: absolute;
+  top: 0.38em;
+  width: 0.09em;
+  height: 0.05em;
+  border-radius: 50%;
+  background: #ffab9c;
+  opacity: 0.75;
+}
+.npc-cheek.is-l { left: 0.07em; }
+.npc-cheek.is-r { right: 0.07em; }
+.npc-mouth {
+  position: absolute;
+  left: 0.23em;
+  top: 0.37em;
+  width: 0.12em;
+  height: 0.06em;
+  border-bottom: 0.022em solid #2d3142;
+  border-radius: 0 0 0.1em 0.1em;
+}
+.npc-body {
+  position: absolute;
+  left: 0.08em;
+  top: 0.5em;
+  width: 0.84em;
+  height: 0.55em;
+  background: var(--suit);
+  border-radius: 0.36em 0.36em 0.1em 0.1em;
+  box-shadow: inset 0 -0.05em 0 rgba(0, 0, 0, 0.08);
+}
+.npc-collar {
+  position: absolute;
+  left: 0.29em;
+  top: 0;
+  width: 0.26em;
+  height: 0.2em;
+  background: #fff;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.npc-tie {
+  position: absolute;
+  left: 0.375em;
+  top: 0.03em;
+  width: 0.09em;
+  height: 0.26em;
+  background: var(--tie);
+  clip-path: polygon(20% 0, 80% 0, 100% 72%, 50% 100%, 0 72%);
+}
+
+/* 연출: 창구에 들어오기, 말하며 들썩이기, 눈 깜빡임 */
+.npc.is-entering { animation: npc-enter 0.5s ease-out both; }
+.npc.is-talking .npc-head { animation: npc-bob 1.6s ease-in-out 0.5s infinite; }
+@keyframes npc-enter {
+  from { opacity: 0; transform: translateY(30%) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes npc-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-0.02em) rotate(-2deg); }
+}
+@keyframes npc-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(0.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .npc, .npc *, .npc.is-talking .npc-head { animation: none !important; }
 }
 
 .btn-reject { background: var(--reject); color: #fff; }
@@ -294,7 +394,6 @@ html, body {
   color: #2c7a5c;
 }
 .rep { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.rep .rep-icon { width: 160px; height: 160px; font-size: 72px; }
 .rep-name { font-size: 28px; font-weight: 700; }
 .counter .bubble { font-size: 22px; }
 
@@ -469,7 +568,6 @@ html, body {
   gap: 18px;
 }
 .award-head { display: flex; align-items: center; gap: 20px; }
-.award-head .rep-icon { width: 88px; height: 88px; font-size: 44px; }
 .award-head h3 { font-size: 40px; }
 .award-pitch { font-size: 24px; color: var(--ink-soft); line-height: 1.5; }
 .award-card .doc-table { font-size: 24px; }
