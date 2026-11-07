@@ -61,6 +61,13 @@ python github/merge_pr.py --pr N --method squash --delete-branch
 6. 개발
 7. PR 생성 — `github/create_pr.py` 사용
 8. 리뷰 요청 — `github/request_review.py` 사용
+9. **사용자 승인 후** 머지 — `github/merge_pr.py --pr N --delete-branch` 사용
+
+### 중요: 머지는 반드시 사용자 승인 후에만
+
+- PR 생성·리뷰 요청까지 마쳤으면 멈추고, PR 번호를 밝혀 머지 여부를 사용자에게 묻는다.
+- 승인은 **PR마다 개별로** 받는다. 이전 PR의 승인은 다음 PR에 적용되지 않는다.
+- 개발 계획에 머지가 포함돼 있어도 승인 없이 머지하지 않는다.
 
 ---
 
