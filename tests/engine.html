@@ -94,8 +94,57 @@
         eq(s.projects[0].awardedName, "새싹디자인랩", "낙찰 업체");
         eq(s.projects[0].news.head, Game.DATA.projects[0].news["desk-b"].head, "뉴스");
         eq(s.topTag, "innovation", "대표 태그");
-        E.nextProject();
-        eq(E.isFinished(), true, "사업 종료");
+        eq(E.nextProject().id, "chair", "다음 사업");
+        eq(E.isFinished(), false, "아직 진행 중");
+      });
+
+      test("사업 5건, 딜레마 태그가 고루 등장", function () {
+        var p = Game.DATA.projects;
+        eq(p.map(function (x) { return x.id; }), ["desk", "chair", "led", "mask", "gym"], "사업 순서");
+        var tags = [];
+        p.forEach(function (x) { x.bidders.forEach(function (b) { if (b.tag && tags.indexOf(b.tag) === -1) tags.push(b.tag); }); });
+        eq(tags.sort(), ["coexist", "green", "innovation", "quality", "safety", "stable", "thrift"], "태그 종류");
+      });
+
+      test("사업마다 새 사유가 하나씩 등장 (담합 → 정보 불일치 → 브로커 → 복습 → 중대재해)", function () {
+        E.reset();
+        var got = [];
+        Game.DATA.projects.forEach(function (p, i) {
+          E.state.projectIndex = i;
+          got.push([E.newReason(), E.availableReasons().length]);
+        });
+        eq(got, [["COLLUSION", 6], ["INFO_MISMATCH", 7], ["BROKER", 8], [null, 8], ["SAFETY", 9]], "사유 등장");
+      });
+
+      test("데이터 검증이 아직 등장 안 한 사유를 정답으로 쓴 경우를 잡아냄", function () {
+        var bad = clone(Game.DATA);
+        var c = bad.projects[0].bidders[2];         // 구름가구 (예산 초과)
+        c.reason = "SAFETY";
+        c.docs.status.seriousAccidents = 1;
+        c.docs.quote.unitPrice = 180000; c.docs.quote.total = 36000000;
+        var errors = E.validateData(bad);
+        if (!errors.some(function (m) { return m.indexOf("아직 등장하지 않음") !== -1; })) throw new Error("사유 시점 오류를 못 잡음: " + errors.join(" / "));
+      });
+
+      test("5건 연속 정답 플레이 → 실수 0, 낙찰 5건, 태그 5점, 종료", function () {
+        E.reset();
+        var picks = [];
+        while (!E.isFinished()) {
+          var p = E.currentProject();
+          p.bidders.forEach(function (b) { E.judge(b.id, b.verdict, b.reason); });
+          var cand = E.awardCandidates();
+          eq(cand.length, 2, p.id + " 낙찰 후보 수");
+          E.award(cand[1].id);
+          picks.push(cand[1].tag);
+          E.nextProject();
+        }
+        var s = E.summary();
+        eq([s.mistakes, s.projects.length], [0, 5], "실수·사업 수");
+        eq(s.projects.every(function (x) { return x.news && x.news.head; }), true, "모든 사업에 뉴스");
+        var total = 0; for (var t in s.tags) total += s.tags[t];
+        eq(total, 5, "태그 합계");
+        eq(picks, ["innovation", "quality", "green", "coexist", "safety"], "고른 태그");
+        throws(function () { E.nextProject(); }, "끝난 뒤 다음 사업");
       });
 
       test("서류상 실제로 있는 다른 문제를 사유로 골라도 정답 (반짝가구 = 인증 만료 또는 담합)", function () {

@@ -23,6 +23,14 @@ window.Game = window.Game || {};
 
   function won(n) { return n.toLocaleString("ko-KR") + "원"; }
 
+  /** 수량 단위 (기본 "개", 공사처럼 개수가 아닌 품목은 데이터의 unit). */
+  function unitOf(project) { return project.unit || "개"; }
+
+  /** "사업 2/5" 같은 진행 표시. */
+  function projectNo() {
+    return (Game.engine.state.projectIndex + 1) + "/" + Game.engine.data.projects.length;
+  }
+
   function yesNo(v) { return v ? "있음" : "없음"; }
 
   function specValue(v) {
@@ -63,7 +71,7 @@ window.Game = window.Game || {};
         ["업체명", d.quote.company],
         ["사업자번호", d.quote.bizNo],
         ["단가", won(d.quote.unitPrice)],
-        ["수량", d.quote.qty + "개"],
+        ["수량", d.quote.qty.toLocaleString("ko-KR") + unitOf(project)],
         ["총액", won(d.quote.total)],
         ["비고", d.quote.note]
       ]);
@@ -108,7 +116,7 @@ window.Game = window.Game || {};
     }
     return [
       ["발주기관", project.agency],
-      ["품목·수량", project.item + " " + project.qty + "개"],
+      ["품목·수량", project.item + " " + project.qty.toLocaleString("ko-KR") + unitOf(project)],
       ["예산 상한", won(project.budgetMax)],
       ["필수 인증", project.requiredCerts.join(", ") || "없음"],
       ["입찰 마감", project.deadline],
@@ -142,12 +150,13 @@ window.Game = window.Game || {};
     // ===== ① 공고 =====
     renderNotice: function (project) {
       $("notice-card").innerHTML =
-        '<p class="notice-badge">입찰 공고</p>' +
+        '<p class="notice-badge">입찰 공고 · 사업 ' + projectNo() + "</p>" +
         '<h2 class="notice-title">' + esc(project.title) + "</h2>" +
         rowsHtml(conditionsRows(project)) +
         '<p class="notice-foot">조달청 · 공정하고 투명한 조달</p>';
-      $("notice-bubble").innerHTML = "새 사업 공고가 도착했어요! 업체 <b>" + project.bidders.length +
-        "곳</b>이 입찰했대요. 조건을 잘 기억해 두세요.";
+      var first = Game.engine.state.projectIndex === 0;
+      $("notice-bubble").innerHTML = (first ? "첫 사업 공고가 도착했어요! " : "다음 사업 공고예요! ") +
+        "업체 <b>" + project.bidders.length + "곳</b>이 입찰했대요. 조건을 잘 기억해 두세요.";
     },
 
     // ===== ②~④ 심사 데스크 =====
@@ -157,7 +166,7 @@ window.Game = window.Game || {};
     renderDesk: function (view) {
       var p = view.project, b = view.bidder;
 
-      $("desk-title").textContent = p.title;
+      $("desk-title").innerHTML = '<span class="desk-no">사업 ' + projectNo() + "</span>" + esc(p.title);
       $("desk-progress").innerHTML = p.bidders.map(function (x, i) {
         var cls = i === view.index ? "is-current" : (view.stamps[x.id] ? "is-" + view.stamps[x.id] : "");
         return '<li class="' + cls + '">' + (i + 1) + "</li>";
@@ -252,42 +261,51 @@ window.Game = window.Game || {};
     },
 
     // ===== 임시 결과 =====
+    /** 5건을 모두 마친 뒤의 전체 결과 (엔딩 신문·칭호 이슈 전까지 쓰는 임시 화면). */
     renderResult: function (summary) {
       var reasons = Game.DATA.reasons;
-      var proj = summary.projects[0];
 
       function verdictText(v, reason) {
         if (v === "ok") return "적격";
-        return "부적격" + (reason ? " · " + reasons[reason].name : "");
+        return "부적격" + (reason ? "(" + reasons[reason].name + ")" : "");
       }
 
-      var rows = proj.judgments.map(function (j) {
-        var mark, cls;
-        if (j.mistake) { mark = "✘"; cls = "is-wrong"; }
-        else if (j.reasonCorrect === false) { mark = "△"; cls = "is-partial"; }
-        else { mark = "✔"; cls = "is-right"; }
-        return '<tr class="' + cls + '"><td class="mark">' + mark + "</td><td>" + esc(j.name) + "</td>" +
-          "<td>" + esc(verdictText(j.verdict, j.reason)) + "</td>" +
-          "<td>" + esc(verdictText(j.expectedVerdict, j.expectedReason)) + "</td></tr>";
+      function markOf(j) {
+        if (j.mistake) return { mark: "✘", cls: "is-wrong" };
+        if (j.reasonCorrect === false) return { mark: "△", cls: "is-partial" };
+        return { mark: "✔", cls: "is-right" };
+      }
+
+      var rows = summary.projects.map(function (p) {
+        var marks = p.judgments.map(function (j) {
+          var m = markOf(j);
+          var tip = j.name + ": " + verdictText(j.verdict, j.reason) + " → 정답 " + verdictText(j.expectedVerdict, j.expectedReason);
+          return '<span class="mark ' + m.cls + '" title="' + esc(tip) + '">' + m.mark + "</span>";
+        }).join("");
+        var wrong = p.judgments.filter(function (j) { return j.mistake || j.reasonCorrect === false; }).map(function (j) {
+          return '<li class="' + markOf(j).cls + '">' + esc(j.name) + ": " + esc(verdictText(j.verdict, j.reason)) +
+            " → 정답 " + esc(verdictText(j.expectedVerdict, j.expectedReason)) + "</li>";
+        }).join("");
+        var news = p.news ? esc(p.news.head)
+          : (p.awardedId === null ? "유찰 — 다시 공고를 내야 해요" : "조건에 맞지 않는 업체 낙찰 — 감사 지적 예정");
+        return "<tr><td><strong>" + esc(p.title) + "</strong>" + (wrong ? '<ul class="result-wrong">' + wrong + "</ul>" : "") + "</td>" +
+          '<td class="marks">' + marks + "</td>" +
+          "<td>" + esc(p.awardedName || "유찰") + "</td>" +
+          '<td class="result-news">' + news + "</td></tr>";
       }).join("");
 
       $("result-table").innerHTML =
-        '<table class="result-table"><thead><tr><th></th><th>업체</th><th>내 판정</th><th>정답</th></tr></thead>' +
+        '<table class="result-table"><thead><tr><th>사업</th><th>판정</th><th>낙찰</th><th>1년 후 뉴스 (미리보기)</th></tr></thead>' +
         "<tbody>" + rows + "</tbody></table>" +
-        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수 — 실수 ' + proj.mistakes + "회</p>";
+        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수</p>';
 
-      var side = '<div class="result-award"><span>낙찰</span><strong>' +
-        esc(proj.awardedName || "유찰") + "</strong></div>";
-      if (proj.news) {
-        side += '<div class="news"><p class="news-label">1년 후 조달 뉴스 (미리보기)</p>' +
-          '<h3 class="news-head">' + esc(proj.news.head) + "</h3>" +
-          '<p class="news-sub">' + esc(proj.news.sub) + "</p></div>";
-      } else if (proj.awardedId === null) {
-        side += '<p class="news-none">' + esc(Game.DATA.narmi.noCandidate) + "</p>";
-      } else {
-        side += '<p class="news-none">조건에 맞지 않는 업체가 낙찰돼 감사에서 지적될 수 있어요.</p>';
-      }
-      $("result-side").innerHTML = side;
+      var labels = Game.DATA.tagLabels;
+      var tags = Object.keys(labels).map(function (t) {
+        return '<li><span>' + esc(labels[t]) + "</span><b>" + (summary.tags[t] || 0) + "</b></li>";
+      }).join("");
+      $("result-side").innerHTML =
+        '<div class="result-award"><span>판정 실수</span><strong>' + summary.mistakes + "회</strong></div>" +
+        '<div class="result-tags"><h3>내가 고른 가치</h3><ul>' + tags + "</ul></div>";
     }
   };
 })();
