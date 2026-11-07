@@ -210,7 +210,8 @@ window.Game = window.Game || {};
         '<p class="notice-badge">입찰 공고 · 사업 ' + projectNo() + "</p>" +
         '<h2 class="notice-title">' + esc(project.title) + "</h2>" +
         rowsHtml(conditionsRows(project)) +
-        '<p class="notice-foot">조달청 · 공정하고 투명한 조달</p>';
+        '<div class="notice-foot"><span>공정하고 투명한 조달</span>' +
+        '<img class="pps-symbol" src="assets/img/pps_symbol_h.jpg" alt="조달청"></div>';
       var first = Game.engine.state.projectIndex === 0;
       $("notice-bubble").innerHTML = (first ? "첫 사업 공고가 도착했어요! " : "다음 사업 공고예요! ") +
         "업체 <b>" + project.bidders.length + "곳</b>이 입찰했대요. 조건을 잘 기억해 두세요.";
@@ -436,7 +437,8 @@ window.Game = window.Game || {};
           '<div><span>나르미 힌트</span><strong>' + ending.hintsUsed + "회</strong></div>" +
         "</div>" +
         '<ul class="ending-bars">' + bars + "</ul>" +
-        '<p class="ending-message">“' + esc(ending.finalMessage) + '”</p>';
+        '<p class="ending-message">“' + esc(ending.finalMessage) + '”</p>' +
+        '<img class="pps-symbol ending-symbol" src="assets/img/pps_symbol_h.jpg" alt="조달청">';
     }
   };
 })();
