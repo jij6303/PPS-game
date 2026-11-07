@@ -668,6 +668,66 @@ html, body {
 .paper-pair .doc-table { font-size: 22px; }
 .paper-pair .paper { padding: 22px 24px 26px; }
 
+/* ===== 표시 도구 (펜·형광펜·지우개) — 책상 오른쪽 아래 세로 막대 ===== */
+.draw-tools {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;                    /* 서류(1~n) 위, 도장(100) 아래 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 20px;
+  box-shadow: 0 6px 18px rgba(45, 49, 66, 0.16);
+}
+.tool-btn {
+  font: inherit;
+  width: 78px;
+  padding: 8px 4px 6px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.tool-btn svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tool-btn .fill-red { fill: #f08a84; }
+.tool-btn .fill-yellow { fill: #ffe14d; }
+.tool-btn .fill-pink { fill: #f7c6d0; }
+.tool-btn span { font-size: 16px; font-weight: 700; white-space: nowrap; }
+.tool-btn:hover { background: rgba(79, 140, 247, 0.08); }
+.tool-btn.is-active { border-color: var(--primary); background: var(--sky); color: var(--ink); }
+.tool-clear { margin-top: 4px; border-top: 1px solid #ece6dc; border-radius: 0 0 14px 14px; }
+.tool-clear span { font-size: 14px; }
+
+/* 덧그림 층: 서류 종이 전체를 덮고, 그리기는 doc-area의 Pointer Events가 처리 */
+.paper svg.marks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;       /* 형광펜 아래 글씨가 비치게 */
+  overflow: visible;
+}
+.mark { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mark.is-pen { stroke: #e0453c; stroke-width: 4; }
+.mark.is-marker { stroke: #ffe14d; stroke-width: 24; opacity: 0.6; stroke-linecap: butt; }
+
+/* 그리기 도구일 때: 서류 본문은 십자 커서, 터치 스크롤 대신 그리기 (머리는 계속 끌기) */
+.papers[data-tool="pen"] .desk-paper .paper,
+.papers[data-tool="marker"] .desk-paper .paper,
+.papers[data-tool="eraser"] .desk-paper .paper { touch-action: none; cursor: crosshair; }
+.papers[data-tool="eraser"] .desk-paper .paper { cursor: cell; }
+.papers[data-tool="pen"] .desk-paper .paper-head,
+.papers[data-tool="marker"] .desk-paper .paper-head,
+.papers[data-tool="eraser"] .desk-paper .paper-head { cursor: grab; }
+
 /* ===== 판정 도장: 책상을 거의 채우는 큰 도장 "쾅" =====
  * 서류(.desk-paper, z-index 1~n)보다 항상 위. 잉크처럼 multiply로 아래 서류 글씨가 비친다.
  * 찍히는 순간(애니메이션 20% ≈ 0.22초)에 효과음·책상 흔들림·잉크 번짐이 함께 (ui.stamp). */
@@ -1362,6 +1422,14 @@ html, body {
 #stage.is-portrait .desk-paper .doc-table td { padding: 12px 8px; }
 #stage.is-portrait .desk-paper .doc-table th { width: 36%; }
 #stage.is-portrait .paper-close { width: 44px; height: 44px; font-size: 30px; }
+
+/* 표시 도구: 휴대폰에서 손가락으로 누르기 좋게 크게 */
+#stage.is-portrait .draw-tools { gap: 10px; padding: 12px 10px; border-radius: 26px; }
+#stage.is-portrait .tool-btn { width: 116px; padding: 12px 4px 8px; border-radius: 18px; }
+#stage.is-portrait .tool-btn svg { width: 52px; height: 52px; }
+#stage.is-portrait .tool-btn span { font-size: 24px; }
+#stage.is-portrait .tool-clear span { font-size: 20px; }
+#stage.is-portrait .mark.is-pen { stroke-width: 6; }
 
 /* 조건표 화면: 글씨를 크게 */
 #stage.is-portrait .conditions { padding: 32px 36px; overflow: auto; align-self: start; max-height: 100%; }
