@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>엔진 테스트</title>
+  <style>
+    :root { --bg: #fdf6ec; --ink: #2d3142; --pass: #2f9e63; --fail: #d6453d; }
+    body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--ink);
+           font-family: system-ui, -apple-system, "Malgun Gothic", sans-serif; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    #total { font-weight: 700; margin-bottom: 16px; }
+    li { margin: 4px 0; list-style: none; }
+    .pass::before { content: "✔ "; color: var(--pass); }
+    .fail { color: var(--fail); }
+    .fail::before { content: "✘ "; }
+    pre { margin: 2px 0 0 20px; white-space: pre-wrap; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>엔진 테스트</h1>
+  <p>이 파일을 브라우저로 열면 <code>js/data.js</code>와 <code>js/engine.js</code>를 자동 검사합니다.</p>
+  <div id="total"></div>
+  <ul id="results"></ul>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/engine.js"></script>
+  <script>
+    (function () {
+      var E = Game.engine;
+      var results = [];
+
+      function test(name, fn) {
+        try { fn(); results.push({ name: name, ok: true }); }
+        catch (e) { results.push({ name: name, ok: false, msg: e.message }); }
+      }
+      function eq(actual, expected, label) {
+        var a = JSON.stringify(actual), b = JSON.stringify(expected);
+        if (a !== b) throw new Error((label || "값") + " — 기대 " + b + ", 실제 " + a);
+      }
+      function throws(fn, label) {
+        try { fn(); } catch (e) { return; }
+        throw new Error((label || "호출") + "이(가) 오류를 내야 하는데 통과함");
+      }
+      function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+      test("시나리오 데이터 검증 통과 (부적격엔 근거, 적격엔 문제 없음)", function () {
+        eq(E.validateData(), [], "검증 오류");
+      });
+
+      test("서류 자동 검사 결과", function () {
+        var p = Game.DATA.projects[0];
+        var got = {};
+        p.bidders.forEach(function (b) { got[b.id] = E.inspect(p, b).sort(); });
+        eq(got, {
+          "desk-a": [],
+          "desk-b": [],
+          "desk-c": ["OVER_BUDGET"],
+          "desk-d": ["CERT_EXPIRED", "COLLUSION"],
+          "desk-e": ["COLLUSION"]
+        }, "검사 결과");
+      });
+
+      test("검증이 잘못된 데이터를 잡아냄", function () {
+        var bad = clone(Game.DATA);
+        var a = bad.projects[0].bidders[0];
+        a.docs.quote.unitPrice = 210000; a.docs.quote.total = 42000000;  // 적격인데 예산 초과
+        bad.projects[0].bidders[2].docs.quote.total = 39000000;           // 단가×수량 불일치 + 근거 사라짐
+        var errors = E.validateData(bad);
+        if (!errors.some(function (m) { return m.indexOf("적격 업체인데") !== -1; })) throw new Error("적격 업체 문제를 못 잡음");
+        if (!errors.some(function (m) { return m.indexOf("근거가 서류에 없음") !== -1; })) throw new Error("근거 없는 부적격을 못 잡음");
+        if (!errors.some(function (m) { return m.indexOf("단가×수량") !== -1; })) throw new Error("견적 계산 오류를 못 잡음");
+      });
+
+      test("사유 선택지: 기본 5개 + 이 사업에서 담합 등장", function () {
+        E.reset();
+        eq(E.availableReasons(), ["OVER_BUDGET", "LATE", "CERT_MISSING", "CERT_EXPIRED", "SPEC_MISMATCH", "COLLUSION"], "사유");
+        eq(E.newReason(), "COLLUSION", "새 사유");
+      });
+
+      test("모두 맞게 판정 → 실수 0, 적격 2곳이 낙찰 후보, 스타트업 낙찰 시 innovation +1", function () {
+        E.reset();
+        E.judge("desk-a", "ok");
+        E.judge("desk-b", "ok");
+        eq(E.judge("desk-c", "reject", "OVER_BUDGET").reasonCorrect, true, "c 사유");
+        eq(E.judge("desk-d", "reject", "CERT_EXPIRED").reasonCorrect, true, "d 사유");
+        eq(E.judge("desk-e", "reject", "COLLUSION").reasonCorrect, true, "e 사유");
+        eq(E.allJudged(), true, "전부 판정");
+        eq(E.awardCandidates().map(function (b) { return b.id; }), ["desk-a", "desk-b"], "낙찰 후보");
+        E.award("desk-b");
+        eq(E.state.tags, { innovation: 1 }, "태그");
+        eq(E.state.mistakes, 0, "실수");
+        var s = E.summary();
+        eq(s.projects[0].awardedName, "새싹디자인랩", "낙찰 업체");
+        eq(s.projects[0].news.head, Game.DATA.projects[0].news["desk-b"].head, "뉴스");
+        eq(s.topTag, "innovation", "대표 태그");
+        E.nextProject();
+        eq(E.isFinished(), true, "사업 종료");
+      });
+
+      test("서류상 실제로 있는 다른 문제를 사유로 골라도 정답 (반짝가구 = 인증 만료 또는 담합)", function () {
+        E.reset();
+        eq(E.judge("desk-d", "reject", "COLLUSION").reasonCorrect, true, "d 담합");
+      });
+
+      test("판정 실수 기록: 부적격 통과·적격 반려는 실수, 사유만 틀리면 실수 아님", function () {
+        E.reset();
+        eq(E.judge("desk-c", "ok").mistake, true, "예산 초과 업체 통과");
+        eq(E.judge("desk-a", "reject", "LATE").mistake, true, "적격 업체 반려");
+        var e = E.judge("desk-e", "reject", "OVER_BUDGET");
+        eq([e.mistake, e.reasonCorrect, e.expectedReason], [false, false, "COLLUSION"], "사유만 틀림");
+        E.judge("desk-b", "ok");
+        E.judge("desk-d", "reject", "CERT_EXPIRED");
+        eq(E.state.mistakes, 2, "실수 수");
+        eq(E.awardCandidates().map(function (b) { return b.id; }), ["desk-b", "desk-c"], "통과시킨 업체가 후보");
+        E.award("desk-c");
+        eq(E.state.tags, {}, "부적격 업체 낙찰은 태그 없음");
+        eq(E.summary().projects[0].news, null, "부적격 업체 뉴스 없음");
+      });
+
+      test("모두 반려하면 유찰만 가능", function () {
+        E.reset();
+        ["desk-a", "desk-b", "desk-c", "desk-d", "desk-e"].forEach(function (id) { E.judge(id, "reject", "LATE"); });
+        eq(E.awardCandidates(), [], "후보 없음");
+        throws(function () { E.award("desk-a"); }, "후보 아닌 업체 낙찰");
+        eq(E.award(null), null, "유찰");
+        eq(E.summary().projects[0].awardedId, null, "요약의 유찰");
+      });
+
+      test("잘못된 진행은 오류로 막음", function () {
+        E.reset();
+        throws(function () { E.judge("desk-c", "reject"); }, "사유 없는 부적격");
+        throws(function () { E.judge("desk-c", "reject", "BROKER"); }, "아직 등장 안 한 사유");
+        throws(function () { E.judge("nope", "ok"); }, "없는 업체");
+        E.judge("desk-a", "ok");
+        throws(function () { E.judge("desk-a", "ok"); }, "중복 판정");
+        throws(function () { E.award("desk-a"); }, "판정 끝나기 전 낙찰");
+        throws(function () { E.nextProject(); }, "낙찰 전 다음 사업");
+      });
+
+      test("성향 태그 동점·없음이면 balanced", function () {
+        E.reset();
+        eq(E.topTag(), "balanced", "태그 없음");
+        E.state.tags = { thrift: 2, green: 2 };
+        eq(E.topTag(), "balanced", "동점");
+        E.state.tags = { thrift: 1, green: 3 };
+        eq(E.topTag(), "green", "최고 태그");
+      });
+
+      var passed = results.filter(function (r) { return r.ok; }).length;
+      var total = document.getElementById("total");
+      total.textContent = passed + " / " + results.length + " 통과";
+      total.className = passed === results.length ? "pass" : "fail";
+      var ul = document.getElementById("results");
+      results.forEach(function (r) {
+        var li = document.createElement("li");
+        li.className = r.ok ? "pass" : "fail";
+        li.textContent = r.name;
+        if (!r.ok) {
+          var pre = document.createElement("pre");
+          pre.textContent = r.msg;
+          li.appendChild(pre);
+        }
+        ul.appendChild(li);
+      });
+      window.TEST_RESULTS = { passed: passed, total: results.length, results: results };
+    })();
+  </script>
+</body>
+</html>

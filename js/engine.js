@@ -1,16 +1,346 @@
 /*
  * 게임 엔진: 상태 관리, 판정 로직, 점수/태그 누적.
- * 화면(DOM)에는 손대지 않는다. 판정 로직은 다음 이슈에서 채운다.
+ * 화면(DOM)에는 손대지 않는다. 시나리오 데이터는 Game.DATA(js/data.js)에서만 읽는다.
+ *
+ * 사업 1건의 흐름 (GAME_SPEC 4장)
+ *   reset() → currentProject() → judge(...) × 업체 수 → awardCandidates() → award(id) → nextProject()
+ *   모든 사업이 끝나면 isFinished() === true, summary()로 결과를 받는다.
  */
 window.Game = window.Game || {};
 
-Game.engine = {
-  state: null,
+(function () {
+  // ===== 서류 자동 검사 ======================================================
 
-  reset: function () {
-    this.state = {
-      projectIndex: 0
-    };
-    return this.state;
+  function uniq(list) {
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      if (out.indexOf(list[i]) === -1) out.push(list[i]);
+    }
+    return out;
   }
-};
+
+  function findCert(docs, type) {
+    var certs = docs.certs || [];
+    for (var i = 0; i < certs.length; i++) {
+      if (certs[i].type === type) return certs[i];
+    }
+    return null;
+  }
+
+  /** 두 업체의 견적이 담합으로 보일 만큼 같은가 (단가와 비고 문구가 모두 동일). */
+  function quotesCollude(a, b) {
+    var qa = a.docs.quote, qb = b.docs.quote;
+    return qa.unitPrice === qb.unitPrice && qa.note === qb.note;
+  }
+
+  /**
+   * 서류만 보고 찾을 수 있는 문제 코드 목록을 돌려준다 (GAME_SPEC 5.1·5.2).
+   * 정답 데이터(verdict/reason)는 보지 않는다 — 나르미 힌트와 데이터 검증에 같이 쓴다.
+   */
+  function inspect(project, bidder) {
+    var d = bidder.docs;
+    var issues = [];
+    var i;
+
+    // 예산 초과: 견적 총액 > 예산 상한
+    if (d.quote.total > project.budgetMax) issues.push("OVER_BUDGET");
+
+    // 마감 후 제출: 날짜는 YYYY-MM-DD 문자열이라 사전순 비교가 곧 날짜 비교
+    if (d.application.submitDate > project.deadline) issues.push("LATE");
+
+    // 필수 인증 누락 / 만료 (마감일 전에 유효기간이 끝났으면 만료)
+    for (i = 0; i < project.requiredCerts.length; i++) {
+      var cert = findCert(d, project.requiredCerts[i]);
+      if (!cert) issues.push("CERT_MISSING");
+      else if (cert.validUntil < project.deadline) issues.push("CERT_EXPIRED");
+    }
+
+    // 요구 사양 불일치
+    var req = project.requiredSpec || {};
+    for (var key in req) {
+      if (Object.prototype.hasOwnProperty.call(req, key) && d.spec[key] !== req[key]) {
+        issues.push("SPEC_MISMATCH");
+        break;
+      }
+    }
+
+    // 서류 간 정보 불일치: 사업자번호·업체명이 서류마다 같아야 한다
+    var bizNos = [d.application.bizNo, d.quote.bizNo, d.status.bizNo];
+    for (i = 0; i < (d.certs || []).length; i++) bizNos.push(d.certs[i].bizNo);
+    if (uniq(bizNos).length > 1 || d.application.company !== d.quote.company) {
+      issues.push("INFO_MISMATCH");
+    }
+
+    // 담합 의심: 같은 사업의 다른 업체와 견적이 같음
+    for (i = 0; i < project.bidders.length; i++) {
+      var other = project.bidders[i];
+      if (other.id !== bidder.id && quotesCollude(bidder, other)) {
+        issues.push("COLLUSION");
+        break;
+      }
+    }
+
+    // 실체 없는 업체: 사무실·공장이 모두 없거나 직원이 1명 이하
+    var s = d.status;
+    if ((!s.hasOffice && !s.hasFactory) || s.employees <= 1) issues.push("BROKER");
+
+    // 중대재해 이력
+    if (s.seriousAccidents > 0) issues.push("SAFETY");
+
+    return uniq(issues);
+  }
+
+  // ===== 데이터 검증 =========================================================
+
+  /**
+   * 시나리오 데이터가 "정답이 있는 퍼즐"인지 검사한다 (GAME_SPEC 4.1).
+   * 오류 메시지 배열을 돌려준다. 빈 배열이면 통과.
+   */
+  function validateData(data) {
+    var errors = [];
+    var reasonCodes = Object.keys(data.reasons);
+
+    function err(where, msg) { errors.push(where + ": " + msg); }
+
+    (data.startingReasons || []).forEach(function (code) {
+      if (reasonCodes.indexOf(code) === -1) err("startingReasons", "알 수 없는 사유 " + code);
+    });
+
+    data.projects.forEach(function (p) {
+      var where = "사업 " + p.id;
+      var ids = p.bidders.map(function (b) { return b.id; });
+      var okCount = 0;
+
+      if (p.introducesReason && reasonCodes.indexOf(p.introducesReason) === -1) {
+        err(where, "알 수 없는 introducesReason " + p.introducesReason);
+      }
+      if (uniq(ids).length !== ids.length) err(where, "업체 id 중복");
+
+      p.bidders.forEach(function (b) {
+        var bw = where + " / " + b.name + "(" + b.id + ")";
+        var issues = inspect(p, b);
+        var q = b.docs.quote;
+
+        if (q.unitPrice * q.qty !== q.total) err(bw, "견적 단가×수량이 총액과 다름");
+        if (q.qty !== p.qty) err(bw, "견적 수량이 공고 수량과 다름");
+
+        if (b.verdict === "ok") {
+          okCount++;
+          if (issues.length) err(bw, "적격 업체인데 서류에서 문제 발견: " + issues.join(", "));
+          if (!b.tag) err(bw, "적격 업체에 성향 태그(tag)가 없음");
+          if (!p.news || !p.news[b.id]) err(bw, "적격 업체의 뉴스 문구가 없음");
+        } else if (b.verdict === "reject") {
+          if (reasonCodes.indexOf(b.reason) === -1) err(bw, "알 수 없는 사유 " + b.reason);
+          else if (issues.indexOf(b.reason) === -1) {
+            err(bw, "정답 사유 " + b.reason + "의 근거가 서류에 없음 (발견: " + (issues.join(", ") || "없음") + ")");
+          }
+          if (b.reason === "COLLUSION" && ids.indexOf(b.collusionWith) === -1) {
+            err(bw, "담합 상대 collusionWith가 없음");
+          }
+        } else {
+          err(bw, "verdict는 ok 또는 reject여야 함");
+        }
+      });
+
+      if (okCount < 1) err(where, "적격 업체가 없음");
+    });
+
+    return errors;
+  }
+
+  // ===== 게임 상태 ===========================================================
+
+  function findBidder(project, bidderId) {
+    for (var i = 0; i < project.bidders.length; i++) {
+      if (project.bidders[i].id === bidderId) return project.bidders[i];
+    }
+    return null;
+  }
+
+  Game.engine = {
+    state: null,
+
+    inspect: inspect,
+    validateData: function (data) { return validateData(data || Game.DATA); },
+
+    /** 새 게임을 시작한다. data를 넘기면 그 데이터로(테스트용), 아니면 Game.DATA로. */
+    reset: function (data) {
+      this.data = data || Game.DATA;
+      this.state = {
+        projectIndex: 0,
+        judgments: {},   // { projectId: { bidderId: 판정 기록 } }
+        awards: {},      // { projectId: bidderId | null(유찰) }
+        tags: {},        // { tag: 점수 }
+        mistakes: 0      // 판정 실수 (벌점 처리는 GAME_SPEC 4.2 결정 후)
+      };
+      return this.state;
+    },
+
+    currentProject: function () {
+      return this.data.projects[this.state.projectIndex] || null;
+    },
+
+    isFinished: function () {
+      return this.state.projectIndex >= this.data.projects.length;
+    },
+
+    /** 현재 사업까지 등장한 부적격 사유 코드 (도장 선택지). */
+    availableReasons: function () {
+      var codes = (this.data.startingReasons || []).slice();
+      for (var i = 0; i <= this.state.projectIndex && i < this.data.projects.length; i++) {
+        var intro = this.data.projects[i].introducesReason;
+        if (intro && codes.indexOf(intro) === -1) codes.push(intro);
+      }
+      return codes;
+    },
+
+    /** 현재 사업에서 처음 등장하는 사유 (나르미 자동 설명용). 없으면 null. */
+    newReason: function () {
+      var p = this.currentProject();
+      return (p && p.introducesReason) || null;
+    },
+
+    judgmentsOf: function (projectId) {
+      var id = projectId || this.currentProject().id;
+      return this.state.judgments[id] || {};
+    },
+
+    isJudged: function (bidderId) {
+      return Object.prototype.hasOwnProperty.call(this.judgmentsOf(), bidderId);
+    },
+
+    allJudged: function () {
+      var p = this.currentProject();
+      var self = this;
+      return p.bidders.every(function (b) { return self.isJudged(b.id); });
+    },
+
+    /**
+     * 업체 하나를 판정한다 (GAME_SPEC 4장 ④).
+     * verdict: "ok" | "reject", reason: 부적격일 때 사유 코드.
+     * 부적격 사유는 정답 사유가 아니어도 서류에 실제로 있는 문제면 맞은 것으로 본다.
+     */
+    judge: function (bidderId, verdict, reason) {
+      var p = this.currentProject();
+      if (!p) throw new Error("진행 중인 사업이 없습니다.");
+      var b = findBidder(p, bidderId);
+      if (!b) throw new Error("업체를 찾을 수 없습니다: " + bidderId);
+      if (this.isJudged(bidderId)) throw new Error("이미 판정한 업체입니다: " + b.name);
+      if (verdict !== "ok" && verdict !== "reject") throw new Error("판정은 ok 또는 reject여야 합니다.");
+      if (verdict === "reject") {
+        if (!reason) throw new Error("부적격 판정에는 사유가 필요합니다.");
+        if (this.availableReasons().indexOf(reason) === -1) throw new Error("아직 쓸 수 없는 사유입니다: " + reason);
+      }
+
+      var issues = inspect(p, b);
+      var verdictCorrect = verdict === b.verdict;
+      var reasonCorrect = null;
+      if (verdict === "reject" && b.verdict === "reject") {
+        reasonCorrect = reason === b.reason || issues.indexOf(reason) !== -1;
+      }
+
+      var record = {
+        bidderId: b.id,
+        verdict: verdict,
+        reason: verdict === "reject" ? reason : null,
+        verdictCorrect: verdictCorrect,
+        reasonCorrect: reasonCorrect,
+        mistake: !verdictCorrect,          // 4.2 제안: 적격/부적격을 틀린 경우만 실수
+        expectedVerdict: b.verdict,
+        expectedReason: b.reason || null,
+        issues: issues
+      };
+
+      if (!this.state.judgments[p.id]) this.state.judgments[p.id] = {};
+      this.state.judgments[p.id][b.id] = record;
+      if (record.mistake) this.state.mistakes++;
+      return record;
+    },
+
+    /** 낙찰 후보: 플레이어가 적격으로 통과시킨 업체들 (GAME_SPEC 4장 ⑤). */
+    awardCandidates: function () {
+      var p = this.currentProject();
+      var j = this.judgmentsOf(p.id);
+      return p.bidders.filter(function (b) { return j[b.id] && j[b.id].verdict === "ok"; });
+    },
+
+    /**
+     * 낙찰 업체를 고른다. 후보가 없으면 null(유찰)만 허용.
+     * 정답 적격 업체를 고르면 그 업체의 성향 태그 +1 (GAME_SPEC 6장).
+     */
+    award: function (bidderId) {
+      var p = this.currentProject();
+      if (!p) throw new Error("진행 중인 사업이 없습니다.");
+      if (!this.allJudged()) throw new Error("모든 업체를 판정한 뒤에 낙찰할 수 있습니다.");
+      if (Object.prototype.hasOwnProperty.call(this.state.awards, p.id)) throw new Error("이미 낙찰을 마친 사업입니다.");
+
+      var candidates = this.awardCandidates();
+      if (bidderId === null) {
+        if (candidates.length) throw new Error("낙찰 후보가 있으면 유찰할 수 없습니다.");
+        this.state.awards[p.id] = null;
+        return null;
+      }
+
+      var b = findBidder(p, bidderId);
+      if (!b || candidates.indexOf(b) === -1) throw new Error("낙찰 후보가 아닌 업체입니다: " + bidderId);
+
+      this.state.awards[p.id] = b.id;
+      if (b.verdict === "ok" && b.tag) {
+        this.state.tags[b.tag] = (this.state.tags[b.tag] || 0) + 1;
+      }
+      return b;
+    },
+
+    /** 다음 사업으로 넘어간다. 낙찰(또는 유찰)을 마쳐야 한다. */
+    nextProject: function () {
+      var p = this.currentProject();
+      if (!p) throw new Error("모든 사업이 끝났습니다.");
+      if (!Object.prototype.hasOwnProperty.call(this.state.awards, p.id)) {
+        throw new Error("낙찰을 마친 뒤 다음 사업으로 넘어갈 수 있습니다.");
+      }
+      this.state.projectIndex++;
+      return this.currentProject();
+    },
+
+    /** 가장 높은 성향 태그. 없거나 동점이면 "balanced" (GAME_SPEC 7.2 제안). */
+    topTag: function () {
+      var best = null, bestScore = 0, tie = false;
+      for (var tag in this.state.tags) {
+        var s = this.state.tags[tag];
+        if (s > bestScore) { best = tag; bestScore = s; tie = false; }
+        else if (s === bestScore) tie = true;
+      }
+      return (!best || tie) ? "balanced" : best;
+    },
+
+    /** 진행한 사업들의 결과 요약 (임시 결과 화면·엔딩 뉴스용). */
+    summary: function () {
+      var self = this;
+      var projects = [];
+      this.data.projects.forEach(function (p) {
+        if (!self.state.judgments[p.id]) return;
+        var j = self.state.judgments[p.id];
+        var awardedId = Object.prototype.hasOwnProperty.call(self.state.awards, p.id) ? self.state.awards[p.id] : undefined;
+        var awarded = awardedId ? findBidder(p, awardedId) : null;
+        projects.push({
+          id: p.id,
+          title: p.title,
+          judgments: p.bidders.map(function (b) {
+            var r = j[b.id];
+            return r ? Object.assign({ name: b.name }, r) : { bidderId: b.id, name: b.name, verdict: null };
+          }),
+          mistakes: p.bidders.filter(function (b) { return j[b.id] && j[b.id].mistake; }).length,
+          awardedId: awardedId === undefined ? undefined : awardedId,
+          awardedName: awarded ? awarded.name : null,
+          news: awarded && p.news ? (p.news[awarded.id] || null) : null
+        });
+      });
+      return {
+        projects: projects,
+        mistakes: this.state.mistakes,
+        tags: Object.assign({}, this.state.tags),
+        topTag: this.topTag()
+      };
+    }
+  };
+})();
