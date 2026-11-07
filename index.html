@@ -49,6 +49,11 @@
         <div class="notice-side">
           <img class="notice-dali" src="assets/img/dali_3d.png" alt="달이">
           <div class="bubble" id="notice-bubble"></div>
+          <!-- 새 확인 사항·조작 안내는 심사 전에 여기서 (심사 중에는 나르미가 말하지 않음) -->
+          <div class="notice-narmi" id="notice-narmi" hidden>
+            <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
+            <div class="bubble bubble-left" id="notice-narmi-bubble"></div>
+          </div>
           <button class="btn btn-primary" type="button" data-action="begin-review">심사 시작</button>
         </div>
       </div>
@@ -66,6 +71,11 @@
           <div class="counter-label">창구</div>
           <div class="rep" id="rep"></div>
           <div class="bubble bubble-up" id="rep-bubble"></div>
+          <!-- 판정 도장: 창구 아래 빈자리에 (서류 공간을 넓히려고 하단 띠를 없앰) -->
+          <div class="stamps">
+            <button class="stamp-btn stamp-ok" type="button" data-action="stamp-ok">적격</button>
+            <button class="stamp-btn stamp-reject" type="button" data-action="stamp-reject">부적격</button>
+          </div>
         </aside>
 
         <main class="papers">
@@ -79,17 +89,13 @@
           <section class="narmi">
             <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
             <div class="narmi-talk">
-              <div class="bubble bubble-left" id="narmi-bubble"></div>
+              <!-- 심사 중에는 말하지 않고, 힌트를 눌렀을 때만 힌트 한 줄을 보여 준다 -->
+              <div class="bubble bubble-left" id="narmi-bubble" hidden></div>
               <button class="hint-btn" type="button" data-action="hint" id="hint-btn">힌트</button>
             </div>
           </section>
         </aside>
       </div>
-
-      <footer class="stamps">
-        <button class="stamp-btn stamp-ok" type="button" data-action="stamp-ok">적격</button>
-        <button class="stamp-btn stamp-reject" type="button" data-action="stamp-reject">부적격</button>
-      </footer>
 
       <div class="modal" id="reason-modal" hidden>
         <div class="modal-card">

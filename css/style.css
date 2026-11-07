@@ -182,7 +182,83 @@ html, body {
   align-items: baseline;
   margin-bottom: 12px;
 }
-.paper-title { font-size: 30px; font-weight: 700; }
+.paper-head { gap: 10px; }
+.paper-title { font-size: 30px; font-weight: 700; margin-right: auto; }
+.paper-badge {
+  flex: none;
+  align-self: center;
+  min-width: 52px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--doc, var(--primary));
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ===== 서류 종류별 생김새 — 색 띠·바탕·무늬가 서로 달라 한눈에 구분 =====
+ * --doc: 띠·표식 색, --doc-bg: 종이 바탕, --doc-line: 표 줄 색 */
+.paper { position: relative; background-color: var(--doc-bg, var(--paper)); border-top-color: var(--doc, var(--sky)); }
+.paper .doc-table th, .paper .doc-table td { border-bottom-color: var(--doc-line, #ece6dc); }
+
+/* 신청서: 파랑, 반듯한 서식 */
+.paper.is-application { --doc: #4f8cf7; --doc-bg: #f5f9ff; --doc-line: #d9e6fb; }
+.paper.is-application .doc-table th { color: #4a6fa8; }
+
+/* 견적서: 주황, 영수증처럼 점선 줄 + 아래 톱니 */
+.paper.is-quote { --doc: #ef8a3c; --doc-bg: #fffaf3; --doc-line: #f1d6bb; }
+.paper.is-quote .doc-table th, .paper.is-quote .doc-table td { border-bottom-style: dashed; }
+.paper.is-quote .doc-table td { font-variant-numeric: tabular-nums; }
+.paper.is-quote {
+  background-image: radial-gradient(circle at 8px 100%, #e9dcc8 6px, transparent 6.5px);
+  background-size: 16px 9px;
+  background-position: 0 100%;
+  background-repeat: repeat-x;
+}
+
+/* 인증서: 초록, 이중 테두리 + 둥근 인증 도장 */
+.paper.is-certs {
+  --doc: #2e9d74; --doc-bg: #f4fbf7; --doc-line: #cfe9dd;
+  outline: 3px double #8fcdb3;
+  outline-offset: -10px;
+}
+.paper.is-certs::after {
+  content: "인증";
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid rgba(46, 157, 116, 0.35);
+  color: rgba(46, 157, 116, 0.5);
+  font-size: 20px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+
+/* 제품 사양서: 보라, 모눈종이 */
+.paper.is-spec {
+  --doc: #8a6fd6; --doc-bg: #faf8ff; --doc-line: #e0d8f5;
+  background-image:
+    linear-gradient(rgba(138, 111, 214, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 111, 214, 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* 업체 현황: 노랑, 왼쪽 철끈 구멍 */
+.paper.is-status {
+  --doc: #d39a12; --doc-bg: #fffbea; --doc-line: #f1e3b0;
+  background-image: radial-gradient(circle, #e9dcc8 5px, transparent 5.5px);
+  background-size: 20px 110px;
+  background-position: 0 50px;
+  background-repeat: repeat-y;
+}
+
 .paper-company { font-size: 22px; color: var(--ink-soft); }
 .doc-empty { font-size: 26px; color: var(--reject); padding: 24px 0; }
 
@@ -346,11 +422,16 @@ html, body {
 .ending-symbol { margin: 14px auto 0; height: 60px; }
 .notice-side { display: flex; flex-direction: column; align-items: center; gap: 28px; }
 .notice-dali { height: 420px; }
+.notice-side:has(.notice-narmi:not([hidden])) .notice-dali { height: 320px; }
+.notice-narmi { display: flex; align-items: flex-end; gap: 14px; width: 100%; }
+.notice-narmi[hidden] { display: none; }
+.notice-narmi .narmi-img { height: 150px; }
+.notice-narmi .bubble { flex: 1; font-size: 22px; }
 
 /* ===== ②~④ 심사 데스크 ===== */
 [data-screen="desk"] { background: var(--bg); }
 .desk-top {
-  height: 104px;
+  height: 88px;
   padding: 0 48px;
   display: flex;
   align-items: center;
@@ -382,26 +463,29 @@ html, body {
 .desk-progress li.is-ok { background: var(--ok); color: #fff; }
 .desk-progress li.is-reject { background: var(--reject); color: #fff; }
 
+/* 가운데 책상(서류)을 최대한 넓게: 창구는 좁게, 도장은 창구 아래 빈자리로, 하단 띠 없음 */
 .desk-body {
   position: absolute;
-  top: 136px;
-  bottom: 176px;
-  left: 48px;
-  right: 48px;
+  top: 108px;
+  bottom: 24px;
+  left: 28px;
+  right: 28px;
   display: grid;
-  grid-template-columns: 320px 1fr 520px;
-  gap: 32px;
+  grid-template-columns: 250px 1fr 430px;
+  gap: 24px;
 }
 
 .counter {
   background: var(--mint);
   border-radius: var(--radius);
-  padding: 28px 24px;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  min-height: 0;
 }
+.counter .npc { font-size: 170px; }
 .counter-label {
   align-self: flex-start;
   font-size: 22px;
@@ -409,14 +493,14 @@ html, body {
   color: #2c7a5c;
 }
 .rep { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.rep-name { font-size: 28px; font-weight: 700; }
-.counter .bubble { font-size: 22px; }
+.rep-name { font-size: 26px; font-weight: 700; text-align: center; }
+.counter .bubble { font-size: 20px; padding: 16px 18px; }
 
 .papers {
   position: relative;
   background: #e9dcc8;            /* 책상 */
   border-radius: var(--radius);
-  padding: 24px 28px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -435,7 +519,96 @@ html, body {
   cursor: pointer;
 }
 .doc-tab.is-active { background: var(--paper); color: var(--ink); box-shadow: 0 4px 10px rgba(45, 49, 66, 0.12); }
-.doc-area { flex: 1; overflow: auto; }
+/* 탭 앞 색 표식 = 서류 띠 색 */
+.doc-tab.is-application { --doc: #4f8cf7; }
+.doc-tab.is-quote { --doc: #ef8a3c; }
+.doc-tab.is-certs { --doc: #2e9d74; }
+.doc-tab.is-spec { --doc: #8a6fd6; }
+.doc-tab.is-status { --doc: #d39a12; }
+.doc-tab::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border-radius: 4px;
+  background: var(--doc, var(--primary));
+}
+.doc-tab.is-active { box-shadow: inset 0 -4px 0 var(--doc, var(--primary)), 0 4px 10px rgba(45, 49, 66, 0.12); }
+.doc-tab.is-open::after {        /* 책상에 펼쳐진 서류 표시 */
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: var(--doc, var(--primary));
+}
+.doc-tabs .compare-label { margin-left: 12px; align-self: center; font-size: 20px; font-weight: 700; color: #8a6a3f; }
+
+/* ===== 책상 위 서류: 펼치기·겹치기·끌기 ===== */
+.doc-area { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+.desk-paper {
+  position: absolute;
+  width: 460px;
+  transition: box-shadow 0.15s ease;
+}
+.desk-paper .paper {
+  max-height: 740px;
+  overflow: auto;
+  padding: 0 24px 22px;
+  box-shadow: 0 8px 22px rgba(45, 49, 66, 0.16);
+}
+.desk-paper .paper-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -24px 6px;
+  padding: 16px 52px 10px 24px;
+  background: var(--doc-bg, var(--paper));
+  cursor: grab;
+  touch-action: none;           /* 머리 부분은 끌기 전용 (터치 스크롤 대신 이동) */
+  border-bottom: 1px dashed #e8dfd0;
+}
+.desk-paper .paper-head::before {  /* 잡는 곳 표시 */
+  content: "⋮⋮";
+  margin-right: 8px;
+  color: #c9bba3;
+  letter-spacing: -3px;
+}
+.desk-paper .paper-title { font-size: 24px; }
+.desk-paper .paper-company { font-size: 18px; }
+.desk-paper .doc-table { font-size: 20px; }
+.desk-paper .doc-table th, .desk-paper .doc-table td { padding: 9px 8px; }
+.desk-paper .doc-table th { width: 38%; }
+/* 비교용으로 불러온 다른 업체 서류: 업체명을 진하게 띄워 지금 업체 서류와 구분 */
+.desk-paper.is-other .paper-company {
+  background: var(--ink);
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+.desk-paper.is-other .paper-company::before { content: "비교 · "; opacity: 0.7; }
+.desk-paper.is-dragging .paper { box-shadow: 0 18px 40px rgba(45, 49, 66, 0.28); }
+.desk-paper.is-dragging .paper-head { cursor: grabbing; }
+.paper-close {
+  position: absolute;
+  top: 18px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #f1ebe1;
+  color: var(--ink-soft);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.desk-empty { position: absolute; inset: 0; display: grid; place-items: center; font-size: 24px; color: #8a6a3f; }
 .compare-bar {
   display: flex;
   align-items: center;
@@ -482,7 +655,7 @@ html, body {
   100% { opacity: 0.95; transform: translate(-50%, -50%) rotate(-12deg) scale(1); }
 }
 
-.side { display: flex; flex-direction: column; gap: 24px; min-height: 0; }
+.side { display: flex; flex-direction: column; gap: 20px; min-height: 0; }
 .conditions {
   background: var(--paper);
   border-radius: var(--radius);
@@ -495,23 +668,24 @@ html, body {
 .conditions .doc-table th, .conditions .doc-table td { padding: 10px 8px; }
 .narmi { display: flex; align-items: flex-end; gap: 16px; margin-top: auto; }
 .narmi-img { height: 200px; flex: none; }
+.narmi .narmi-img { height: 160px; }
 .narmi .bubble { font-size: 21px; }
 
+/* 도장 버튼: 창구 맨 아래 (위아래로 쌓음) */
 .stamps {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 28px;
+  margin-top: auto;
+  align-self: stretch;
   display: flex;
-  justify-content: center;
-  gap: 48px;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 10px;
 }
 .stamp-btn {
   font: inherit;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 700;
-  width: 300px;
-  height: 120px;
+  width: 100%;
+  height: 100px;
   border: none;
   border-radius: 28px;
   color: #fff;
@@ -982,3 +1156,7 @@ html, body {
 .sound-btn .mute { display: none; stroke: var(--reject); }
 .sound-btn.is-off .wave { display: none; }
 .sound-btn.is-off .mute { display: inline; }
+
+/* 심사 데스크에서는 도장 버튼(창구 아래)과 겹치지 않게 소리 버튼을 머리띠 왼쪽으로 */
+#stage:has([data-screen="desk"].is-active) .sound-btn { top: 12px; bottom: auto; }
+[data-screen="desk"] .desk-top { padding-left: 104px; }

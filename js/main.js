@@ -50,10 +50,11 @@ window.Game = window.Game || {};
       index: index,
       bidder: p.bidders[index],
       docKey: "application",
-      compareWith: null,
+      papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
       seen: p.bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
+    openPaper(view.bidder.id, "application");
     ui.renderDesk(view);
     ui.show("desk");
     sound.play("enter", 0.1);   // 새 업체가 창구에 "띵동"
@@ -127,6 +128,65 @@ window.Game = window.Game || {};
     return null;
   }
 
+  // ===== 책상 위 서류 (펼치기·겹치기·끌기, GAME_SPEC 8장) =====
+
+  var PAPER_STEP_X = 110;     // 새로 펼친 서류가 비켜 놓이는 간격 (머리의 서류 표식이 보이게 가로로 넉넉히)
+  var PAPER_STEP_Y = 44;
+  var COMPARE_X = 500;        // 비교용 다른 업체 견적서를 놓는 x 위치 (서류 폭 460 + 여백)
+
+  function paperId(bidderId, docKey) { return bidderId + ":" + docKey; }
+
+  function findPaper(id) {
+    for (var i = 0; i < view.papers.length; i++) if (view.papers[i].id === id) return i;
+    return -1;
+  }
+
+  /** 맨 위 서류 중 지금 업체의 것 → 탭 강조·나르미 안내에 쓴다. */
+  function syncTopDoc() {
+    for (var i = view.papers.length - 1; i >= 0; i--) {
+      if (view.papers[i].bidderId === view.bidder.id) { view.docKey = view.papers[i].docKey; return; }
+    }
+    view.docKey = null;
+  }
+
+  /** 서류를 맨 위로. 없으면 펼친다. pos를 주면 그 자리에, 아니면 조금씩 비켜서. */
+  function openPaper(bidderId, docKey, pos) {
+    var id = paperId(bidderId, docKey);
+    var i = findPaper(id);
+    var paper;
+    if (i === -1) {
+      var n = view.papers.filter(function (pp) { return pp.bidderId === view.bidder.id; }).length;
+      paper = { id: id, bidderId: bidderId, docKey: docKey,
+        x: pos ? pos.x : (n % 5) * PAPER_STEP_X, y: pos ? pos.y : (n % 5) * PAPER_STEP_Y };
+    } else {
+      paper = view.papers.splice(i, 1)[0];
+      if (pos) { paper.x = pos.x; paper.y = pos.y; }
+    }
+    view.papers.push(paper);
+    syncTopDoc();
+  }
+
+  function closePaper(id) {
+    var i = findPaper(id);
+    if (i !== -1) view.papers.splice(i, 1);
+    syncTopDoc();
+  }
+
+  // 끌기: 누르면 맨 위로(다시 그리지 않고 순서만), 다 옮기면 위치 저장
+  ui.enablePaperDrag({
+    front: function (id) {
+      var i = findPaper(id);
+      if (i === -1 || i === view.papers.length - 1) return;
+      view.papers.push(view.papers.splice(i, 1)[0]);
+      syncTopDoc();
+      ui.restack(view);
+    },
+    moved: function (id, x, y) {
+      var i = findPaper(id);
+      if (i !== -1) { view.papers[i].x = x; view.papers[i].y = y; }
+    }
+  });
+
   // data-action 버튼 → 동작. 마우스·터치 모두 click으로 들어온다.
   var actions = {
     "start": startIntro,
@@ -145,8 +205,13 @@ window.Game = window.Game || {};
       if (busy || engine.hintsLeft() <= 0 || engine.hintOf(view.bidder.id)) return;
       var hint = engine.useHint(view.bidder.id);
       if (hint.docKey) {
-        view.docKey = hint.docKey;
-        view.compareWith = hint.code === "COLLUSION" ? colludingSeen() : null;
+        if (hint.code === "COLLUSION" && colludingSeen()) {
+          // 담합: 지금 업체 견적서와 같은 견적의 업체 견적서를 나란히
+          openPaper(colludingSeen().id, "quote", { x: COMPARE_X, y: 0 });
+          openPaper(view.bidder.id, "quote", { x: 0, y: 0 });
+        } else {
+          openPaper(view.bidder.id, hint.docKey);
+        }
       }
       ui.renderDesk(view);
     },
@@ -169,14 +234,26 @@ window.Game = window.Game || {};
     },
 
     "tab": function (el) {
-      view.docKey = el.getAttribute("data-doc");
-      if (view.docKey !== "quote") view.compareWith = null;
+      openPaper(view.bidder.id, el.getAttribute("data-doc"));
       ui.renderDesk(view);
     },
 
+    /** 앞서 본 업체의 견적서를 오른쪽에 펼침 (다시 누르면 닫음) */
     "compare": function (el) {
       var other = findSeen(el.getAttribute("data-bidder"));
-      view.compareWith = (view.compareWith && other && view.compareWith.id === other.id) ? null : other;
+      if (!other) return;
+      var id = paperId(other.id, "quote");
+      if (findPaper(id) !== -1) {
+        closePaper(id);
+      } else {
+        openPaper(other.id, "quote", { x: COMPARE_X, y: 0 });
+        openPaper(view.bidder.id, "quote", { x: 0, y: 0 });   // 내 견적서도 왼쪽에 맨 위로
+      }
+      ui.renderDesk(view);
+    },
+
+    "close-paper": function (el) {
+      closePaper(el.getAttribute("data-paper"));
       ui.renderDesk(view);
     },
 
@@ -229,6 +306,7 @@ window.Game = window.Game || {};
     "begin-review": "paper",
     "tab": "paper",
     "compare": "paper",
+    "close-paper": "paper",
     "stamp-reject": "click",
     "pick-reason": "click",
     "cancel-reject": "click",
