@@ -76,6 +76,99 @@ window.Game = window.Game || {};
       "</div>";
   }
 
+  /*
+   * 납품 물건 그림 (GAME_SPEC 5.1 "제품 사양서 — 사진", 10장 "CSS/SVG로 직접 그리기").
+   * 사업의 picture 값으로 고르고, 사양서 값(spec)대로 그린다 → 사진과 사양서 글자가 항상 일치.
+   * 모두 viewBox 0 0 200 140, 파스텔 톤.
+   */
+  function has(text, word) { return String(text || "").indexOf(word) !== -1; }
+
+  var ITEM_PICTURES = {
+    /** 학생용 책상: 상판 색은 재질, 높이 조절이면 다리에 조절 손잡이 */
+    desk: function (s) {
+      var top = has(s.material, "원목") ? "#d9a46c" : has(s.material, "플라스틱") ? "#9fd8c4" : "#e8c79a";
+      var adj = s.heightAdjustable === true;
+      var leg = function (x) {
+        return '<rect x="' + x + '" y="58" width="10" height="38" rx="2" fill="#8d99ab"/>' +
+          '<rect x="' + (x + 2) + '" y="94" width="6" height="26" rx="2" fill="#b4bdca"/>' +
+          (adj ? '<circle cx="' + (x + 5) + '" cy="96" r="5" fill="#f2a33a" stroke="#fff" stroke-width="2"/>' : "") +
+          '<rect x="' + (x - 12) + '" y="119" width="34" height="7" rx="3.5" fill="#6f7b8d"/>';
+      };
+      return '<rect x="34" y="52" width="132" height="22" rx="4" fill="#cfd6e0"/>' +   // 책 넣는 칸
+        '<rect x="42" y="58" width="116" height="10" rx="2" fill="#b9c2cf"/>' +
+        leg(40) + leg(150) +
+        '<rect x="18" y="38" width="164" height="16" rx="5" fill="' + top + '"/>' +
+        '<rect x="18" y="38" width="164" height="5" rx="2.5" fill="#fff" opacity="0.35"/>' +
+        '<rect x="128" y="26" width="34" height="12" rx="2" fill="#f2a6a0"/><rect x="132" y="20" width="26" height="7" rx="2" fill="#8fb8ef"/>';   // 책
+    },
+
+    /** 대기 의자: 팔걸이 있음/없음, 쿠션 색은 재질 */
+    chair: function (s) {
+      var seat = has(s.material, "패브릭") ? "#7fa6e6" : has(s.material, "메시") ? "#6b7280" :
+        has(s.material, "쿠션") ? "#f0a46e" : "#8fd3bb";
+      var arms = s.armrest === true
+        ? '<rect x="40" y="70" width="8" height="26" rx="3" fill="#8d99ab"/><rect x="30" y="64" width="30" height="9" rx="4.5" fill="#6f7b8d"/>' +
+          '<rect x="152" y="70" width="8" height="26" rx="3" fill="#8d99ab"/><rect x="140" y="64" width="30" height="9" rx="4.5" fill="#6f7b8d"/>'
+        : "";
+      return '<rect x="64" y="96" width="8" height="36" rx="3" fill="#8d99ab"/><rect x="128" y="96" width="8" height="36" rx="3" fill="#8d99ab"/>' +
+        '<rect x="56" y="126" width="24" height="6" rx="3" fill="#6f7b8d"/><rect x="120" y="126" width="24" height="6" rx="3" fill="#6f7b8d"/>' +
+        '<rect x="62" y="12" width="76" height="66" rx="16" fill="' + seat + '"/>' +
+        '<rect x="70" y="20" width="60" height="8" rx="4" fill="#fff" opacity="0.3"/>' +
+        '<rect x="50" y="78" width="100" height="20" rx="9" fill="' + seat + '"/>' +
+        '<rect x="50" y="92" width="100" height="6" rx="3" fill="#000" opacity="0.08"/>' + arms;
+    },
+
+    /** 천장 LED 평판 조명: 빛 색은 색온도 (5000K 이상 하얀빛, 낮으면 노란빛) */
+    led: function (s) {
+      var k = parseInt(s.colorTemp, 10) || 5000;
+      var glow = k >= 4500 ? "#e8f3ff" : "#fff0c2";
+      var core = k >= 4500 ? "#ffffff" : "#fff8e0";
+      return '<rect x="0" y="0" width="200" height="14" fill="#efe6d8"/>' +
+        '<line x1="70" y1="14" x2="70" y2="30" stroke="#9aa6b8" stroke-width="2"/><line x1="130" y1="14" x2="130" y2="30" stroke="#9aa6b8" stroke-width="2"/>' +
+        '<polygon points="44,50 156,50 196,140 4,140" fill="' + glow + '" opacity="0.9"/>' +
+        '<rect x="36" y="30" width="128" height="22" rx="4" fill="#cfd6e0"/>' +
+        '<rect x="42" y="34" width="116" height="14" rx="2" fill="' + core + '" stroke="#e1e6ee" stroke-width="1.5"/>' +
+        '<line x1="100" y1="34" x2="100" y2="48" stroke="#e1e6ee" stroke-width="1.5"/>' +
+        '<g stroke="#f3c94d" stroke-width="3" stroke-linecap="round" opacity="0.8">' +
+          '<line x1="24" y1="44" x2="12" y2="40"/><line x1="176" y1="44" x2="188" y2="40"/><line x1="100" y1="62" x2="100" y2="74"/></g>';
+    },
+
+    /** 보건용 마스크: 마스크에 등급 표시 */
+    mask: function (s) {
+      return '<ellipse cx="44" cy="70" rx="24" ry="30" fill="none" stroke="#a9b4c4" stroke-width="5"/>' +
+        '<ellipse cx="156" cy="70" rx="24" ry="30" fill="none" stroke="#a9b4c4" stroke-width="5"/>' +
+        '<path d="M48 42 Q100 20 152 42 L152 96 Q100 126 48 96 Z" fill="#ffffff" stroke="#c9d3e0" stroke-width="3"/>' +
+        '<path d="M52 62 Q100 50 148 62" fill="none" stroke="#e1e7ef" stroke-width="3"/>' +
+        '<path d="M52 84 Q100 98 148 84" fill="none" stroke="#e1e7ef" stroke-width="3"/>' +
+        '<text x="100" y="80" text-anchor="middle" font-size="20" font-weight="700" fill="#3a6fd1">' + esc(s.grade || "") + "</text>";
+    },
+
+    /** 체육관 지붕 공사: 건물 + 지붕 패널, 재질에 태양광이 있으면 태양광 패널 */
+    gym: function (s) {
+      var solar = has(s.material, "태양광")
+        ? '<polygon points="110,44 150,62 142,66 102,48" fill="#3f5f9e" stroke="#fff" stroke-width="1.5"/>' +
+          '<polygon points="116,55 156,73 148,77 108,59" fill="#3f5f9e" stroke="#fff" stroke-width="1.5"/>'
+        : "";
+      return '<rect x="0" y="124" width="200" height="16" fill="#cfe8d6"/>' +
+        '<rect x="30" y="72" width="140" height="56" fill="#f6e7c8"/>' +
+        '<rect x="88" y="96" width="24" height="32" rx="2" fill="#c9a77c"/>' +
+        '<rect x="44" y="84" width="28" height="18" rx="2" fill="#bfe0ff"/><rect x="128" y="84" width="28" height="18" rx="2" fill="#bfe0ff"/>' +
+        '<polygon points="16,76 100,30 184,76" fill="#7fa6d6"/>' +
+        '<g stroke="#5f86bd" stroke-width="2.5" fill="none">' +
+          '<polyline points="30,70 100,38 170,70"/><polyline points="44,74 100,48 156,74"/></g>' +
+        '<polygon points="16,76 100,30 184,76 178,80 100,37 22,80" fill="#5f86bd"/>' + solar +
+        '<text x="100" y="91" text-anchor="middle" font-size="11" font-weight="700" fill="#8a6a3f">체육관</text>';
+    }
+  };
+
+  /** 납품 물건 그림 SVG. spec: 그릴 사양 값 (업체 사양서 또는 공고 요구 사양). */
+  function itemPictureHtml(project, spec, extraClass) {
+    var draw = ITEM_PICTURES[project.picture];
+    if (!draw) return "";
+    return '<svg class="item-pic ' + (extraClass || "") + '" viewBox="0 0 200 140" role="img" aria-label="' +
+      esc(project.item) + ' 그림">' + draw(spec || {}) + "</svg>";
+  }
+
   /** 서류 한 장의 HTML. hl: 형광펜 칠할 항목 키 목록 (힌트가 없으면 빈 배열). */
   function docHtml(project, bidder, key, hl) {
     var d = bidder.docs;
@@ -121,7 +214,9 @@ window.Game = window.Game || {};
       for (var k in labels) {
         if (Object.prototype.hasOwnProperty.call(d.spec, k)) rows.push([labels[k], specValue(d.spec[k]), "spec." + k]);
       }
-      body = rowsHtml(rows, hl);
+      var pic = itemPictureHtml(project, d.spec);
+      body = (pic ? '<figure class="doc-photo">' + pic + "<figcaption>제품 사진</figcaption></figure>" : "") +
+        rowsHtml(rows, hl);
     } else if (key === "status") {
       body = rowsHtml([
         ["사업자번호", d.status.bizNo, "status.bizNo"],
@@ -230,8 +325,10 @@ window.Game = window.Game || {};
     // ===== ① 공고 =====
     renderNotice: function (project) {
       $("notice-card").innerHTML =
-        '<p class="notice-badge">입찰 공고 · 사업 ' + projectNo() + "</p>" +
-        '<h2 class="notice-title">' + esc(project.title) + "</h2>" +
+        '<div class="notice-head"><div>' +
+          '<p class="notice-badge">입찰 공고 · 사업 ' + projectNo() + "</p>" +
+          '<h2 class="notice-title">' + esc(project.title) + "</h2></div>" +
+          itemPictureHtml(project, project.requiredSpec, "is-notice") + "</div>" +
         rowsHtml(conditionsRows(project)) +
         '<div class="notice-foot"><span>공정하고 투명한 조달</span>' +
         '<img class="pps-symbol" src="assets/img/pps_symbol_h.jpg" alt="조달청"></div>';

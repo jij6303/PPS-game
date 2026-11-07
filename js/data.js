@@ -7,7 +7,7 @@
  *   application: 입찰참가 신청서 { company, ceo, bizNo, address, submitDate }
  *   quote:       견적서         { company, bizNo, unitPrice, qty, total, note }
  *   certs:       인증서 목록     [{ type, number, validUntil, issuer, bizNo }]
- *   spec:        제품 사양서     { requiredSpec의 키와 같은 항목 + material }
+ *   spec:        제품 사양서     { requiredSpec의 키와 같은 항목 + material } — 사양서의 제품 사진도 이 값대로 그려진다
  *   status:      업체 현황       { bizNo, hasOffice, hasFactory, employees, deliveries, seriousAccidents }
  *
  * 부적격 업체는 서류 안에 reason에 해당하는 근거가 반드시 있어야 한다.
@@ -89,6 +89,7 @@ Game.DATA = {
   projects: [
     {
       id: "desk",
+      picture: "desk",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○초등학교 교실 책상 구매",
       agency: "○○초등학교",
       item: "학생용 책상",
@@ -168,6 +169,7 @@ Game.DATA = {
     /* ── 사업 2: 딜레마 #1 가격 vs 품질 ─────────────────────────────── */
     {
       id: "chair",
+      picture: "chair",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○시청 민원실 의자 구매",
       agency: "○○시청",
       item: "민원실 대기 의자",
@@ -246,6 +248,7 @@ Game.DATA = {
     /* ── 사업 3: 딜레마 #4 일반 제품 vs 친환경 제품 ──────────────────── */
     {
       id: "led",
+      picture: "led",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○도서관 LED 조명 교체",
       agency: "○○시립도서관",
       item: "LED 평판 조명",
@@ -337,6 +340,7 @@ Game.DATA = {
     /* ── 사업 4: 딜레마 #5 빠른 납기 vs 사회적 가치 ───────────────────── */
     {
       id: "mask",
+      picture: "mask",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○보건소 방역 마스크 구매",
       agency: "○○보건소",
       item: "보건용 마스크",
@@ -415,6 +419,7 @@ Game.DATA = {
     /* ── 사업 5: 딜레마 #7 싼 시공 vs 안전 ─────────────────────────────── */
     {
       id: "gym",
+      picture: "gym",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○중학교 체육관 지붕 보수 공사",
       agency: "○○중학교",
       item: "체육관 지붕 보수 공사",

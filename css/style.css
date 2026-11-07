@@ -262,6 +262,42 @@ html, body {
 .paper-company { font-size: 22px; color: var(--ink-soft); }
 .doc-empty { font-size: 26px; color: var(--reject); padding: 24px 0; }
 
+/* ===== 납품 물건 그림 (ui.js ITEM_PICTURES) ===== */
+.item-pic { display: block; width: 100%; height: auto; }
+/* 제품 사양서의 "제품 사진" 칸: 사진처럼 흰 테두리 + 그림자, 살짝 기울여 붙인 느낌 */
+.doc-photo {
+  position: relative;
+  width: 62%;
+  margin: 6px auto 12px;
+  padding: 10px 10px 6px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(45, 49, 66, 0.15);
+  transform: rotate(-1.5deg);
+}
+.doc-photo .item-pic { background: #f4f1fb; border-radius: 3px; }
+.doc-photo figcaption { margin-top: 4px; font-size: 16px; color: var(--ink-soft); text-align: center; }
+.doc-photo::before {          /* 사진을 붙인 테이프 */
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 70px;
+  height: 18px;
+  margin-left: -35px;
+  background: rgba(255, 233, 160, 0.85);
+  transform: rotate(3deg);
+}
+/* 공고 카드: 제목 옆에 납품 물건 */
+.notice-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.item-pic.is-notice {
+  flex: none;
+  width: 220px;
+  padding: 10px;
+  background: var(--sky);
+  border-radius: 20px;
+}
+
 /* ===== 업체 대표 캐릭터 (CSS 도형, GAME_SPEC 3장) =====
  * 모든 크기는 em 단위 → .npc의 font-size 하나로 전체 크기를 조절한다.
  * 색은 --suit(정장), --tie(넥타이) 변수로 업체마다 다르게. */
