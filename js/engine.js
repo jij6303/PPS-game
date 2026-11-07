@@ -90,6 +90,89 @@ window.Game = window.Game || {};
     return uniq(issues);
   }
 
+  // ===== 힌트: 문제의 근거가 서류 어디에 있는지 =================================
+
+  var DOC_NAMES = { quote: "견적서", certs: "인증서", status: "업체 현황" };
+
+  /**
+   * 문제 코드 하나의 근거 위치를 찾는다 (GAME_SPEC 5.3 형광펜 표시용).
+   * docKey: 펼칠 서류 탭, fields: 형광펜 칠할 항목("quote.total", "certs.0.validUntil" …),
+   * vars: 나르미 문구에 넣을 값.
+   */
+  function locate(project, bidder, code) {
+    var d = bidder.docs;
+    var i;
+
+    switch (code) {
+      case "OVER_BUDGET":
+        return { docKey: "quote", fields: ["quote.total"], vars: { budget: project.budgetMax.toLocaleString("ko-KR") + "원" } };
+
+      case "LATE":
+        return { docKey: "application", fields: ["application.submitDate"], vars: { deadline: project.deadline } };
+
+      case "CERT_MISSING":
+      case "CERT_EXPIRED":
+        for (i = 0; i < project.requiredCerts.length; i++) {
+          var type = project.requiredCerts[i];
+          var idx = -1;
+          for (var j = 0; j < (d.certs || []).length; j++) if (d.certs[j].type === type) idx = j;
+          if (code === "CERT_MISSING" && idx === -1) {
+            return { docKey: "certs", fields: ["certs"], vars: { cert: type } };
+          }
+          if (code === "CERT_EXPIRED" && idx !== -1 && d.certs[idx].validUntil < project.deadline) {
+            return { docKey: "certs", fields: ["certs." + idx + ".validUntil"], vars: { cert: type, deadline: project.deadline } };
+          }
+        }
+        break;
+
+      case "SPEC_MISMATCH":
+        for (var key in project.requiredSpec) {
+          if (Object.prototype.hasOwnProperty.call(project.requiredSpec, key) && d.spec[key] !== project.requiredSpec[key]) {
+            return { docKey: "spec", fields: ["spec." + key], vars: { spec: (Game.DATA.specLabels || {})[key] || key } };
+          }
+        }
+        break;
+
+      case "INFO_MISMATCH":
+        var base = d.application.bizNo;
+        if (d.quote.bizNo !== base || d.quote.company !== d.application.company) {
+          return { docKey: "quote", fields: d.quote.bizNo !== base ? ["quote.bizNo"] : ["quote.company"], vars: { doc: DOC_NAMES.quote } };
+        }
+        for (i = 0; i < (d.certs || []).length; i++) {
+          if (d.certs[i].bizNo !== base) return { docKey: "certs", fields: ["certs." + i + ".bizNo"], vars: { doc: DOC_NAMES.certs } };
+        }
+        if (d.status.bizNo !== base) return { docKey: "status", fields: ["status.bizNo"], vars: { doc: DOC_NAMES.status } };
+        break;
+
+      case "COLLUSION":
+        return { docKey: "quote", fields: ["quote.unitPrice", "quote.note"], vars: {} };
+
+      case "BROKER":
+        return { docKey: "status", fields: ["status.hasOffice", "status.hasFactory", "status.employees"], vars: {} };
+
+      case "SAFETY":
+        return { docKey: "status", fields: ["status.seriousAccidents"], vars: {} };
+    }
+    return null;
+  }
+
+  /**
+   * 업체 하나에 대한 힌트. 정답 사유의 근거를 먼저 보여 주고,
+   * 없으면 지금 쓸 수 있는 다른 문제, 문제가 없으면 code: null("수상한 곳 없음").
+   */
+  function hintFor(project, bidder, available) {
+    var issues = inspect(project, bidder).filter(function (c) { return available.indexOf(c) !== -1; });
+    if (bidder.reason && issues.indexOf(bidder.reason) !== -1) {
+      issues.splice(issues.indexOf(bidder.reason), 1);
+      issues.unshift(bidder.reason);
+    }
+    for (var i = 0; i < issues.length; i++) {
+      var spot = locate(project, bidder, issues[i]);
+      if (spot) return { code: issues[i], docKey: spot.docKey, fields: spot.fields, vars: spot.vars };
+    }
+    return { code: null, docKey: null, fields: [], vars: {} };
+  }
+
   // ===== 데이터 검증 =========================================================
 
   /**
@@ -135,6 +218,7 @@ window.Game = window.Game || {};
         } else if (b.verdict === "reject") {
           if (reasonCodes.indexOf(b.reason) === -1) err(bw, "알 수 없는 사유 " + b.reason);
           else if (available.indexOf(b.reason) === -1) err(bw, "정답 사유 " + b.reason + "가 이 사업 시점엔 아직 등장하지 않음");
+          else if (!locate(p, b, b.reason)) err(bw, "정답 사유 " + b.reason + "의 근거 위치를 힌트로 찾을 수 없음");
           else if (issues.indexOf(b.reason) === -1) {
             err(bw, "정답 사유 " + b.reason + "의 근거가 서류에 없음 (발견: " + (issues.join(", ") || "없음") + ")");
           }
@@ -165,6 +249,8 @@ window.Game = window.Game || {};
     state: null,
 
     inspect: inspect,
+    locate: locate,
+    hintFor: hintFor,
     validateData: function (data) { return validateData(data || Game.DATA); },
 
     /** 새 게임을 시작한다. data를 넘기면 그 데이터로(테스트용), 아니면 Game.DATA로. */
@@ -175,9 +261,44 @@ window.Game = window.Game || {};
         judgments: {},   // { projectId: { bidderId: 판정 기록 } }
         awards: {},      // { projectId: bidderId | null(유찰) }
         tags: {},        // { tag: 점수 }
-        mistakes: 0      // 판정 실수 (벌점 처리는 GAME_SPEC 4.2 결정 후)
+        mistakes: 0,     // 감사 지적 = 판정 실수 (GAME_SPEC 4.2). 엔딩 뉴스·칭호에 반영
+        hints: {}        // { projectId: { bidderId: 힌트 } } — 사업당 hintsPerProject회
       };
       return this.state;
+    },
+
+    /** 이 사업에서 남은 힌트 횟수 (GAME_SPEC 5.3). */
+    hintsLeft: function () {
+      var p = this.currentProject();
+      if (!p) return 0;
+      var used = Object.keys(this.state.hints[p.id] || {}).length;
+      return Math.max(0, (this.data.hintsPerProject || 0) - used);
+    },
+
+    /** 이미 받은 힌트 (없으면 null). */
+    hintOf: function (bidderId) {
+      var p = this.currentProject();
+      var h = p && this.state.hints[p.id];
+      return (h && h[bidderId]) || null;
+    },
+
+    /**
+     * 힌트를 쓴다. 같은 업체에 다시 쓰면 횟수를 차감하지 않고 같은 힌트를 돌려준다.
+     * 돌려주는 값: { code(문제 코드|null), docKey, fields, vars }
+     */
+    useHint: function (bidderId) {
+      var p = this.currentProject();
+      if (!p) throw new Error("진행 중인 사업이 없습니다.");
+      var b = findBidder(p, bidderId);
+      if (!b) throw new Error("업체를 찾을 수 없습니다: " + bidderId);
+      var cached = this.hintOf(bidderId);
+      if (cached) return cached;
+      if (this.hintsLeft() <= 0) throw new Error("이 사업의 힌트를 모두 썼습니다.");
+
+      var hint = hintFor(p, b, this.availableReasons());
+      if (!this.state.hints[p.id]) this.state.hints[p.id] = {};
+      this.state.hints[p.id][b.id] = hint;
+      return hint;
     },
 
     currentProject: function () {
@@ -322,8 +443,8 @@ window.Game = window.Game || {};
       var self = this;
       var projects = [];
       this.data.projects.forEach(function (p) {
-        if (!self.state.judgments[p.id]) return;
-        var j = self.state.judgments[p.id];
+        if (!self.state.judgments[p.id] && !self.state.hints[p.id]) return;
+        var j = self.state.judgments[p.id] || {};
         var awardedId = Object.prototype.hasOwnProperty.call(self.state.awards, p.id) ? self.state.awards[p.id] : undefined;
         var awarded = awardedId ? findBidder(p, awardedId) : null;
         projects.push({
@@ -334,6 +455,7 @@ window.Game = window.Game || {};
             return r ? Object.assign({ name: b.name }, r) : { bidderId: b.id, name: b.name, verdict: null };
           }),
           mistakes: p.bidders.filter(function (b) { return j[b.id] && j[b.id].mistake; }).length,
+          hintsUsed: Object.keys(self.state.hints[p.id] || {}).length,
           awardedId: awardedId === undefined ? undefined : awardedId,
           awardedName: awarded ? awarded.name : null,
           news: awarded && p.news ? (p.news[awarded.id] || null) : null
@@ -342,6 +464,7 @@ window.Game = window.Game || {};
       return {
         projects: projects,
         mistakes: this.state.mistakes,
+        hintsUsed: projects.reduce(function (n, x) { return n + x.hintsUsed; }, 0),
         tags: Object.assign({}, this.state.tags),
         topTag: this.topTag()
       };

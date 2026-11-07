@@ -39,9 +39,15 @@ window.Game = window.Game || {};
     return v;
   }
 
-  function rowsHtml(rows) {
+  /**
+   * 표 HTML. rows: [이름, 값, 항목 키(선택)].
+   * hl(형광펜 칠할 항목 키 목록)에 들어 있는 행은 형광펜으로 표시한다 (나르미 힌트).
+   */
+  function rowsHtml(rows, hl) {
+    hl = hl || [];
     return '<table class="doc-table">' + rows.map(function (r) {
-      return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1]) + "</td></tr>";
+      var on = r[2] && hl.indexOf(r[2]) !== -1;
+      return "<tr" + (on ? ' class="is-hl"' : "") + "><th>" + esc(r[0]) + "</th><td>" + esc(r[1]) + "</td></tr>";
     }).join("") + "</table>";
   }
 
@@ -49,63 +55,74 @@ window.Game = window.Game || {};
     return '<div class="rep-icon">' + esc(bidder.name.charAt(0)) + "</div>";
   }
 
-  /** 서류 한 장의 HTML. */
-  function docHtml(project, bidder, key) {
+  /** 서류 한 장의 HTML. hl: 형광펜 칠할 항목 키 목록 (힌트가 없으면 빈 배열). */
+  function docHtml(project, bidder, key, hl) {
     var d = bidder.docs;
     var labels = Game.DATA.specLabels;
     var title = "";
     var body = "";
+    hl = hl || [];
 
     for (var i = 0; i < DOC_TABS.length; i++) if (DOC_TABS[i].key === key) title = DOC_TABS[i].label;
 
     if (key === "application") {
       body = rowsHtml([
-        ["업체명", d.application.company],
-        ["대표자", d.application.ceo],
-        ["사업자번호", d.application.bizNo],
-        ["소재지", d.application.address],
-        ["제출일", d.application.submitDate]
-      ]);
+        ["업체명", d.application.company, "application.company"],
+        ["대표자", d.application.ceo, "application.ceo"],
+        ["사업자번호", d.application.bizNo, "application.bizNo"],
+        ["소재지", d.application.address, "application.address"],
+        ["제출일", d.application.submitDate, "application.submitDate"]
+      ], hl);
     } else if (key === "quote") {
       body = rowsHtml([
-        ["업체명", d.quote.company],
-        ["사업자번호", d.quote.bizNo],
-        ["단가", won(d.quote.unitPrice)],
-        ["수량", d.quote.qty.toLocaleString("ko-KR") + unitOf(project)],
-        ["총액", won(d.quote.total)],
-        ["비고", d.quote.note]
-      ]);
+        ["업체명", d.quote.company, "quote.company"],
+        ["사업자번호", d.quote.bizNo, "quote.bizNo"],
+        ["단가", won(d.quote.unitPrice), "quote.unitPrice"],
+        ["수량", d.quote.qty.toLocaleString("ko-KR") + unitOf(project), "quote.qty"],
+        ["총액", won(d.quote.total), "quote.total"],
+        ["비고", d.quote.note, "quote.note"]
+      ], hl);
     } else if (key === "certs") {
-      body = (d.certs && d.certs.length) ? d.certs.map(function (c) {
+      body = (d.certs && d.certs.length) ? d.certs.map(function (c, idx) {
+        var f = "certs." + idx + ".";
         return rowsHtml([
-          ["인증 종류", c.type],
-          ["인증 번호", c.number],
-          ["유효기간", "~ " + c.validUntil],
-          ["발급기관", c.issuer],
-          ["사업자번호", c.bizNo]
-        ]);
+          ["인증 종류", c.type, f + "type"],
+          ["인증 번호", c.number, f + "number"],
+          ["유효기간", "~ " + c.validUntil, f + "validUntil"],
+          ["발급기관", c.issuer, f + "issuer"],
+          ["사업자번호", c.bizNo, f + "bizNo"]
+        ], hl);
       }).join("") : '<p class="doc-empty">제출된 인증서가 없습니다.</p>';
     } else if (key === "spec") {
       var rows = [];
       for (var k in labels) {
-        if (Object.prototype.hasOwnProperty.call(d.spec, k)) rows.push([labels[k], specValue(d.spec[k])]);
+        if (Object.prototype.hasOwnProperty.call(d.spec, k)) rows.push([labels[k], specValue(d.spec[k]), "spec." + k]);
       }
-      body = rowsHtml(rows);
+      body = rowsHtml(rows, hl);
     } else if (key === "status") {
       body = rowsHtml([
-        ["사업자번호", d.status.bizNo],
-        ["사무실", yesNo(d.status.hasOffice)],
-        ["공장", yesNo(d.status.hasFactory)],
-        ["직원 수", d.status.employees + "명"],
-        ["납품 실적", d.status.deliveries + "건"],
-        ["중대재해 이력", d.status.seriousAccidents + "건"]
-      ]);
+        ["사업자번호", d.status.bizNo, "status.bizNo"],
+        ["사무실", yesNo(d.status.hasOffice), "status.hasOffice"],
+        ["공장", yesNo(d.status.hasFactory), "status.hasFactory"],
+        ["직원 수", d.status.employees + "명", "status.employees"],
+        ["납품 실적", d.status.deliveries + "건", "status.deliveries"],
+        ["중대재해 이력", d.status.seriousAccidents + "건", "status.seriousAccidents"]
+      ], hl);
     }
 
-    return '<article class="paper">' +
+    // 서류 전체가 근거일 때 (예: 필수 인증서 누락) 종이 전체에 형광펜
+    var whole = hl.indexOf(key) !== -1;
+    return '<article class="paper' + (whole ? " is-hl" : "") + '">' +
       '<header class="paper-head"><span class="paper-title">' + esc(title) + "</span>" +
       '<span class="paper-company">' + esc(bidder.name) + "</span></header>" +
       body + "</article>";
+  }
+
+  /** 힌트 문구 채우기: {키}를 vars 값으로. */
+  function fillVars(template, vars) {
+    return template.replace(/\{(\w+)\}/g, function (m, k) {
+      return Object.prototype.hasOwnProperty.call(vars, k) ? esc(vars[k]) : m;
+    });
   }
 
   function conditionsRows(project) {
@@ -188,23 +205,44 @@ window.Game = window.Game || {};
             '" data-action="compare" data-bidder="' + s.id + '">' + esc(s.name) + "</button>";
         }).join("") + "</div>";
       }
+      // 나르미 힌트: 지금 업체에 쓴 힌트가 있으면 해당 서류의 근거 항목에 형광펜
+      var hint = Game.engine.hintOf(b.id);
+      var hl = hint && hint.docKey === view.docKey ? hint.fields : [];
+
       if (view.docKey === "quote" && view.compareWith) {
-        area += '<div class="paper-pair">' + docHtml(p, b, "quote") + docHtml(p, view.compareWith, "quote") + "</div>";
+        area += '<div class="paper-pair">' + docHtml(p, b, "quote", hl) + docHtml(p, view.compareWith, "quote", hl) + "</div>";
       } else {
-        area += docHtml(p, b, view.docKey);
+        area += docHtml(p, b, view.docKey, hl);
       }
       $("doc-area").innerHTML = area;
 
       $("conditions").innerHTML = '<h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p));
 
       var reasons = Game.DATA.reasons;
+      var narmi = Game.DATA.narmi;
       var newCode = view.index === 0 ? Game.engine.newReason() : null;
-      var tip = newCode ? fill(Game.DATA.narmi.newReason, reasons[newCode])
-        : (view.docKey === "quote" && view.seen.length ? esc(Game.DATA.narmi.compareTip) : esc(Game.DATA.narmi.deskTip));
+      var tip;
+      if (hint) tip = fillVars(narmi.hints[hint.code || "none"], hint.vars);
+      else if (newCode) tip = fill(narmi.newReason, reasons[newCode]);
+      else tip = esc(view.docKey === "quote" && view.seen.length ? narmi.compareTip : narmi.deskTip);
       $("narmi-bubble").innerHTML = tip;
+
+      var left = Game.engine.hintsLeft();
+      var btn = $("hint-btn");
+      btn.innerHTML = "힌트 <b>" + left + "</b>";
+      btn.disabled = !!hint || left <= 0;
+      btn.title = hint ? "이 업체에는 이미 힌트를 썼어요" : (left <= 0 ? "이번 사업의 힌트를 모두 썼어요" : "수상한 곳 한 군데를 알려 줘요");
 
       this.setStampsEnabled(true);
     },
+
+    /** 도장 뒤 나르미가 진짜 사유를 알려 주는 창 (GAME_SPEC 4.2). */
+    showReasonFix: function (code) {
+      $("narmi-modal-text").innerHTML = fill(Game.DATA.narmi.reasonFix, Game.DATA.reasons[code]);
+      $("narmi-modal").hidden = false;
+    },
+
+    closeNarmiModal: function () { $("narmi-modal").hidden = true; },
 
     setStampsEnabled: function (on) {
       var btns = document.querySelectorAll(".stamp-btn");
@@ -297,14 +335,15 @@ window.Game = window.Game || {};
       $("result-table").innerHTML =
         '<table class="result-table"><thead><tr><th>사업</th><th>판정</th><th>낙찰</th><th>1년 후 뉴스 (미리보기)</th></tr></thead>' +
         "<tbody>" + rows + "</tbody></table>" +
-        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수</p>';
+        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수(감사 지적)</p>';
 
       var labels = Game.DATA.tagLabels;
       var tags = Object.keys(labels).map(function (t) {
         return '<li><span>' + esc(labels[t]) + "</span><b>" + (summary.tags[t] || 0) + "</b></li>";
       }).join("");
       $("result-side").innerHTML =
-        '<div class="result-award"><span>판정 실수</span><strong>' + summary.mistakes + "회</strong></div>" +
+        '<div class="result-award"><span>감사 지적</span><strong>' + summary.mistakes + "회</strong>" +
+        '<span class="result-hints">나르미 힌트 ' + summary.hintsUsed + "회 사용</span></div>" +
         '<div class="result-tags"><h3>내가 고른 가치</h3><ul>' + tags + "</ul></div>";
     }
   };
