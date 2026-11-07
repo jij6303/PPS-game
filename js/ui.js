@@ -51,8 +51,28 @@ window.Game = window.Game || {};
     }).join("") + "</table>";
   }
 
-  function repIcon(bidder) {
-    return '<div class="rep-icon">' + esc(bidder.name.charAt(0)) + "</div>";
+  /*
+   * 업체 대표 캐릭터 (GAME_SPEC 3장 — CSS로 그린 단순 캐릭터, 업체마다 색만 다르게).
+   * 이미지 없이 도형만 쓰고, 정장·넥타이 색은 사업 안에서 업체 순서로 정한다 (5곳 모두 다른 색).
+   */
+  var NPC_COLORS = [
+    { suit: "#6f9fe6", tie: "#f2a33a" },   // 파랑 + 귤색
+    { suit: "#6cc4a1", tie: "#e8607a" },   // 민트 + 분홍
+    { suit: "#ef8f74", tie: "#4f6fc4" },   // 코랄 + 남색
+    { suit: "#a68be0", tie: "#f3c94d" },   // 보라 + 노랑
+    { suit: "#e9b44c", tie: "#3f8f7a" }    // 겨자 + 초록
+  ];
+
+  function npcHtml(project, bidder, extraClass) {
+    var idx = project.bidders.indexOf(bidder);
+    var c = NPC_COLORS[(idx < 0 ? 0 : idx) % NPC_COLORS.length];
+    return '<div class="npc ' + (extraClass || "") + '" style="--suit:' + c.suit + ";--tie:" + c.tie + '" role="img" aria-label="' + esc(bidder.name) + ' 대표">' +
+      '<div class="npc-body"><div class="npc-collar"></div><div class="npc-tie"></div></div>' +
+      '<div class="npc-head"><div class="npc-hair"></div>' +
+        '<div class="npc-eye is-l"></div><div class="npc-eye is-r"></div>' +
+        '<div class="npc-cheek is-l"></div><div class="npc-cheek is-r"></div>' +
+        '<div class="npc-mouth"></div></div>' +
+      "</div>";
   }
 
   /** 서류 한 장의 HTML. hl: 형광펜 칠할 항목 키 목록 (힌트가 없으면 빈 배열). */
@@ -189,7 +209,11 @@ window.Game = window.Game || {};
         return '<li class="' + cls + '">' + (i + 1) + "</li>";
       }).join("");
 
-      $("rep").innerHTML = repIcon(b) + '<div class="rep-name">' + esc(b.name) + " 대표</div>";
+      // 새 업체가 들어올 때만 등장 애니메이션 (탭 전환 등으로 다시 그릴 땐 생략)
+      var entering = $("rep").getAttribute("data-bidder") !== b.id;
+      $("rep").setAttribute("data-bidder", b.id);
+      $("rep").innerHTML = npcHtml(p, b, "is-talking" + (entering ? " is-entering" : "")) +
+        '<div class="rep-name">' + esc(b.name) + " 대표</div>";
       $("rep-bubble").textContent = b.pitch;
 
       $("doc-tabs").innerHTML = DOC_TABS.map(function (t) {
@@ -283,7 +307,7 @@ window.Game = window.Game || {};
       $("award-cards").innerHTML = candidates.map(function (b) {
         var d = b.docs;
         return '<article class="award-card">' +
-          '<div class="award-head">' + repIcon(b) + '<h3>' + esc(b.name) + "</h3></div>" +
+          '<div class="award-head">' + npcHtml(project, b, "is-small") + '<h3>' + esc(b.name) + "</h3></div>" +
           '<p class="award-pitch">“' + esc(b.pitch) + '”</p>' +
           rowsHtml([
             ["단가", won(d.quote.unitPrice)],
