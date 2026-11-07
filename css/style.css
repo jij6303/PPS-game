@@ -959,3 +959,26 @@ html, body {
   .intro-text.is-in,
   .intro-next { animation: none !important; }
 }
+
+/* ===== 소리 켜기/끄기 버튼 (모든 화면 왼쪽 아래) ===== */
+.sound-btn {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 30;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 16px rgba(45, 49, 66, 0.18);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.sound-btn svg { width: 34px; height: 34px; }
+.sound-btn .spk { fill: var(--ink); }
+.sound-btn .wave, .sound-btn .mute { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.sound-btn .mute { display: none; stroke: var(--reject); }
+.sound-btn.is-off .wave { display: none; }
+.sound-btn.is-off .mute { display: inline; }
