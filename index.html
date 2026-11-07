@@ -78,6 +78,12 @@
           </div>
         </aside>
 
+        <!-- 세로 화면에서만 보이는 전환 탭 (GAME_SPEC 8장: 서류와 조건표를 탭으로 전환) -->
+        <nav class="pane-switch" role="tablist">
+          <button class="pane-btn is-active" type="button" role="tab" data-action="pane" data-pane="papers">서류</button>
+          <button class="pane-btn" type="button" role="tab" data-action="pane" data-pane="conditions">공고 조건표</button>
+        </nav>
+
         <main class="papers">
           <nav class="doc-tabs" id="doc-tabs"></nav>
           <div class="doc-area" id="doc-area"></div>

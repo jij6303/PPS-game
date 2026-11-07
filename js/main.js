@@ -51,6 +51,7 @@ window.Game = window.Game || {};
       bidder: p.bidders[index],
       docKey: "application",
       papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
+      pane: "papers",          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
       seen: p.bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
@@ -130,9 +131,15 @@ window.Game = window.Game || {};
 
   // ===== 책상 위 서류 (펼치기·겹치기·끌기, GAME_SPEC 8장) =====
 
-  var PAPER_STEP_X = 110;     // 새로 펼친 서류가 비켜 놓이는 간격 (머리의 서류 표식이 보이게 가로로 넉넉히)
-  var PAPER_STEP_Y = 44;
-  var COMPARE_X = 500;        // 비교용 다른 업체 견적서를 놓는 x 위치 (서류 폭 460 + 여백)
+  /*
+   * 서류 놓는 자리. 가로 화면: 서류 폭 460 → 비교 견적서는 오른쪽 옆.
+   * 세로 화면: 서류 폭 720(글씨를 크게) → 가로로 두 장이 안 들어가 비교 견적서는 아래.
+   */
+  function paperLayout() {
+    return ui.portrait
+      ? { stepX: 60, stepY: 70, compare: { x: 0, y: 600 } }
+      : { stepX: 110, stepY: 44, compare: { x: 500, y: 0 } };   // 새 서류는 머리의 표식이 보이게 비켜 놓음
+  }
 
   function paperId(bidderId, docKey) { return bidderId + ":" + docKey; }
 
@@ -157,7 +164,7 @@ window.Game = window.Game || {};
     if (i === -1) {
       var n = view.papers.filter(function (pp) { return pp.bidderId === view.bidder.id; }).length;
       paper = { id: id, bidderId: bidderId, docKey: docKey,
-        x: pos ? pos.x : (n % 5) * PAPER_STEP_X, y: pos ? pos.y : (n % 5) * PAPER_STEP_Y };
+        x: pos ? pos.x : (n % 5) * paperLayout().stepX, y: pos ? pos.y : (n % 5) * paperLayout().stepY };
     } else {
       paper = view.papers.splice(i, 1)[0];
       if (pos) { paper.x = pos.x; paper.y = pos.y; }
@@ -204,10 +211,11 @@ window.Game = window.Game || {};
     "hint": function () {
       if (busy || engine.hintsLeft() <= 0 || engine.hintOf(view.bidder.id)) return;
       var hint = engine.useHint(view.bidder.id);
+      view.pane = "papers";      // 세로 화면: 형광펜이 보이게 서류 쪽으로
       if (hint.docKey) {
         if (hint.code === "COLLUSION" && colludingSeen()) {
           // 담합: 지금 업체 견적서와 같은 견적의 업체 견적서를 나란히
-          openPaper(colludingSeen().id, "quote", { x: COMPARE_X, y: 0 });
+          openPaper(colludingSeen().id, "quote", paperLayout().compare);
           openPaper(view.bidder.id, "quote", { x: 0, y: 0 });
         } else {
           openPaper(view.bidder.id, hint.docKey);
@@ -246,9 +254,15 @@ window.Game = window.Game || {};
       if (findPaper(id) !== -1) {
         closePaper(id);
       } else {
-        openPaper(other.id, "quote", { x: COMPARE_X, y: 0 });
+        openPaper(other.id, "quote", paperLayout().compare);
         openPaper(view.bidder.id, "quote", { x: 0, y: 0 });   // 내 견적서도 왼쪽에 맨 위로
       }
+      ui.renderDesk(view);
+    },
+
+    /** 세로 화면: 서류 ↔ 조건표 전환 */
+    "pane": function (el) {
+      view.pane = el.getAttribute("data-pane");
       ui.renderDesk(view);
     },
 
@@ -307,6 +321,7 @@ window.Game = window.Game || {};
     "tab": "paper",
     "compare": "paper",
     "close-paper": "paper",
+    "pane": "click",
     "stamp-reject": "click",
     "pick-reason": "click",
     "cancel-reject": "click",
@@ -340,7 +355,21 @@ window.Game = window.Game || {};
     }
   });
 
-  window.addEventListener("resize", function () { ui.fitStage(); });
+  window.addEventListener("resize", function () {
+    var was = ui.portrait;
+    ui.fitStage();
+    // 화면을 돌리면 책상 크기·서류 폭이 바뀌니 서류를 책상 안으로 다시 맞춘다
+    if (was !== ui.portrait && view && document.querySelector('[data-screen="desk"].is-active')) {
+      ui.renderDesk(view);
+      view.papers.forEach(function (pp) {
+        var el = document.querySelector('.desk-paper[data-paper="' + pp.id + '"]');
+        if (!el || !el.offsetParent) return;    // 조건표를 보는 중(서류가 숨겨짐)이면 그대로 둔다
+        var pos = ui.clampPaper(el, pp.x, pp.y);
+        pp.x = pos.x; pp.y = pos.y;
+      });
+      ui.renderDesk(view);
+    }
+  });
 
   ui.fitStage();
   ui.renderSoundButton(sound.enabled);
