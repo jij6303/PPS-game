@@ -430,14 +430,18 @@ window.Game = window.Game || {};
       document.querySelector('[data-screen="desk"]').setAttribute("data-pane", "papers");
       mark.textContent = verdict === "ok" ? "적격" : "부적격";
       mark.className = "stamp-mark is-" + verdict;
+      var desk = mark.parentNode;        // .papers (책상)
+      desk.classList.remove("is-thud");
       void mark.offsetWidth;            // 애니메이션 재시작
       mark.classList.add("is-on");
-      // 도장이 종이에 닿는 순간(애니메이션 25% ≈ 0.22초)에 "쾅" — 적격/부적격 같은 소리
+      desk.classList.add("is-thud");    // 찍히는 순간 책상이 흔들림 (css 0.2초 지연)
+      // 도장이 종이에 닿는 순간(애니메이션 20% ≈ 0.22초)에 "쾅" — 적격/부적격 같은 소리
       if (Game.sound) Game.sound.play("stamp", 0.2);
       setTimeout(function () {
         mark.className = "stamp-mark";
+        desk.classList.remove("is-thud");
         done();
-      }, 900);
+      }, 1100);
     },
 
     /** 소리 켜기/끄기 버튼 모양 */
