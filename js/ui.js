@@ -345,6 +345,54 @@ window.Game = window.Game || {};
         '<div class="result-award"><span>감사 지적</span><strong>' + summary.mistakes + "회</strong>" +
         '<span class="result-hints">나르미 힌트 ' + summary.hintsUsed + "회 사용</span></div>" +
         '<div class="result-tags"><h3>내가 고른 가치</h3><ul>' + tags + "</ul></div>";
+    },
+
+    // ===== 엔딩 ① 1년 후 조달 뉴스 (GAME_SPEC 7.1) =====
+    renderNews: function (ending) {
+      var E = Game.DATA.ending;
+      $("news-mast").innerHTML =
+        '<div class="news-mast-top"><span>' + esc(E.paperDate) + "</span><span>" + esc(E.paperSlogan) + "</span></div>" +
+        '<h1 class="news-name">' + esc(E.paperName) + "</h1>";
+
+      function article(a, lead) {
+        var cls = "news-article is-" + a.kind + (lead ? " is-lead" : "");
+        return '<section class="' + cls + '">' +
+          '<p class="news-kicker">' + esc(a.title) + "</p>" +
+          '<h2 class="news-article-head">' + esc(a.head) + "</h2>" +
+          '<p class="news-article-sub">' + esc(a.sub) + "</p>" +
+          (a.correction ? '<p class="news-correction">' + esc(a.correction) + "</p>" : "") +
+          "</section>";
+      }
+
+      var list = ending.articles;
+      $("news-lead").innerHTML = list.length ? article(list[0], true) : "";
+      $("news-grid").innerHTML = list.slice(1).map(function (a) { return article(a, false); }).join("");
+    },
+
+    // ===== 엔딩 ② 칭호 카드 (GAME_SPEC 7.2) =====
+    renderEnding: function (ending) {
+      var labels = Game.DATA.tagLabels;
+      var max = 0;
+      Object.keys(labels).forEach(function (t) { max = Math.max(max, ending.tags[t] || 0); });
+
+      var bars = Object.keys(labels).map(function (t) {
+        var v = ending.tags[t] || 0;
+        var w = max ? Math.round(v / max * 100) : 0;
+        return '<li><span class="bar-label">' + esc(labels[t]) + '</span>' +
+          '<span class="bar"><i style="width:' + w + '%"></i></span><b>' + v + "</b></li>";
+      }).join("");
+
+      $("ending-card").innerHTML =
+        '<p class="ending-game">달이의 조달 창구</p>' +
+        '<p class="ending-label">1년 차 신입 조달관 달이의 칭호</p>' +
+        '<h2 class="ending-title' + (ending.perfect ? " is-perfect" : "") + '">' + esc(ending.title) + "</h2>" +
+        '<p class="ending-blurb">' + esc(ending.blurb) + "</p>" +
+        '<div class="ending-stats">' +
+          '<div><span>감사 지적</span><strong>' + ending.mistakes + "회</strong></div>" +
+          '<div><span>나르미 힌트</span><strong>' + ending.hintsUsed + "회</strong></div>" +
+        "</div>" +
+        '<ul class="ending-bars">' + bars + "</ul>" +
+        '<p class="ending-message">“' + esc(ending.finalMessage) + '”</p>';
     }
   };
 })();

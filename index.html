@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>달이의 조달 창구 (가제)</title>
+  <title>달이의 조달 창구</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
     <section class="screen" data-screen="title">
       <div class="title-card">
         <p class="title-badge">2026 조달청 AI 게임 공모전</p>
-        <h1 class="title-name">달이의 조달 창구<span class="title-tentative">가제</span></h1>
+        <h1 class="title-name">달이의 조달 창구</h1>
         <p class="title-sub">신입 조달관 달이와 AI 비서 나르미의 공정 심사</p>
         <button class="btn btn-primary" type="button" data-action="start">시작하기</button>
       </div>
@@ -104,15 +104,39 @@
       </div>
     </section>
 
-    <!-- 임시 결과 (M1) -->
+    <!-- 엔딩 ① 1년 후 조달 뉴스 (GAME_SPEC 7.1) -->
+    <section class="screen" data-screen="news">
+      <article class="paper-news">
+        <header class="news-mast" id="news-mast"></header>
+        <div class="news-lead" id="news-lead"></div>
+        <div class="news-grid" id="news-grid"></div>
+      </article>
+      <div class="news-actions">
+        <button class="btn btn-primary" type="button" data-action="show-title">내 칭호 받기</button>
+      </div>
+    </section>
+
+    <!-- 엔딩 ② 칭호 카드 (GAME_SPEC 7.2) — 캡처·공유용 한 장 -->
+    <section class="screen" data-screen="ending">
+      <div class="ending-card" id="ending-card"></div>
+      <img class="ending-dali" src="assets/img/dali_3d.png" alt="달이">
+      <img class="ending-narmi" src="assets/img/narmi_3d.png" alt="나르미">
+      <div class="ending-actions">
+        <button class="btn" type="button" data-action="show-record">심사 기록 보기</button>
+        <button class="btn btn-primary" type="button" data-action="restart">다시 하기</button>
+      </div>
+    </section>
+
+    <!-- 심사 기록 (사업별 판정 상세) -->
     <section class="screen" data-screen="result">
-      <h2 class="result-title">심사 결과</h2>
+      <h2 class="result-title">심사 기록</h2>
       <div class="result-body">
         <div class="result-table-wrap" id="result-table"></div>
         <div class="result-side" id="result-side"></div>
       </div>
       <div class="result-actions">
-        <button class="btn btn-primary" type="button" data-action="restart">처음으로</button>
+        <button class="btn" type="button" data-action="back-to-ending">칭호로 돌아가기</button>
+        <button class="btn btn-primary" type="button" data-action="restart">다시 하기</button>
       </div>
     </section>
 

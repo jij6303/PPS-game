@@ -93,9 +93,10 @@ window.Game = window.Game || {};
     return null;
   }
 
+  /** 5건이 끝나면 엔딩: 1년 후 조달 뉴스 → 칭호 카드 (GAME_SPEC 7장). */
   function showResult() {
-    ui.renderResult(engine.summary());
-    ui.show("result");
+    ui.renderNews(engine.ending());
+    ui.show("news");
   }
 
   function findSeen(id) {
@@ -121,6 +122,18 @@ window.Game = window.Game || {};
       }
       ui.renderDesk(view);
     },
+
+    "show-title": function () {
+      ui.renderEnding(engine.ending());
+      ui.show("ending");
+    },
+
+    "show-record": function () {
+      ui.renderResult(engine.summary());
+      ui.show("result");
+    },
+
+    "back-to-ending": function () { ui.show("ending"); },
 
     "narmi-ok": function () {
       ui.closeNarmiModal();

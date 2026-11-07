@@ -468,6 +468,85 @@ window.Game = window.Game || {};
         tags: Object.assign({}, this.state.tags),
         topTag: this.topTag()
       };
+    },
+
+    /**
+     * 칭호 (GAME_SPEC 7.2). 같은 칭호를 가진 태그(stable·quality 등)는 점수를 합친다.
+     * 최고 점수 칭호가 하나면 그 칭호, 없거나 동점이면 balanced. 감사 지적 0회면 앞에 "완벽한".
+     */
+    title: function () {
+      var titles = this.data.titles;
+      var prefix = (this.data.ending && this.data.ending.perfectPrefix) || "";
+      var scores = {}, keyOf = {};
+      for (var tag in this.state.tags) {
+        var name = titles[tag];
+        if (!name) continue;
+        scores[name] = (scores[name] || 0) + this.state.tags[tag];
+        if (!keyOf[name]) keyOf[name] = tag;
+      }
+      var best = null, bestScore = 0, tie = false;
+      for (var n in scores) {
+        if (scores[n] > bestScore) { best = n; bestScore = scores[n]; tie = false; }
+        else if (scores[n] === bestScore) tie = true;
+      }
+      var base = (!best || tie) ? titles.balanced : best;
+      var group = (!best || tie) ? ["balanced"] : Object.keys(titles).filter(function (k) { return titles[k] === base; });
+      var perfect = this.state.mistakes === 0;
+      return {
+        base: base,
+        full: (perfect && prefix ? prefix + " " : "") + base,
+        perfect: perfect,
+        keys: group,          // 이 칭호에 해당하는 태그들 (설명 문구 찾기용)
+        scores: scores
+      };
+    },
+
+    /**
+     * 엔딩 데이터 (GAME_SPEC 7장): 칭호 + 1년 후 뉴스 기사 목록.
+     * 기사: 적격 업체 낙찰 → 그 업체 뉴스 / 유찰 → 재공고 / 조건 미달 업체 낙찰 → 감사 지적 기사.
+     * 감사 지적이 있던 사업엔 정정 기사(correction)를 붙인다.
+     */
+    ending: function () {
+      var E = this.data.ending || {};
+      var s = this.summary();
+      var t = this.title();
+
+      function fillIn(text, p) {
+        return String(text || "").replace("{title}", p.title).replace("{n}", p.mistakes);
+      }
+
+      var articles = s.projects.map(function (p) {
+        var a = { projectId: p.id, title: p.title, kind: "news", head: "", sub: "", correction: null };
+        if (p.awardedId === null) {
+          a.kind = "failed";
+          a.head = fillIn(E.failed && E.failed.head, p);
+          a.sub = fillIn(E.failed && E.failed.sub, p);
+        } else if (p.news) {
+          a.head = p.news.head;
+          a.sub = p.news.sub;
+        } else {
+          a.kind = "badAward";
+          a.head = fillIn(E.badAward && E.badAward.head, p);
+          a.sub = fillIn(E.badAward && E.badAward.sub, p);
+        }
+        if (p.mistakes > 0) a.correction = fillIn(E.correction, p);
+        return a;
+      });
+
+      var blurb = "";
+      for (var i = 0; i < t.keys.length && !blurb; i++) blurb = (E.titleBlurb || {})[t.keys[i]] || "";
+
+      return {
+        title: t.full,
+        titleBase: t.base,
+        perfect: t.perfect,
+        blurb: blurb,
+        mistakes: s.mistakes,
+        hintsUsed: s.hintsUsed,
+        tags: s.tags,
+        articles: articles,
+        finalMessage: E.finalMessage || ""
+      };
     }
   };
 })();
