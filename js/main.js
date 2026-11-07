@@ -70,9 +70,27 @@ window.Game = window.Game || {};
   function doJudge(verdict, reason) {
     if (busy) return;
     busy = true;
-    engine.judge(view.bidder.id, verdict, reason);
+    var record = engine.judge(view.bidder.id, verdict, reason);
     view.stamps[view.bidder.id] = verdict;
-    ui.stamp(verdict, afterStamp);
+    ui.stamp(verdict, function () {
+      // 부적격은 맞췄지만 사유가 틀렸으면 나르미가 진짜 사유를 알려 준다 (GAME_SPEC 4.2).
+      // 적격/부적격 자체를 틀린 경우(감사 지적)는 끝날 때까지 알려 주지 않는다.
+      if (record.verdictCorrect && record.reasonCorrect === false) {
+        ui.showReasonFix(record.expectedReason);
+        return;   // "알겠어요"를 누르면 afterStamp
+      }
+      afterStamp();
+    });
+  }
+
+  /** 담합 힌트일 때, 앞서 본 업체 중 견적이 같은 곳이 있으면 바로 나란히 비교해 준다. */
+  function colludingSeen() {
+    var q = view.bidder.docs.quote;
+    for (var i = 0; i < view.seen.length; i++) {
+      var o = view.seen[i].docs.quote;
+      if (o.unitPrice === q.unitPrice && o.note === q.note) return view.seen[i];
+    }
+    return null;
   }
 
   function showResult() {
@@ -92,6 +110,21 @@ window.Game = window.Game || {};
     "begin-review": function () {
       view = null;
       enterBidder(0);
+    },
+
+    "hint": function () {
+      if (busy || engine.hintsLeft() <= 0 || engine.hintOf(view.bidder.id)) return;
+      var hint = engine.useHint(view.bidder.id);
+      if (hint.docKey) {
+        view.docKey = hint.docKey;
+        view.compareWith = hint.code === "COLLUSION" ? colludingSeen() : null;
+      }
+      ui.renderDesk(view);
+    },
+
+    "narmi-ok": function () {
+      ui.closeNarmiModal();
+      afterStamp();
     },
 
     "tab": function (el) {

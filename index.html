@@ -57,7 +57,10 @@
           <section class="conditions" id="conditions"></section>
           <section class="narmi">
             <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
-            <div class="bubble bubble-left" id="narmi-bubble"></div>
+            <div class="narmi-talk">
+              <div class="bubble bubble-left" id="narmi-bubble"></div>
+              <button class="hint-btn" type="button" data-action="hint" id="hint-btn">힌트</button>
+            </div>
           </section>
         </aside>
       </div>
@@ -74,6 +77,17 @@
           <div class="modal-actions">
             <button class="btn" type="button" data-action="cancel-reject">취소</button>
             <button class="btn btn-reject" type="button" data-action="confirm-reject" id="confirm-reject" disabled>부적격 도장 찍기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사유를 틀렸을 때 나르미 안내 (GAME_SPEC 4.2) -->
+      <div class="modal" id="narmi-modal" hidden>
+        <div class="modal-card narmi-card">
+          <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
+          <div class="narmi-card-body">
+            <p class="narmi-card-text" id="narmi-modal-text"></p>
+            <button class="btn btn-primary" type="button" data-action="narmi-ok">알겠어요</button>
           </div>
         </div>
       </div>

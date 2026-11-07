@@ -187,6 +187,68 @@
         throws(function () { E.nextProject(); }, "낙찰 전 다음 사업");
       });
 
+      test("힌트가 부적격 업체 15곳의 정답 근거 위치를 정확히 가리킴", function () {
+        var expected = {
+          "desk-c": ["OVER_BUDGET", "quote", ["quote.total"]],
+          "desk-d": ["CERT_EXPIRED", "certs", ["certs.0.validUntil"]],
+          "desk-e": ["COLLUSION", "quote", ["quote.unitPrice", "quote.note"]],
+          "chair-c": ["INFO_MISMATCH", "quote", ["quote.bizNo"]],
+          "chair-d": ["SPEC_MISMATCH", "spec", ["spec.armrest"]],
+          "chair-e": ["LATE", "application", ["application.submitDate"]],
+          "led-c": ["BROKER", "status", ["status.hasOffice", "status.hasFactory", "status.employees"]],
+          "led-d": ["CERT_MISSING", "certs", ["certs"]],
+          "led-e": ["OVER_BUDGET", "quote", ["quote.total"]],
+          "mask-c": ["CERT_EXPIRED", "certs", ["certs.0.validUntil"]],
+          "mask-d": ["SPEC_MISMATCH", "spec", ["spec.grade"]],
+          "mask-e": ["INFO_MISMATCH", "certs", ["certs.0.bizNo"]],
+          "gym-c": ["SAFETY", "status", ["status.seriousAccidents"]],
+          "gym-d": ["BROKER", "status", ["status.hasOffice", "status.hasFactory", "status.employees"]],
+          "gym-e": ["OVER_BUDGET", "quote", ["quote.total"]]
+        };
+        var got = {}, okHints = [];
+        E.reset();
+        Game.DATA.projects.forEach(function (p, i) {
+          E.state.projectIndex = i;
+          var avail = E.availableReasons();
+          p.bidders.forEach(function (b) {
+            var h = E.hintFor(p, b, avail);
+            if (b.verdict === "reject") got[b.id] = [h.code, h.docKey, h.fields];
+            else okHints.push(h.code);
+          });
+        });
+        eq(got, expected, "힌트 위치");
+        eq(okHints, [null, null, null, null, null, null, null, null, null, null], "적격 업체는 '수상한 곳 없음'");
+      });
+
+      test("힌트 문구에 들어갈 값 (인증 이름·사양 이름·예산)", function () {
+        var P = Game.DATA.projects;
+        eq(E.locate(P[2], P[2].bidders[3], "CERT_MISSING").vars, { cert: "고효율" }, "LED 인증 누락");
+        eq(E.locate(P[1], P[1].bidders[3], "SPEC_MISMATCH").vars, { spec: "팔걸이" }, "의자 사양");
+        eq(E.locate(P[0], P[0].bidders[2], "OVER_BUDGET").vars, { budget: "40,000,000원" }, "책상 예산");
+        Object.keys(Game.DATA.reasons).forEach(function (code) {
+          if (!Game.DATA.narmi.hints[code]) throw new Error("힌트 문구 없음: " + code);
+        });
+      });
+
+      test("힌트는 사업당 2회, 같은 업체 재사용은 차감 없음, 다음 사업에서 다시 2회", function () {
+        E.reset();
+        eq(E.hintsLeft(), 2, "시작");
+        var h1 = E.useHint("desk-c");
+        eq(E.hintsLeft(), 1, "1회 사용");
+        eq(E.useHint("desk-c"), h1, "같은 업체는 같은 힌트");
+        eq(E.hintsLeft(), 1, "재사용 차감 없음");
+        E.useHint("desk-a");
+        eq(E.hintsLeft(), 0, "2회 사용");
+        throws(function () { E.useHint("desk-b"); }, "횟수 초과");
+        Game.DATA.projects[0].bidders.forEach(function (b) { E.judge(b.id, b.verdict, b.reason); });
+        E.award("desk-a");
+        E.nextProject();
+        eq(E.hintsLeft(), 2, "다음 사업 초기화");
+        E.useHint("chair-c");
+        var s = E.summary();
+        eq([s.projects[0].hintsUsed, s.projects[1].hintsUsed, s.hintsUsed], [2, 1, 3], "힌트 사용 집계");
+      });
+
       test("성향 태그 동점·없음이면 balanced", function () {
         E.reset();
         eq(E.topTag(), "balanced", "태그 없음");
