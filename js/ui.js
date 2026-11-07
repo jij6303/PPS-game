@@ -177,10 +177,23 @@ window.Game = window.Game || {};
   Game.ui = {
     STAGE_W: 1920,
     STAGE_H: 1080,
+    portrait: false,
     DOC_TABS: DOC_TABS,
 
     /** 창 크기에 맞춰 1920×1080 무대를 비율 유지(레터박스)로 스케일한다. */
+    /*
+     * 세로 화면(창 높이 > 폭, 휴대폰 세로)이면 1080×1920 세로 무대로 바꾼다 (GAME_SPEC 8장).
+     * 화면 배치는 css의 #stage.is-portrait 규칙이 맡는다.
+     */
     fitStage: function () {
+      var portrait = window.innerHeight > window.innerWidth;
+      this.portrait = portrait;
+      this.STAGE_W = portrait ? 1080 : 1920;
+      this.STAGE_H = portrait ? 1920 : 1080;
+      var stage = $("stage");
+      stage.classList.toggle("is-portrait", portrait);
+      stage.style.setProperty("--stage-w", this.STAGE_W + "px");
+      stage.style.setProperty("--stage-h", this.STAGE_H + "px");
       var scale = Math.min(window.innerWidth / this.STAGE_W, window.innerHeight / this.STAGE_H);
       this.scale = scale;     // 서류 끌기에서 화면 이동량 → 무대 좌표로 바꿀 때 사용
       $("stage").style.setProperty("--stage-scale", scale);
@@ -354,6 +367,16 @@ window.Game = window.Game || {};
 
       this.renderTabs(view);
       this.renderPapers(view);
+
+      // 세로 화면 전환 탭 (가로 화면에서는 css로 숨김)
+      var pane = view.pane || "papers";
+      document.querySelector('[data-screen="desk"]').setAttribute("data-pane", pane);
+      var paneBtns = document.querySelectorAll(".pane-btn");
+      for (var pi = 0; pi < paneBtns.length; pi++) {
+        var on = paneBtns[pi].getAttribute("data-pane") === pane;
+        paneBtns[pi].classList.toggle("is-active", on);
+        paneBtns[pi].setAttribute("aria-selected", on ? "true" : "false");
+      }
       var hint = Game.engine.hintOf(b.id);
 
       $("conditions").innerHTML = '<h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p));
@@ -403,6 +426,8 @@ window.Game = window.Game || {};
     stamp: function (verdict, done) {
       var mark = $("stamp-mark");
       this.setStampsEnabled(false);
+      // 세로 화면에서 조건표를 보다가 찍어도 도장이 보이게 서류 쪽으로 (도장 자국은 책상 위에 찍힌다)
+      document.querySelector('[data-screen="desk"]').setAttribute("data-pane", "papers");
       mark.textContent = verdict === "ok" ? "적격" : "부적격";
       mark.className = "stamp-mark is-" + verdict;
       void mark.offsetWidth;            // 애니메이션 재시작
