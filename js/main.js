@@ -15,6 +15,7 @@ window.Game = window.Game || {};
   var busy = false;          // 도장 애니메이션 중 입력 막기
 
   var introIndex = -1;       // 인트로 진행 중인 컷 (-1이면 인트로 아님)
+  var tool = "move";         // 책상 표시 도구: "move" | "pen" | "marker" | "eraser" (업체가 바뀌어도 유지)
 
   function project() { return engine.currentProject(); }
 
@@ -51,7 +52,8 @@ window.Game = window.Game || {};
       bidder: p.bidders[index],
       docKey: "application",
       papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
-      pane: "papers",          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
+      pane: "papers",
+      marks: {},               // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
       seen: p.bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
@@ -194,6 +196,13 @@ window.Game = window.Game || {};
     }
   });
 
+  // 펜·형광펜·지우개 (플레이어 메모 — 판정에는 영향 없음)
+  ui.enablePaperDraw({
+    tool: function () { return tool; },
+    marks: function (id) { return view.marks[id] || (view.marks[id] = []); },
+    changed: function (id) { ui.renderMarks(view, id); }
+  });
+
   // data-action 버튼 → 동작. 마우스·터치 모두 click으로 들어온다.
   var actions = {
     "start": startIntro,
@@ -266,6 +275,18 @@ window.Game = window.Game || {};
       ui.renderDesk(view);
     },
 
+    /** 표시 도구 고르기 */
+    "tool": function (el) {
+      tool = el.getAttribute("data-tool");
+      ui.setTool(tool);
+    },
+
+    /** 지금 업체 책상의 표시 모두 지우기 */
+    "clear-marks": function () {
+      view.marks = {};
+      ui.renderMarks(view);
+    },
+
     "close-paper": function (el) {
       closePaper(el.getAttribute("data-paper"));
       ui.renderDesk(view);
@@ -321,6 +342,8 @@ window.Game = window.Game || {};
     "tab": "paper",
     "compare": "paper",
     "close-paper": "paper",
+    "tool": "click",
+    "clear-marks": "paper",
     "pane": "click",
     "stamp-reject": "click",
     "pick-reason": "click",
@@ -372,6 +395,7 @@ window.Game = window.Game || {};
   });
 
   ui.fitStage();
+  ui.setTool(tool);
   ui.renderSoundButton(sound.enabled);
   ui.show("title");
 })();

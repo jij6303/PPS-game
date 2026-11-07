@@ -242,6 +242,36 @@ window.Game = window.Game || {};
     return null;
   }
 
+  // ----- 펜·형광펜 선 -----
+  var MARK_WIDTH = { pen: 4, marker: 24 };   // 선 굵기 (색은 css .mark.is-pen / .is-marker)
+  var ERASER_R = 14;                          // 지우개 반경
+
+  function strokeD(pts) {
+    if (pts.length === 1) return "M" + pts[0][0] + " " + pts[0][1] + "l0.1 0";   // 콕 찍은 점도 보이게
+    return "M" + pts.map(function (p) { return p[0] + " " + p[1]; }).join("L");
+  }
+
+  function strokeHtml(s) {
+    return '<path class="mark is-' + s.tool + '" d="' + strokeD(s.points) + '"/>';
+  }
+
+  /** 점에서 선분까지 거리 */
+  function segDist(p, a, b) {
+    var dx = b[0] - a[0], dy = b[1] - a[1];
+    var len = dx * dx + dy * dy;
+    var t = len ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len)) : 0;
+    var x = a[0] + t * dx - p[0], y = a[1] + t * dy - p[1];
+    return Math.sqrt(x * x + y * y);
+  }
+
+  /** 지우개가 선에 닿았는지 (선 굵기 포함) */
+  function strokeNear(s, p, r) {
+    var reach = r + MARK_WIDTH[s.tool] / 2, pts = s.points;
+    if (pts.length === 1) return segDist(p, pts[0], pts[0]) <= reach;
+    for (var i = 1; i < pts.length; i++) if (segDist(p, pts[i - 1], pts[i]) <= reach) return true;
+    return false;
+  }
+
   /** 힌트 문구 채우기: {키}를 vars 값으로. */
   function fillVars(template, vars) {
     return template.replace(/\{(\w+)\}/g, function (m, k) {
@@ -381,6 +411,103 @@ window.Game = window.Game || {};
           '<button type="button" class="paper-close" data-action="close-paper" data-paper="' + pp.id + '" aria-label="서류 닫기">×</button>' +
           docHtml(p, owner, pp.docKey, hl) + "</div>";
       }).join("") + (view.papers.length ? "" : '<p class="desk-empty">위의 서류 탭을 눌러 책상에 펼쳐 보세요.</p>');
+      this.renderMarks(view);
+    },
+
+    // ===== 펜·형광펜 표시 (플레이어 메모 — 판정에는 영향 없음) =====
+    /**
+     * 서류마다 SVG 덧그림 층에 저장된 선을 그린다. paperId를 주면 그 서류만.
+     * view.marks: { 서류id: [{ tool: "pen"|"marker", points: [[x, y], …] }] } — 좌표는 서류 종이(.paper) 기준.
+     */
+    renderMarks: function (view, paperId) {
+      var sel = paperId ? '.desk-paper[data-paper="' + paperId + '"]' : ".desk-paper";
+      var els = document.querySelectorAll("#doc-area " + sel);
+      for (var i = 0; i < els.length; i++) {
+        var paper = els[i].querySelector(".paper");
+        var svg = paper.querySelector("svg.marks");
+        if (!svg) {
+          paper.insertAdjacentHTML("beforeend", '<svg class="marks" aria-hidden="true"></svg>');
+          svg = paper.lastElementChild;
+        }
+        // 종이 전체(스크롤되는 부분 포함)를 덮는 크기
+        svg.setAttribute("width", paper.scrollWidth);
+        svg.setAttribute("height", paper.scrollHeight);
+        var strokes = (view.marks && view.marks[els[i].getAttribute("data-paper")]) || [];
+        svg.innerHTML = strokes.map(strokeHtml).join("");
+      }
+    },
+
+    /** 고른 도구 표시 (책상의 data-tool → 커서·터치 동작은 css가 맡음). */
+    setTool: function (tool) {
+      document.querySelector(".papers").setAttribute("data-tool", tool);
+      var btns = document.querySelectorAll(".tool-btn[data-tool]");
+      for (var i = 0; i < btns.length; i++) {
+        var on = btns[i].getAttribute("data-tool") === tool;
+        btns[i].classList.toggle("is-active", on);
+        btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+      }
+    },
+
+    /**
+     * 서류 위에 그리기·지우기 (Pointer Events — 마우스·터치 공통).
+     * h.tool(): 지금 도구 ("move"|"pen"|"marker"|"eraser"), h.marks(paperId): 그 서류의 선 배열(없으면 만들어 돌려줌),
+     * h.changed(paperId): 지우개로 선이 지워졌을 때 (그 서류 표시를 다시 그림).
+     * 서류 머리(잡는 곳)와 버튼은 건드리지 않는다 → 어느 도구든 서류를 옮길 수 있다.
+     */
+    enablePaperDraw: function (h) {
+      var area = $("doc-area");
+      var cur = null;     // { el, paper, id, tool, stroke, path }
+
+      function local(e, paper) {
+        var r = paper.getBoundingClientRect();
+        var s = Game.ui.scale || 1;
+        return [Math.round(((e.clientX - r.left) / s + paper.scrollLeft) * 10) / 10,
+                Math.round(((e.clientY - r.top) / s + paper.scrollTop) * 10) / 10];
+      }
+
+      function erase(pt) {
+        var list = h.marks(cur.id);
+        var before = list.length;
+        for (var i = list.length - 1; i >= 0; i--) {
+          if (strokeNear(list[i], pt, ERASER_R)) list.splice(i, 1);
+        }
+        if (list.length !== before) h.changed(cur.id);
+      }
+
+      area.addEventListener("pointerdown", function (e) {
+        var tool = h.tool();
+        if (tool === "move") return;
+        var el = e.target.closest(".desk-paper");
+        if (!el || e.target.closest("button") || e.target.closest(".paper-head")) return;
+        var paper = el.querySelector(".paper");
+        e.preventDefault();
+        cur = { el: el, paper: paper, id: el.getAttribute("data-paper"), tool: tool };
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
+        var pt = local(e, paper);
+        if (tool === "eraser") { erase(pt); return; }
+        cur.stroke = { tool: tool, points: [pt] };
+        var svg = paper.querySelector("svg.marks");
+        svg.insertAdjacentHTML("beforeend", strokeHtml(cur.stroke));
+        cur.path = svg.lastElementChild;
+      });
+
+      area.addEventListener("pointermove", function (e) {
+        if (!cur) return;
+        var pt = local(e, cur.paper);
+        if (cur.tool === "eraser") { erase(pt); return; }
+        var pts = cur.stroke.points, last = pts[pts.length - 1];
+        if (Math.abs(pt[0] - last[0]) + Math.abs(pt[1] - last[1]) < 2) return;   // 너무 촘촘한 점은 건너뜀
+        pts.push(pt);
+        cur.path.setAttribute("d", strokeD(pts));
+      });
+
+      function end() {
+        if (!cur) return;
+        if (cur.stroke) h.marks(cur.id).push(cur.stroke);
+        cur = null;
+      }
+      area.addEventListener("pointerup", end);
+      area.addEventListener("pointercancel", end);
     },
 
     /** 끌기 없이 쌓인 순서만 바꿀 때 (다시 그리지 않아 끌기가 끊기지 않음). */
