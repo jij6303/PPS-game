@@ -103,9 +103,9 @@ html, body {
   top: 46%;
   transform: translate(-50%, -50%);
   width: 960px;
-  padding: 64px 72px;
+  padding: 40px 72px 64px;
   text-align: center;
-  background: rgba(255, 255, 255, 0.85);
+  background: #fff;            /* 정부상징 이미지(흰 바탕)와 같은 흰색 */
   border-radius: 40px;
   box-shadow: var(--shadow);
 }
@@ -328,7 +328,22 @@ html, body {
   border-radius: 8px;
 }
 .notice-title { font-size: 52px; margin: 20px 0 28px; letter-spacing: -1px; }
-.notice-foot { margin-top: 28px; text-align: right; color: var(--ink-soft); font-size: 22px; }
+.notice-foot {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 22px;
+}
+
+/* ===== 조달청 정부상징 =====
+ * 원본 그대로 사용: 높이만 지정해 비율 유지, 색·모양·자르기·효과 없음.
+ * 원본 이미지에 여백이 포함돼 있어 따로 여백을 줄이지 않는다. 흰 바탕 위에만 배치. */
+.pps-symbol { display: block; height: 72px; width: auto; }
+.title-symbol { margin: 0 auto 12px; height: 84px; }
+.ending-symbol { margin: 14px auto 0; height: 60px; }
 .notice-side { display: flex; flex-direction: column; align-items: center; gap: 28px; }
 .notice-dali { height: 420px; }
 
@@ -786,7 +801,7 @@ html, body {
 .ending-bars .bar { height: 18px; background: #f0ebe2; border-radius: 999px; overflow: hidden; }
 .ending-bars .bar i { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
 .ending-bars b { text-align: right; color: var(--primary-dark); }
-.ending-message { margin-top: 26px; font-size: 28px; font-weight: 700; line-height: 1.5; }
+.ending-message { margin-top: 20px; font-size: 28px; font-weight: 700; line-height: 1.5; }
 .ending-dali, .ending-narmi { position: absolute; bottom: 0; height: 480px; pointer-events: none; }
 .ending-dali { left: 40px; }
 .ending-narmi { right: 40px; }
