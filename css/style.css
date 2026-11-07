@@ -876,19 +876,29 @@ html, body {
 .modal-actions { display: flex; justify-content: flex-end; gap: 20px; margin-top: 36px; }
 
 /* ===== ⑤ 낙찰 ===== */
+/*
+ * 위 → 아래 한 줄기 배치: 제목 → 딜레마 → 카드 영역(남은 높이, 넘치면 그 안에서 스크롤) → 나르미 조언.
+ * 카드와 나르미가 같은 흐름 안에 있어 후보가 몇 곳이든 겹치지 않는다.
+ */
 [data-screen="award"] { background: linear-gradient(180deg, var(--peach) 0%, var(--bg) 55%); }
-.award-title { text-align: center; font-size: 56px; margin-top: 64px; }
-.award-dilemma { text-align: center; font-size: 28px; color: var(--ink-soft); margin-top: 16px; }
+[data-screen="award"].is-active { display: flex; flex-direction: column; align-items: center; padding: 0 0 24px; }
+.award-title { flex: none; text-align: center; font-size: 56px; margin-top: 56px; }
+.award-dilemma { flex: none; text-align: center; font-size: 28px; color: var(--ink-soft); margin-top: 14px; }
 .award-cards {
-  position: absolute;
-  top: 200px;
-  left: 160px;
-  right: 160px;
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+  margin: 26px 120px 18px;
+  padding: 6px 6px 12px;
+  overflow-y: auto;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 56px;
+  align-content: flex-start;
+  gap: 32px 56px;
 }
 .award-card {
+  flex: none;
   width: 640px;
   background: var(--paper);
   border-radius: 32px;
@@ -905,16 +915,24 @@ html, body {
 .award-card .doc-table th, .award-card .doc-table td { padding: 10px 12px; }
 .award-card .btn { align-self: center; margin-top: 8px; }
 .award-narmi {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
+  flex: none;
   display: flex;
   align-items: flex-end;
   gap: 16px;
   width: 960px;
 }
-.award-narmi .narmi-img { height: 160px; }
+.award-narmi .narmi-img { height: 150px; }
+.award-narmi .bubble { flex: 1; }
+
+/* 후보가 3곳 이상(부적격 업체를 통과시킨 경우): 카드를 조금 작게 해서 한 줄에 더 들어가게 */
+.award-cards.is-many { gap: 24px 32px; }
+.award-cards.is-many .award-card { width: 520px; padding: 26px 30px; gap: 12px; }
+.award-cards.is-many .award-head h3 { font-size: 32px; }
+.award-cards.is-many .npc.is-small { font-size: 80px; }
+.award-cards.is-many .award-pitch { font-size: 20px; }
+.award-cards.is-many .doc-table { font-size: 20px; }
+.award-cards.is-many .doc-table th, .award-cards.is-many .doc-table td { padding: 7px 10px; }
+.award-cards.is-many .btn { font-size: 28px; padding: 16px 44px; }
 
 /* ===== 임시 결과 ===== */
 [data-screen="result"] { background: var(--bg); }
@@ -1401,20 +1419,17 @@ html, body {
 /* --- ⑤ 낙찰: 후보 카드를 위아래로 --- */
 #stage.is-portrait .award-title { margin-top: 72px; }
 #stage.is-portrait .award-dilemma { padding: 0 60px; line-height: 1.5; }
-#stage.is-portrait .award-cards {
-  top: 290px;
-  left: 60px;
-  right: 60px;
-  bottom: 230px;               /* 아래 나르미와 겹치지 않게, 후보가 많으면 스크롤 */
-  overflow-y: auto;
+#stage.is-portrait [data-screen="award"].is-active { padding-bottom: 40px; }
+#stage.is-portrait .award-cards {           /* 카드는 위아래로, 많으면 카드 영역 안에서 스크롤 */
+  margin: 30px 60px 20px;
   flex-direction: column;
-  justify-content: flex-start;
+  flex-wrap: nowrap;
   align-items: stretch;
   gap: 32px;
-  padding: 4px 4px 24px;
 }
-#stage.is-portrait .award-card { width: auto; flex: none; }
-#stage.is-portrait .award-narmi { width: 960px; bottom: 40px; }
+#stage.is-portrait .award-card,
+#stage.is-portrait .award-cards.is-many .award-card { width: auto; }
+#stage.is-portrait .award-narmi { width: 960px; }
 
 /* --- 엔딩 ① 뉴스: 세로 신문 --- */
 #stage.is-portrait .paper-news { top: 110px; width: 1000px; height: auto; max-height: 1640px; padding: 40px 44px 48px; }
