@@ -184,6 +184,26 @@ window.Game = window.Game || {};
       }
     },
 
+    // ===== 인트로 (달이 첫 출근) =====
+    /** index번째 컷을 그린다. 말하는 캐릭터는 크게, 듣는 캐릭터는 작고 흐리게. */
+    renderIntro: function (index) {
+      var cuts = Game.DATA.intro;
+      var cut = cuts[index];
+      $("intro-name").textContent = Game.DATA.speakers[cut.speaker];
+      $("intro-name").className = "intro-name is-" + cut.speaker;
+      var text = $("intro-text");
+      text.innerHTML = cut.text;          // data.js의 대사 (<b> 강조 포함)
+      text.classList.remove("is-in");
+      void text.offsetWidth;              // 등장 애니메이션 다시 시작
+      text.classList.add("is-in");
+      $("intro-dali").classList.toggle("is-speaking", cut.speaker === "dali");
+      $("intro-narmi").classList.toggle("is-speaking", cut.speaker === "narmi");
+      $("intro-narmi").classList.toggle("is-present", index > 0);   // 나르미는 2컷부터 등장
+      $("intro-dots").innerHTML = cuts.map(function (c, i) {
+        return '<li class="' + (i === index ? "is-on" : (i < index ? "is-done" : "")) + '"></li>';
+      }).join("");
+    },
+
     // ===== ① 공고 =====
     renderNotice: function (project) {
       $("notice-card").innerHTML =

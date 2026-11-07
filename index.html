@@ -21,6 +21,26 @@
       <img class="mascot mascot-narmi" src="assets/img/narmi_3d.png" alt="나르미">
     </section>
 
+    <!-- 인트로: 달이 첫 출근 (화면 아무 곳이나 누르면 다음 컷) -->
+    <section class="screen" data-screen="intro" data-action="intro-next">
+      <div class="intro-office" aria-hidden="true">
+        <div class="intro-window"></div>
+        <div class="intro-sign">조달청 민원 창구</div>
+        <div class="intro-desk"></div>
+      </div>
+      <img class="intro-char intro-dali" id="intro-dali" src="assets/img/dali_3d.png" alt="달이">
+      <img class="intro-char intro-narmi" id="intro-narmi" src="assets/img/narmi_3d.png" alt="나르미">
+      <button class="btn intro-skip" type="button" data-action="intro-skip">건너뛰기</button>
+      <div class="intro-box">
+        <span class="intro-name" id="intro-name"></span>
+        <p class="intro-text" id="intro-text"></p>
+        <div class="intro-foot">
+          <ol class="intro-dots" id="intro-dots"></ol>
+          <span class="intro-next">▶ 다음</span>
+        </div>
+      </div>
+    </section>
+
     <!-- ① 사업 공고 -->
     <section class="screen" data-screen="notice">
       <div class="notice-wrap">

@@ -1,6 +1,6 @@
 /*
  * 진입점: 초기화, 버튼 동작 연결, 화면 전환 흐름.
- * 흐름: 타이틀 → 공고 → 심사 데스크(업체 5곳) → 낙찰 → 임시 결과
+ * 흐름: 타이틀 → 인트로 → [공고 → 심사 데스크(업체 5곳) → 낙찰] × 사업 5건 → 1년 후 뉴스 → 칭호
  */
 window.Game = window.Game || {};
 
@@ -13,7 +13,26 @@ window.Game = window.Game || {};
   var pendingReason = null;
   var busy = false;          // 도장 애니메이션 중 입력 막기
 
+  var introIndex = -1;       // 인트로 진행 중인 컷 (-1이면 인트로 아님)
+
   function project() { return engine.currentProject(); }
+
+  function startIntro() {
+    introIndex = 0;
+    ui.renderIntro(0);
+    ui.show("intro");
+  }
+
+  function nextIntro() {
+    if (introIndex < 0) return;
+    introIndex++;
+    if (introIndex >= Game.DATA.intro.length) {
+      introIndex = -1;
+      startGame();
+      return;
+    }
+    ui.renderIntro(introIndex);
+  }
 
   function startGame() {
     engine.reset();
@@ -106,7 +125,12 @@ window.Game = window.Game || {};
 
   // data-action 버튼 → 동작. 마우스·터치 모두 click으로 들어온다.
   var actions = {
-    "start": startGame,
+    "start": startIntro,
+    "intro-next": nextIntro,
+    "intro-skip": function () {
+      introIndex = -1;
+      startGame();
+    },
 
     "begin-review": function () {
       view = null;
@@ -190,6 +214,14 @@ window.Game = window.Game || {};
     if (!target || target.disabled) return;
     var fn = actions[target.getAttribute("data-action")];
     if (fn) fn(target);
+  });
+
+  // 인트로는 Enter·Space로도 넘길 수 있다 (시연영상 녹화용)
+  document.addEventListener("keydown", function (e) {
+    if (introIndex >= 0 && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      nextIntro();
+    }
   });
 
   window.addEventListener("resize", function () { ui.fitStage(); });
