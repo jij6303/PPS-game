@@ -21,11 +21,84 @@
       <img class="mascot mascot-narmi" src="assets/img/narmi_3d.png" alt="나르미">
     </section>
 
-    <section class="screen" data-screen="placeholder">
-      <div class="title-card">
-        <h2 class="title-name">준비 중</h2>
-        <p class="title-sub">사업 공고와 심사 화면은 다음 작업에서 만들어집니다.</p>
-        <button class="btn" type="button" data-action="back-to-title">처음으로</button>
+    <!-- ① 사업 공고 -->
+    <section class="screen" data-screen="notice">
+      <div class="notice-wrap">
+        <div class="notice-card" id="notice-card"></div>
+        <div class="notice-side">
+          <img class="notice-dali" src="assets/img/dali_3d.png" alt="달이">
+          <div class="bubble" id="notice-bubble"></div>
+          <button class="btn btn-primary" type="button" data-action="begin-review">심사 시작</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ②~④ 심사 데스크 -->
+    <section class="screen" data-screen="desk">
+      <header class="desk-top">
+        <h2 class="desk-title" id="desk-title"></h2>
+        <ol class="desk-progress" id="desk-progress"></ol>
+      </header>
+
+      <div class="desk-body">
+        <aside class="counter">
+          <div class="counter-label">창구</div>
+          <div class="rep" id="rep"></div>
+          <div class="bubble bubble-up" id="rep-bubble"></div>
+        </aside>
+
+        <main class="papers">
+          <nav class="doc-tabs" id="doc-tabs"></nav>
+          <div class="doc-area" id="doc-area"></div>
+          <div class="stamp-mark" id="stamp-mark"></div>
+        </main>
+
+        <aside class="side">
+          <section class="conditions" id="conditions"></section>
+          <section class="narmi">
+            <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
+            <div class="bubble bubble-left" id="narmi-bubble"></div>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="stamps">
+        <button class="stamp-btn stamp-ok" type="button" data-action="stamp-ok">적격</button>
+        <button class="stamp-btn stamp-reject" type="button" data-action="stamp-reject">부적격</button>
+      </footer>
+
+      <div class="modal" id="reason-modal" hidden>
+        <div class="modal-card">
+          <h3>부적격 사유를 골라 주세요</h3>
+          <div class="reason-list" id="reason-list"></div>
+          <div class="modal-actions">
+            <button class="btn" type="button" data-action="cancel-reject">취소</button>
+            <button class="btn btn-reject" type="button" data-action="confirm-reject" id="confirm-reject" disabled>부적격 도장 찍기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑤ 낙찰 선택 -->
+    <section class="screen" data-screen="award">
+      <h2 class="award-title">낙찰 업체를 골라 주세요</h2>
+      <p class="award-dilemma" id="award-dilemma"></p>
+      <div class="award-cards" id="award-cards"></div>
+      <div class="award-narmi">
+        <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
+        <div class="bubble bubble-left" id="award-bubble"></div>
+      </div>
+    </section>
+
+    <!-- 임시 결과 (M1) -->
+    <section class="screen" data-screen="result">
+      <h2 class="result-title">심사 결과</h2>
+      <div class="result-body">
+        <div class="result-table-wrap" id="result-table"></div>
+        <div class="result-side" id="result-side"></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" type="button" data-action="restart">처음으로</button>
       </div>
     </section>
 
