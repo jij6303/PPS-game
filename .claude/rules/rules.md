@@ -41,6 +41,10 @@ python github/create_pr.py --title "feat(#N): description" --head feature-#N --b
 
 # 리뷰 요청
 python github/request_review.py --pr N --reviewers username
+
+# PR 머지 (머지 후 원격 브랜치 삭제)
+python github/merge_pr.py --pr N --delete-branch
+python github/merge_pr.py --pr N --method squash --delete-branch
 ```
 
 ---
