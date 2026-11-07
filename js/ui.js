@@ -344,13 +344,69 @@ window.Game = window.Game || {};
       text.classList.remove("is-in");
       void text.offsetWidth;              // 등장 애니메이션 다시 시작
       text.classList.add("is-in");
+      // 장면(집 → 출근길 → 조달청 → 업무 장소): 배경과 이름표를 바꾼다. 장면이 바뀔 때만 등장 연출.
+      var screen = document.querySelector('[data-screen="intro"]');
+      var scene = cut.scene || "office";
+      if (screen.getAttribute("data-scene") !== scene || index === 0) {
+        screen.setAttribute("data-scene", scene);
+        screen.classList.remove("is-scene-in");
+        void screen.offsetWidth;
+        screen.classList.add("is-scene-in");
+      }
+      $("scene-tag").textContent = (Game.DATA.scenes && Game.DATA.scenes[scene]) || "";
       $("intro-dali").classList.toggle("is-speaking", cut.speaker === "dali");
       $("intro-narmi").classList.toggle("is-speaking", cut.speaker === "narmi");
-      $("intro-narmi").classList.toggle("is-present", index > 0);   // 나르미는 2컷부터 등장
+      $("intro-narmi").classList.toggle("is-present", scene === "office");   // 나르미는 업무 장소에서 등장
       $("intro-dots").innerHTML = cuts.map(function (c, i) {
         return '<li class="' + (i === index ? "is-on" : (i < index ? "is-done" : "")) + '"></li>';
       }).join("");
     },
+
+    // ===== 업무 장소 (사무실 — 책상을 누르면 공고 → 심사) =====
+    /** first: 첫 사업이면 true (안내 문구가 다름). 책상 위에는 이번 사업 공고 카드가 놓인다. */
+    renderOffice: function (project, first) {
+      var O = Game.DATA.office;
+      $("desk-notice").innerHTML =
+        '<span class="desk-notice-badge">입찰 공고 · 사업 ' + projectNo() + "</span>" +
+        '<span class="desk-notice-title">' + esc(project.title) + "</span>" +
+        itemPictureHtml(project, project.requiredSpec, "is-desk");
+      $("desk-label").textContent = O.deskLabel;
+      $("office-prompt").textContent = first ? O.prompt.first : O.prompt.next;
+      this.hideOfficeTip();
+    },
+
+    /**
+     * 이야기의 "업무 장소" 장면 배경 = 업무 장소 화면의 방을 복사 (두 곳 그림이 항상 같게).
+     * 복사본은 장식용: 누를 수 없게, id 없이, 나르미는 이야기 쪽 캐릭터가 따로 나오므로 뺀다.
+     */
+    buildIntroRoom: function () {
+      var room = $("office-room").cloneNode(true);
+      room.removeAttribute("id");
+      var narmi = room.querySelector(".room-narmi");
+      if (narmi) narmi.parentNode.removeChild(narmi);
+      var label = room.querySelector(".desk-label");
+      if (label) label.parentNode.removeChild(label);
+      var all = room.querySelectorAll("[id], [data-action], button");
+      for (var i = 0; i < all.length; i++) {
+        all[i].removeAttribute("id");
+        all[i].removeAttribute("data-action");
+        all[i].setAttribute("tabindex", "-1");
+      }
+      $("intro-room").innerHTML = "";
+      $("intro-room").appendChild(room);
+    },
+
+    /** 문·창문·나르미를 눌렀을 때 그 근처에 말풍선 (html: data.js 문구) */
+    showOfficeTip: function (spot, html) {
+      var tip = $("office-tip");
+      tip.innerHTML = html;
+      tip.className = "office-tip is-" + spot;
+      tip.hidden = false;
+      void tip.offsetWidth;
+      tip.classList.add("is-in");
+    },
+
+    hideOfficeTip: function () { $("office-tip").hidden = true; },
 
     // ===== ① 공고 =====
     renderNotice: function (project) {

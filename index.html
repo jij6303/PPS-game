@@ -22,13 +22,46 @@
       <img class="mascot mascot-narmi" src="assets/img/narmi_3d.png" alt="나르미">
     </section>
 
-    <!-- 인트로: 달이 첫 출근 (화면 아무 곳이나 누르면 다음 컷) -->
-    <section class="screen" data-screen="intro" data-action="intro-next">
-      <div class="intro-office" aria-hidden="true">
-        <div class="intro-window"></div>
-        <div class="intro-sign">조달청 민원 창구</div>
-        <div class="intro-desk"></div>
+    <!-- 이야기: 달이의 첫 출근 (화면 아무 곳이나 누르면 다음 컷). data-scene에 맞는 배경만 보인다. -->
+    <section class="screen" data-screen="intro" data-action="intro-next" data-scene="home">
+      <!-- 달이의 집 -->
+      <div class="scene scene-home" aria-hidden="true">
+        <div class="home-window"><div class="home-sun"></div></div>
+        <div class="home-frame"></div>
+        <div class="home-floor"></div>
+        <div class="home-bed"><div class="home-pillow"></div><div class="home-blanket"></div></div>
+        <div class="home-table"><div class="home-clock"><span>7:30</span></div></div>
+        <div class="home-rug"></div>
       </div>
+      <!-- 출근길 -->
+      <div class="scene scene-street" aria-hidden="true">
+        <div class="street-sun"></div>
+        <div class="street-cloud is-a"></div><div class="street-cloud is-b"></div>
+        <div class="street-city"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="street-tree is-a"></div><div class="street-tree is-b"></div><div class="street-tree is-c"></div>
+        <div class="street-lamp"></div>
+        <div class="street-stop"><div class="street-stop-sign">버스</div><div class="street-bench"></div></div>
+        <div class="street-walk"></div>
+        <div class="street-road"></div>
+      </div>
+      <!-- 조달청 건물 (일하는 곳) -->
+      <div class="scene scene-building" aria-hidden="true">
+        <div class="bld-cloud is-a"></div><div class="bld-cloud is-b"></div>
+        <div class="bld">
+          <div class="bld-windows"></div>
+          <!-- 정부상징은 원본 그대로 흰 현판 위에만 -->
+          <div class="bld-plate"><img src="assets/img/pps_symbol_h.jpg" alt=""></div>
+          <div class="bld-door"></div>
+        </div>
+        <div class="bld-steps"></div>
+        <div class="bld-ground"></div>
+        <div class="bld-tree is-a"></div><div class="bld-tree is-b"></div>
+      </div>
+      <!-- 업무 장소 (사무실 — 아래 office 화면과 같은 방) -->
+      <!-- 방 그림은 ui.buildIntroRoom()이 업무 장소 화면의 방을 복사해 채운다 (두 곳이 항상 같게) -->
+      <div class="scene scene-office" aria-hidden="true" id="intro-room"></div>
+      <p class="scene-tag" id="scene-tag"></p>
+
       <img class="intro-char intro-dali" id="intro-dali" src="assets/img/dali_3d.png" alt="달이">
       <img class="intro-char intro-narmi" id="intro-narmi" src="assets/img/narmi_3d.png" alt="나르미">
       <button class="btn intro-skip" type="button" data-action="intro-skip">건너뛰기</button>
@@ -40,6 +73,57 @@
           <span class="intro-next">▶ 다음</span>
         </div>
       </div>
+    </section>
+
+    <!-- 업무 장소(사무실): 게임의 중심 화면. 책상을 누르면 공고 → 심사 (배치: docs/office_layout.png) -->
+    <section class="screen" data-screen="office">
+      <div class="room" id="office-room">
+        <!-- 벽·바닥 -->
+        <div class="room-wall"></div>
+        <div class="room-wainscot"></div>
+        <div class="room-floor"></div>
+        <div class="room-rug"></div>
+        <div class="room-ceiling"><i class="room-lamp is-a"></i><i class="room-lamp is-b"></i></div>
+        <!-- 문 -->
+        <button class="room-door" type="button" data-action="office-spot" data-spot="door" aria-label="문">
+          <span class="door-glass"></span><span class="door-plate">민원 접수</span><i></i>
+        </button>
+        <!-- 액자: 정부상징은 원본 그대로 흰 바탕 위에 -->
+        <div class="room-poster"><img src="assets/img/pps_symbol_v.jpg" alt=""><span>공정한 조달</span></div>
+        <div class="room-plant"><i></i><i></i><i></i></div>
+        <!-- 창문 -->
+        <button class="room-window" type="button" data-action="office-spot" data-spot="window" aria-label="창문">
+          <span class="win-city"><i></i><i></i><i></i><i></i><i></i></span><b></b><b></b>
+        </button>
+        <div class="room-valance"></div>
+        <div class="room-clock"><i></i><i></i></div>
+        <!-- 서류 보관함 -->
+        <div class="room-shelf">
+          <span class="shelf-row"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="shelf-row"><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="shelf-top"></span>
+        </div>
+        <!-- 나르미: 작은 AI 받침대 위에 -->
+        <button class="room-narmi" type="button" data-action="office-spot" data-spot="narmi" aria-label="나르미에게 묻기">
+          <span class="narmi-pad">AI</span>
+          <img src="assets/img/narmi_3d.png" alt="나르미">
+        </button>
+        <!-- 책상 -->
+        <button class="room-desk" type="button" data-action="office-desk" aria-label="책상 — 사업 공고 확인">
+          <span class="desk-tray"><i></i><i></i><i></i></span>
+          <span class="desk-stamp"></span>
+          <span class="desk-ink"></span>
+          <span class="desk-notice" id="desk-notice"></span>
+          <span class="desk-mug"></span>
+          <span class="desk-pens"><i></i><i></i><i></i></span>
+          <span class="desk-sprout"></span>
+          <span class="desk-nameplate">신입 조달관 달이</span>
+          <span class="desk-label" id="desk-label"></span>
+        </button>
+      </div>
+      <p class="scene-tag">업무 장소</p>
+      <div class="office-prompt" id="office-prompt"></div>
+      <div class="office-tip" id="office-tip" hidden></div>
     </section>
 
     <!-- ① 사업 공고 -->

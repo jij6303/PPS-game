@@ -40,8 +40,15 @@ window.Game = window.Game || {};
     engine.reset();
     var errors = engine.validateData();
     if (errors.length) console.warn("[Game] 시나리오 데이터 검증 오류", errors);
-    ui.renderNotice(project());
-    ui.show("notice");
+    showOffice(true);
+  }
+
+  /** 업무 장소(사무실). 책상 위에 이번 사업 공고가 놓여 있고, 책상을 누르면 공고 → 심사. */
+  var narmiTipIndex = 0;
+  function showOffice(first) {
+    view = null;
+    ui.renderOffice(project(), first);
+    ui.show("office");
   }
 
   function enterBidder(index) {
@@ -52,8 +59,8 @@ window.Game = window.Game || {};
       bidder: p.bidders[index],
       docKey: "application",
       papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
-      pane: "papers",
-      marks: {},               // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
+      pane: "papers",          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
+      marks: {},               // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상
       seen: p.bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
@@ -87,9 +94,7 @@ window.Game = window.Game || {};
       showResult();
       return;
     }
-    view = null;
-    ui.renderNotice(project());
-    ui.show("notice");
+    showOffice(false);   // 사무실로 돌아오면 다음 공고가 책상 위에
   }
 
   function doJudge(verdict, reason) {
@@ -210,6 +215,26 @@ window.Game = window.Game || {};
     "intro-skip": function () {
       introIndex = -1;
       startGame();
+    },
+
+    /** 사무실 책상 → 사업 공고 */
+    "office-desk": function () {
+      ui.renderNotice(project());
+      ui.show("notice");
+    },
+
+    /** 사무실의 문·창문·나르미 → 말풍선 (나르미는 누를 때마다 다음 안내) */
+    "office-spot": function (el) {
+      var spot = el.getAttribute("data-spot");
+      var S = Game.DATA.office.spots;
+      var html;
+      if (spot === "narmi") {
+        html = S.narmi[narmiTipIndex % S.narmi.length];
+        narmiTipIndex++;
+      } else {
+        html = S[spot];
+      }
+      ui.showOfficeTip(spot, html);
     },
 
     "begin-review": function () {
@@ -339,6 +364,8 @@ window.Game = window.Game || {};
     "intro-next": "pop",
     "intro-skip": "click",
     "begin-review": "paper",
+    "office-desk": "paper",
+    "office-spot": "pop",
     "tab": "paper",
     "compare": "paper",
     "close-paper": "paper",
@@ -396,6 +423,7 @@ window.Game = window.Game || {};
 
   ui.fitStage();
   ui.setTool(tool);
+  ui.buildIntroRoom();
   ui.renderSoundButton(sound.enabled);
   ui.show("title");
 })();
