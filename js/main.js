@@ -132,6 +132,13 @@ window.Game = window.Game || {};
     sound.play("flip", 0.45);   // 낙찰 소리 뒤에 신문이 "촤악"
   }
 
+  // 판정 복기: 심사 기록의 모든 업체를 차례로 넘겨 볼 수 있다
+  var reviewList = [], reviewIndex = 0;
+  function showReview() {
+    var it = reviewList[reviewIndex];
+    ui.renderReview(engine.review(it.projectId, it.bidderId), { index: reviewIndex, total: reviewList.length });
+  }
+
   function findSeen(id) {
     for (var i = 0; i < view.seen.length; i++) if (view.seen[i].id === id) return view.seen[i];
     return null;
@@ -271,6 +278,24 @@ window.Game = window.Game || {};
 
     "back-to-ending": function () { ui.show("ending"); },
 
+    /** 심사 기록의 판정 표시 → 판정 복기 창 */
+    "review": function (el) {
+      reviewList = [];
+      engine.summary().projects.forEach(function (p) {
+        p.judgments.forEach(function (j) { reviewList.push({ projectId: p.id, bidderId: j.bidderId }); });
+      });
+      reviewIndex = 0;
+      for (var i = 0; i < reviewList.length; i++) {
+        if (reviewList[i].projectId === el.getAttribute("data-project") &&
+            reviewList[i].bidderId === el.getAttribute("data-bidder")) reviewIndex = i;
+      }
+      showReview();
+      document.getElementById("review-modal").hidden = false;
+    },
+    "review-prev": function () { if (reviewIndex > 0) { reviewIndex--; showReview(); } },
+    "review-next": function () { if (reviewIndex < reviewList.length - 1) { reviewIndex++; showReview(); } },
+    "close-review": function () { document.getElementById("review-modal").hidden = true; },
+
     /** 칭호 카드를 PNG로 저장하고 미리보기를 띄운다 (GAME_SPEC 7.2 공유용) */
     "save-card": function (el) {
       if (el.disabled) return;
@@ -398,6 +423,10 @@ window.Game = window.Game || {};
     "show-title": "fanfare",
     "show-record": "paper",
     "back-to-ending": "click",
+    "review": "paper",
+    "review-prev": "paper",
+    "review-next": "paper",
+    "close-review": "click",
     "save-card": "paper",
     "close-card": "click",
     "restart": "click"

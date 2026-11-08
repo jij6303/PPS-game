@@ -237,6 +237,13 @@ window.Game = window.Game || {};
       body + "</article>";
   }
 
+  /** "적격" / "부적격(사유)" */
+  function verdictText(v, reason) {
+    if (!v) return "판정 안 함";
+    if (v === "ok") return "적격";
+    return "부적격" + (reason ? "(" + Game.DATA.reasons[reason].name + ")" : "");
+  }
+
   function findIn(project, bidderId) {
     for (var i = 0; i < project.bidders.length; i++) if (project.bidders[i].id === bidderId) return project.bidders[i];
     return null;
@@ -288,10 +295,10 @@ window.Game = window.Game || {};
     return [
       ["발주기관", project.agency],
       ["품목·수량", project.item + " " + project.qty.toLocaleString("ko-KR") + unitOf(project)],
-      ["예산 상한", won(project.budgetMax)],
-      ["필수 인증", project.requiredCerts.join(", ") || "없음"],
-      ["입찰 마감", project.deadline],
-      ["요구 사양", spec.join(" · ")]
+      ["예산 상한", won(project.budgetMax), "cond.budget"],
+      ["필수 인증", project.requiredCerts.join(", ") || "없음", "cond.certs"],
+      ["입찰 마감", project.deadline, "cond.deadline"],
+      ["요구 사양", spec.join(" · "), "cond.spec"]
     ];
   }
 
@@ -786,28 +793,28 @@ window.Game = window.Game || {};
     // ===== 임시 결과 =====
     /** 5건을 모두 마친 뒤의 전체 결과 (엔딩 신문·칭호 이슈 전까지 쓰는 임시 화면). */
     renderResult: function (summary) {
-      var reasons = Game.DATA.reasons;
-
-      function verdictText(v, reason) {
-        if (v === "ok") return "적격";
-        return "부적격" + (reason ? "(" + reasons[reason].name + ")" : "");
-      }
-
       function markOf(j) {
         if (j.mistake) return { mark: "✘", cls: "is-wrong" };
         if (j.reasonCorrect === false) return { mark: "△", cls: "is-partial" };
         return { mark: "✔", cls: "is-right" };
       }
 
+      // 표시·틀린 줄을 누르면 판정 복기 (data-project·data-bidder)
+      function reviewAttrs(p, j) {
+        return ' data-action="review" data-project="' + p.id + '" data-bidder="' + j.bidderId + '"';
+      }
+
       var rows = summary.projects.map(function (p) {
         var marks = p.judgments.map(function (j) {
           var m = markOf(j);
           var tip = j.name + ": " + verdictText(j.verdict, j.reason) + " → 정답 " + verdictText(j.expectedVerdict, j.expectedReason);
-          return '<span class="mark ' + m.cls + '" title="' + esc(tip) + '">' + m.mark + "</span>";
+          return '<button type="button" class="mark ' + m.cls + '"' + reviewAttrs(p, j) + ' title="' + esc(tip) +
+            '" aria-label="' + esc(tip + " — 복기 보기") + '">' + m.mark + "</button>";
         }).join("");
         var wrong = p.judgments.filter(function (j) { return j.mistake || j.reasonCorrect === false; }).map(function (j) {
-          return '<li class="' + markOf(j).cls + '">' + esc(j.name) + ": " + esc(verdictText(j.verdict, j.reason)) +
-            " → 정답 " + esc(verdictText(j.expectedVerdict, j.expectedReason)) + "</li>";
+          return '<li class="' + markOf(j).cls + '"><button type="button" class="result-wrong-btn"' + reviewAttrs(p, j) + ">" +
+            esc(j.name) + ": " + esc(verdictText(j.verdict, j.reason)) +
+            " → 정답 " + esc(verdictText(j.expectedVerdict, j.expectedReason)) + ' <span class="review-go">복기 ›</span></button></li>';
         }).join("");
         var news = p.news ? esc(p.news.head)
           : (p.awardedId === null ? "유찰 — 다시 공고를 내야 해요" : "조건에 맞지 않는 업체 낙찰 — 감사 지적 예정");
@@ -820,7 +827,7 @@ window.Game = window.Game || {};
       $("result-table").innerHTML =
         '<table class="result-table"><thead><tr><th>사업</th><th>판정</th><th>낙찰</th><th>1년 후 뉴스 (미리보기)</th></tr></thead>' +
         "<tbody>" + rows + "</tbody></table>" +
-        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수(감사 지적)</p>';
+        '<p class="result-legend">✔ 정답 · △ 부적격은 맞지만 사유가 다름 · ✘ 판정 실수(감사 지적) — <b>표시를 누르면 판정을 복기할 수 있어요</b></p>';
 
       var labels = Game.DATA.tagLabels;
       var tags = Object.keys(labels).map(function (t) {
@@ -830,6 +837,69 @@ window.Game = window.Game || {};
         '<div class="result-award"><span>감사 지적</span><strong>' + summary.mistakes + "회</strong>" +
         '<span class="result-hints">나르미 힌트 ' + summary.hintsUsed + "회 사용</span></div>" +
         '<div class="result-tags"><h3>내가 고른 가치</h3><ul>' + tags + "</ul></div>";
+    },
+
+    /**
+     * 판정 복기 창 (engine.review 결과). pos: { index, total } — 이전/다음 업체 버튼 상태.
+     * 근거 서류(형광펜) + 공고 조건표(비교 칸 형광펜) + 나르미 설명.
+     */
+    renderReview: function (r, pos) {
+      var D = Game.DATA, R = D.narmi.review, reasons = D.reasons;
+      var p = null;
+      D.projects.forEach(function (x) { if (x.id === r.projectId) p = x; });
+      var b = findIn(p, r.bidderId);
+      var vars = Object.assign({}, r.vars, {
+        name: r.expectedReason ? reasons[r.expectedReason].name : "",
+        picked: r.picked ? reasons[r.picked].name : ""
+      });
+
+      var marks = {
+        right: ["✔", "is-right", "정답"],
+        partial: ["△", "is-partial", "사유가 달라요"],
+        wrong: ["✘", "is-wrong", "판정 실수"],
+        none: ["–", "", "판정 안 함"]
+      };
+      var m = marks[r.status];
+
+      var msg;
+      if (r.status === "none") msg = R.none;
+      else if (r.expectedVerdict === "ok") msg = r.status === "right" ? R.okRight : R.okWrong;
+      else msg = r.status === "wrong" ? R.rejectWrong : (r.status === "partial" ? R.partial : R.rejectRight);
+
+      var explain = "";
+      if (r.expectedReason) {
+        var why = (R.explain && R.explain[r.expectedReason]) || D.narmi.hints[r.expectedReason];
+        var reason = reasons[r.expectedReason];
+        explain = '<p class="review-why">' + fillVars(why, vars) + "</p>" +
+          '<p class="review-desc">' + esc(reason.desc) + "</p>" +
+          '<p class="review-policy"><span>연결 정책</span>' + esc(reason.policy) + "</p>";
+      }
+
+      // 근거 서류가 없으면(서류에 문제없는 적격 업체) 견적서를 보여 준다
+      var papers = r.papers.length ? r.papers : [{ bidderId: b.id, docKey: "quote", fields: [] }];
+      var papersHtml = papers.map(function (pp) {
+        return docHtml(p, findIn(p, pp.bidderId), pp.docKey, pp.fields);
+      }).join("");
+
+      $("review-body").innerHTML =
+        '<header class="review-head">' +
+          '<p class="review-project">' + esc(r.projectTitle) + "</p>" +
+          "<h3>" + esc(r.name) + ' <span class="review-mark ' + m[1] + '">' + m[0] + " " + esc(m[2]) + "</span></h3>" +
+          '<p class="review-verdicts"><span>내 판정 <b>' + esc(verdictText(r.verdict, r.picked)) + "</b></span>" +
+          "<span>정답 <b>" + esc(verdictText(r.expectedVerdict, r.expectedReason)) + "</b></span></p>" +
+        "</header>" +
+        '<div class="review-grid">' +
+          '<div class="review-papers' + (papers.length > 1 ? " is-pair" : "") + '">' + papersHtml + "</div>" +
+          '<div class="review-side">' +
+            '<section class="conditions review-conditions"><h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p), r.condFields) + "</section>" +
+            '<div class="review-narmi"><img src="assets/img/narmi_3d.png" alt="나르미">' +
+              '<div class="bubble bubble-left"><p>' + fillVars(msg, vars) + "</p>" + explain + "</div></div>" +
+          "</div>" +
+        "</div>";
+
+      $("review-pos").textContent = (pos.index + 1) + " / " + pos.total;
+      $("review-prev").disabled = pos.index <= 0;
+      $("review-next").disabled = pos.index >= pos.total - 1;
     },
 
     // ===== 엔딩 ① 1년 후 조달 뉴스 (GAME_SPEC 7.1) =====

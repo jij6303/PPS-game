@@ -94,6 +94,16 @@ window.Game = window.Game || {};
 
   var DOC_NAMES = { quote: "견적서", certs: "인증서", status: "업체 현황" };
 
+  /* 판정 복기: 사유마다 확인할 서류(근거를 못 찾을 때·적격 업체를 반려했을 때)와 공고 조건표에서 비교할 칸 */
+  var REASON_DOC = {
+    OVER_BUDGET: "quote", LATE: "application", CERT_MISSING: "certs", CERT_EXPIRED: "certs",
+    SPEC_MISMATCH: "spec", INFO_MISMATCH: "application", COLLUSION: "quote", BROKER: "status", SAFETY: "status"
+  };
+  var COND_FIELDS = {
+    OVER_BUDGET: ["cond.budget"], LATE: ["cond.deadline"], CERT_MISSING: ["cond.certs"],
+    CERT_EXPIRED: ["cond.certs", "cond.deadline"], SPEC_MISMATCH: ["cond.spec"]
+  };
+
   /**
    * 문제 코드 하나의 근거 위치를 찾는다 (GAME_SPEC 5.3 형광펜 표시용).
    * docKey: 펼칠 서류 탭, fields: 형광펜 칠할 항목("quote.total", "certs.0.validUntil" …),
@@ -439,6 +449,62 @@ window.Game = window.Game || {};
     },
 
     /** 진행한 사업들의 결과 요약 (임시 결과 화면·엔딩 뉴스용). */
+    /**
+     * 판정 복기 (심사 기록에서 업체 하나를 눌렀을 때). 화면은 이 값을 그리기만 한다.
+     * status: "right"(정답) | "partial"(부적격은 맞지만 사유가 다름) | "wrong"(판정 실수) | "none"(판정 안 함)
+     * papers: [{ bidderId, docKey, fields }] — 보여 줄 근거 서류와 형광펜 칸 (담합은 두 업체 견적서)
+     * condFields: 공고 조건표에서 함께 칠할 칸 ("cond.budget" 등)
+     * vars: 나르미 설명 문구({budget} 등)에 넣을 값
+     */
+    review: function (projectId, bidderId) {
+      var p = null;
+      for (var i = 0; i < this.data.projects.length; i++) if (this.data.projects[i].id === projectId) p = this.data.projects[i];
+      var b = p && findBidder(p, bidderId);
+      if (!b) throw new Error("복기할 업체를 찾을 수 없습니다: " + projectId + "/" + bidderId);
+      var j = (this.state.judgments[p.id] || {})[b.id] || null;
+
+      var status = "none";
+      if (j) status = j.mistake ? "wrong" : (j.reasonCorrect === false ? "partial" : "right");
+
+      var code = b.verdict === "reject" ? b.reason : null;
+      var picked = j && j.verdict === "reject" ? j.reason : null;
+      var papers = [], vars = {};
+
+      if (code) {
+        var spot = locate(p, b, code) || { docKey: REASON_DOC[code], fields: [], vars: {} };
+        vars = Object.assign({}, spot.vars);
+        papers.push({ bidderId: b.id, docKey: spot.docKey, fields: spot.fields });
+        if (code === "COLLUSION") {
+          var other = findBidder(p, b.collusionWith);
+          if (other) {
+            papers.unshift({ bidderId: other.id, docKey: "quote", fields: spot.fields });
+            vars.other = other.name;
+          }
+        } else if (code === "INFO_MISMATCH" && spot.docKey !== "application") {
+          // 기준이 되는 신청서의 사업자번호와 나란히
+          papers.unshift({ bidderId: b.id, docKey: "application", fields: ["application.bizNo"] });
+        }
+      } else if (picked && REASON_DOC[picked]) {
+        // 적격 업체를 반려했을 때: 고른 사유와 관련된 서류를 보여 주며 "여긴 문제없어요"
+        papers.push({ bidderId: b.id, docKey: REASON_DOC[picked], fields: [] });
+      }
+
+      return {
+        projectId: p.id,
+        projectTitle: p.title,
+        bidderId: b.id,
+        name: b.name,
+        status: status,
+        verdict: j ? j.verdict : null,
+        picked: picked,
+        expectedVerdict: b.verdict,
+        expectedReason: code,
+        papers: papers,
+        condFields: COND_FIELDS[code || picked] || [],
+        vars: vars
+      };
+    },
+
     summary: function () {
       var self = this;
       var projects = [];
