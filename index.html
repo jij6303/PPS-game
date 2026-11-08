@@ -263,7 +263,20 @@
       <img class="ending-narmi" src="assets/img/narmi_3d.png" alt="나르미">
       <div class="ending-actions">
         <button class="btn" type="button" data-action="show-record">심사 기록 보기</button>
+        <button class="btn" type="button" data-action="save-card" id="save-card-btn">이미지로 저장</button>
         <button class="btn btn-primary" type="button" data-action="restart">다시 하기</button>
+      </div>
+
+      <!-- 칭호 카드 이미지 저장 결과 (내려받기가 안 되는 기기에서는 길게 눌러 저장) -->
+      <div class="modal" id="card-modal" hidden>
+        <div class="modal-card card-preview">
+          <h3>칭호 카드를 저장했어요!</h3>
+          <img id="card-preview-img" alt="칭호 카드 이미지">
+          <p class="card-preview-tip">저장이 안 됐다면 이미지를 길게 누르거나 오른쪽 클릭해서 저장해 주세요.</p>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="button" data-action="close-card">닫기</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -296,6 +309,8 @@
   <script src="js/engine.js"></script>
   <script src="js/sound.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/card_images.js"></script>
+  <script src="js/card.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

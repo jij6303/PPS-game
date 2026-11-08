@@ -221,6 +221,8 @@ PPS-game/
 │   ├── engine.js      # 상태 관리, 판정 로직, 점수/태그 누적
 │   ├── sound.js       # 효과음 (Web Audio 직접 합성, 음원 파일 없음)
 │   ├── ui.js          # 화면 렌더링, 드래그, 도장 애니메이션
+│   ├── card_images.js # 칭호 카드 저장용 이미지 data URI (tools/make_card_images.py가 생성)
+│   ├── card.js        # 칭호 카드를 Canvas로 그려 PNG 저장
 │   └── main.js        # 진입점, 화면 전환
 ├── assets/
 │   ├── img/           # narmi_3d.png, dali_3d.png, 서류 배경 등
