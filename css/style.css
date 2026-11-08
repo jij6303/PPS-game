@@ -1775,7 +1775,7 @@ html, body {
   background: #3f6b5a; box-shadow: inset 0 0 0 4px #355b4c; opacity: 0.9; pointer-events: none; }   /* 책상 매트 */
 
 .scene-office .room-desk { top: 74%; }   /* 대화 중에는 책상을 낮게 — 달이·나르미가 보이게 */
-.scene-office .desk-notice { display: none; }
+.scene-office .desk-pc { display: none; }
 .scene-office button { pointer-events: none; }
 
 /* --- 업무 장소 화면 --- */
@@ -1787,10 +1787,10 @@ html, body {
 [data-screen="office"] .room-window:hover { filter: brightness(1.06); }
 [data-screen="office"] .room-narmi:hover { transform: translateY(-4px); }
 
-/* 책상: 눌러서 심사 시작 — 은은한 반짝임 */
-[data-screen="office"] .room-desk { cursor: pointer; animation: desk-glow 2s ease-in-out infinite; transition: transform 0.15s ease; }
-[data-screen="office"] .room-desk:hover { transform: translateY(-4px); }
-[data-screen="office"] .room-desk:active { transform: translateY(2px); }
+/* 책상 위 컴퓨터: 눌러서 업무 고르기 — 은은한 반짝임 */
+[data-screen="office"] .desk-pc { cursor: pointer; animation: desk-glow 2s ease-in-out infinite; transition: transform 0.15s ease; }
+[data-screen="office"] .desk-pc:hover { transform: translateX(-50%) translateY(-4px); }
+[data-screen="office"] .desk-pc:active { transform: translateX(-50%) translateY(2px); }
 @keyframes desk-glow {
   0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 225, 77, 0)); }
   50%      { filter: drop-shadow(0 0 16px rgba(255, 225, 77, 0.9)); }
@@ -1802,16 +1802,116 @@ html, body {
 }
 .room-desk > span { z-index: 1; }
 
-/* 책상 위 오늘의 공고 카드 */
-.desk-notice {
-  position: absolute; left: 37%; top: 12%; width: 26%; height: 64%;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 16px 20px; background: #fff; border-radius: 8px; border-top: 10px solid var(--primary);
-  box-shadow: 0 10px 22px rgba(20, 30, 25, 0.35); transform: rotate(-2deg);
+/* 책상 위 컴퓨터: 모니터(책상 위로 솟음) · 받침 · 키보드 · 마우스 */
+.desk-pc {
+  position: absolute; left: 50%; top: -58%; width: 34%; height: 140%; transform: translateX(-50%);
+  border: 0; padding: 0; background: none; font: inherit; z-index: 2;
 }
-.desk-notice-badge { padding: 3px 12px; border-radius: 6px; background: var(--primary); color: #fff; font-size: 18px; font-weight: 700; }
-.desk-notice-title { font-size: 24px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.3; }
-.item-pic.is-desk { width: 70%; flex: 1; min-height: 0; }
+.pc-monitor {
+  position: absolute; left: 0; right: 0; top: 0; height: 58%;
+  border-radius: 16px; background: #2d3142; padding: 12px 12px 18px;
+  box-shadow: 0 12px 24px rgba(20, 30, 25, 0.35);
+}
+.pc-screen {
+  display: grid; grid-template-columns: repeat(5, 1fr); align-content: start; gap: 8px 6px;
+  width: 100%; height: 100%; padding: 16px 14px; border-radius: 8px;
+  background: radial-gradient(circle at 80% 20%, #cfe3ff 0, transparent 50%), linear-gradient(160deg, #8fb8f7, #bfe8d9);
+}
+.pc-stand { position: absolute; left: 44%; width: 12%; top: 58%; height: 12%; background: #565c70; }
+.pc-stand::after { content: ""; position: absolute; left: -90%; right: -90%; bottom: -6px; height: 14px; border-radius: 8px; background: #3d4256; }
+.pc-keyboard {
+  position: absolute; left: 4%; width: 70%; top: 76%; height: 13%; border-radius: 8px;
+  background: repeating-linear-gradient(90deg, #e8ecf3 0 18px, #c9d0dc 18px 20px), #e8ecf3;
+  box-shadow: 0 6px 0 #a8b0bf, 0 10px 18px rgba(20, 30, 25, 0.25);
+}
+.pc-mouse {
+  position: absolute; right: 6%; top: 75%; width: 9%; height: 16%; border-radius: 40% 40% 46% 46%;
+  background: #f4f6fa; box-shadow: inset 0 -6px 0 #c9d0dc, 0 6px 12px rgba(20, 30, 25, 0.25);
+}
+.pc-mouse::before { content: ""; position: absolute; left: 47%; top: 8%; width: 6%; height: 28%; background: #c9d0dc; }
+.desk-pc .desk-label { top: -46px; }
+
+/* 폴더 아이콘 (CSS 그림) — 모니터 속 작은 것과 바탕화면 큰 것 공용 */
+.pc-folder { position: relative; display: block; width: 100%; aspect-ratio: 5 / 4; }
+.pc-folder::before { content: ""; position: absolute; left: 0; top: 0; width: 44%; height: 24%; border-radius: 6px 6px 0 0; background: #e8b93a; }
+.pc-folder i { position: absolute; left: 0; right: 0; top: 14%; bottom: 0; border-radius: 4px 8px 8px 8px; background: linear-gradient(180deg, #ffd65c, #f5c242); box-shadow: inset 0 3px 0 #ffe591; }
+.pc-folder.is-done { opacity: 0.6; }
+.pc-folder b {
+  position: absolute; right: -6%; bottom: -8%; width: 46%; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; background: var(--ok); color: #fff; font-size: 0.9em; box-shadow: 0 0 0 3px #fff;
+}
+.pc-screen .pc-folder b { font-size: 12px; }
+
+/* ===== 컴퓨터 바탕화면 화면 ===== */
+[data-screen="computer"] { background: linear-gradient(180deg, #e9dcc8 0%, #d8c4a6 100%); }
+.pc-frame {
+  position: absolute; left: 50%; top: 36px; transform: translateX(-50%);
+  width: 1640px; height: 900px; padding: 26px 26px 40px; border-radius: 34px;
+  background: #2d3142; box-shadow: 0 30px 60px rgba(45, 49, 66, 0.35);
+}
+.pc-base { position: absolute; left: 50%; top: 936px; width: 260px; height: 110px; transform: translateX(-50%); background: #565c70; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+.pc-desktop {
+  position: relative; width: 100%; height: 100%; border-radius: 14px; overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.55) 0, transparent 35%),
+    radial-gradient(circle at 10% 90%, var(--mint) 0, transparent 40%),
+    linear-gradient(160deg, #8fb8f7 0%, #b9d4fb 55%, #cdeee0 100%);
+}
+.pc-topbar {
+  display: flex; justify-content: space-between; align-items: center; height: 56px; padding: 0 26px;
+  background: rgba(255, 255, 255, 0.85); font-size: 22px; color: var(--ink-soft);
+}
+.pc-app { font-weight: 700; color: var(--primary-dark); font-size: 24px; }
+.pc-icons { display: flex; flex-wrap: wrap; gap: 30px 44px; padding: 44px 56px; align-content: flex-start; }
+.pc-icon, .pc-file {
+  width: 190px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 16px 10px 14px; border: 3px solid transparent; border-radius: 18px; background: none;
+  font: inherit; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease;
+}
+.pc-icon:hover, .pc-file:hover { background: rgba(255, 255, 255, 0.45); border-color: rgba(255, 255, 255, 0.9); transform: translateY(-3px); }
+.pc-icon .pc-folder, .pc-file .pc-folder { width: 120px; }
+.pc-icon .pc-folder b, .pc-file .pc-folder b { font-size: 26px; }
+.pc-icon-name { font-size: 24px; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.3; word-break: keep-all; }
+.pc-icon-badge { font-size: 18px; font-weight: 700; color: #fff; background: var(--ok); padding: 2px 12px; border-radius: 999px; }
+.pc-icon.is-done .pc-icon-name { color: var(--ink-soft); }
+
+/* 폴더 창 */
+.pc-window {
+  position: absolute; left: 50%; top: 330px; width: 960px; transform: translateX(-50%);   /* 폴더 아이콘이 보이게 아래쪽에 */
+  background: #fff; border-radius: 18px; box-shadow: 0 24px 50px rgba(45, 49, 66, 0.35); overflow: hidden; z-index: 2;
+}
+.pc-window[hidden] { display: none; }
+.pc-window.is-in { animation: card-pop 0.22s ease-out; }
+@keyframes card-pop { from { opacity: 0; transform: translateX(-50%) scale(0.94); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+.pc-window-bar { display: flex; align-items: center; gap: 14px; padding: 14px 18px 14px 24px; background: #eef3fb; border-bottom: 1px solid #dde5f2; }
+.pc-window-bar .pc-folder { width: 40px; }
+.pc-window-title { flex: 1; font-size: 26px; font-weight: 700; }
+.pc-window-close { width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; font-size: 34px; line-height: 1; cursor: pointer; color: var(--ink-soft); }
+.pc-window-close:hover { background: #fde7e5; color: var(--reject); }
+.pc-window-body { padding: 30px 40px 32px; }
+.pc-files { display: flex; align-items: center; gap: 30px; }
+.pc-file:hover { background: #f2f6fd; border-color: #cfe3ff; }
+.pc-file-pic { margin-left: auto; width: 260px; }
+.item-pic.is-pc { width: 100%; height: auto; }
+.pc-window-note { margin-top: 18px; font-size: 22px; color: var(--ink-soft); }
+.pc-window-note b { color: var(--ink); }
+.pc-new { display: inline-block; margin-left: 8px; color: #b9801d !important; }
+/* 문서 아이콘 (접힌 모서리 + 글줄) */
+.pc-doc { position: relative; display: block; width: 96px; height: 120px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 3px #4f8cf7 inset, 0 6px 12px rgba(45, 49, 66, 0.15); }
+.pc-doc::before { content: ""; position: absolute; right: 0; top: 0; border-width: 0 26px 26px 0; border-style: solid; border-color: #eef3fb #eef3fb #a9c5f5 #a9c5f5; }
+.pc-doc i { position: absolute; left: 18%; right: 18%; height: 7px; border-radius: 4px; background: #cfe3ff; }
+.pc-doc i:nth-child(1) { top: 36%; } .pc-doc i:nth-child(2) { top: 52%; } .pc-doc i:nth-child(3) { top: 68%; right: 40%; }
+
+.pc-taskbar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 72px; display: flex; align-items: center; gap: 24px; padding: 0 22px;
+  background: rgba(45, 49, 66, 0.82); color: #fff;
+}
+.pc-off { font: inherit; font-size: 22px; font-weight: 700; padding: 10px 22px; border: 0; border-radius: 12px; background: var(--primary); color: #fff; cursor: pointer; }
+.pc-off:hover { background: var(--primary-dark); }
+.pc-hint { flex: 1; font-size: 22px; }
+.pc-clock { font-size: 22px; font-variant-numeric: tabular-nums; opacity: 0.85; }
+
+.notice-actions { display: flex; gap: 20px; }
 
 /* 서류함 · 도장 · 인주 · 머그컵 · 펜꽂이 · 새싹 화분 · 명패 */
 .desk-tray { position: absolute; left: 6%; top: 14%; width: 15%; height: 46%; border-radius: 8px; background: #8d99ab; box-shadow: inset 0 0 0 6px #6f7b8d; transform: rotate(3deg); }
@@ -1837,7 +1937,7 @@ html, body {
 
 /* 안내 (책상 위쪽) */
 .office-prompt {
-  position: absolute; left: 50%; top: 47%; transform: translateX(-50%); z-index: 4;
+  position: absolute; left: 50%; top: 54%;   /* 모니터 화면 아래쪽 빈 곳 */ transform: translateX(-50%); z-index: 4;
   padding: 16px 34px; border-radius: 18px; background: #fff; color: var(--ink);
   font-size: 30px; font-weight: 700; white-space: nowrap; box-shadow: var(--shadow);
   pointer-events: none; animation: prompt-bob 1.4s ease-in-out infinite;
@@ -1860,7 +1960,7 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) {
   .home-clock, .street-cloud, .bld-cloud, .room-window b, .room-narmi img,
-  [data-screen="office"] .room-desk, .office-prompt, [data-scene="street"] .intro-dali { animation: none !important; }
+  [data-screen="office"] .desk-pc, .office-prompt, [data-scene="street"] .intro-dali { animation: none !important; }
 }
 
 /* --- 세로 화면 (1080×1920) --- */
@@ -1910,8 +2010,16 @@ html, body {
 #stage.is-portrait .room-shelf { left: 36%; top: 26%; width: 26%; height: 21%; }
 #stage.is-portrait .room-narmi { left: 68%; top: 26%; width: 26%; height: 21%; }
 #stage.is-portrait .room-desk { left: 3%; top: 53%; width: 94%; height: 47%; }
-#stage.is-portrait .desk-notice { left: 24%; top: 10%; width: 52%; height: 50%; }
-#stage.is-portrait .desk-notice-title { font-size: 30px; }
+#stage.is-portrait .desk-pc { width: 52%; top: -40%; height: 120%; }
+#stage.is-portrait .pc-frame { width: 1000px; height: 1500px; top: 60px; }
+#stage.is-portrait .pc-base { top: 1560px; }
+#stage.is-portrait .pc-icons { padding: 40px 30px; gap: 30px 20px; justify-content: center; }
+#stage.is-portrait .pc-icon { width: 260px; }
+#stage.is-portrait .pc-icon-name { font-size: 30px; }
+#stage.is-portrait .pc-window { width: 900px; top: 200px; }
+#stage.is-portrait .pc-files { flex-wrap: wrap; }
+#stage.is-portrait .pc-file-pic { margin: 0 auto; }
+#stage.is-portrait .pc-hint { font-size: 24px; }
 #stage.is-portrait .desk-tray { left: 5%; top: 12%; width: 16%; height: 30%; }
 #stage.is-portrait .desk-stamp { left: 6%; top: 50%; }
 #stage.is-portrait .desk-ink { left: 14%; top: 56%; }

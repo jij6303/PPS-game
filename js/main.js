@@ -38,6 +38,7 @@ window.Game = window.Game || {};
 
   function startGame() {
     engine.reset();
+    noticeRead = {};
     var errors = engine.validateData();
     if (errors.length) console.warn("[Game] 시나리오 데이터 검증 오류", errors);
     showOffice(true);
@@ -47,8 +48,22 @@ window.Game = window.Game || {};
   var narmiTipIndex = 0;
   function showOffice(first) {
     view = null;
-    ui.renderOffice(project(), first);
+    ui.renderOffice(first);
     ui.show("office");
+  }
+
+  /** 컴퓨터 바탕화면 (사업 폴더 고르기) */
+  var noticeRead = {};      // 공고문을 읽은 사업 (업체 폴더를 바로 열면 공고문부터 보여 줌)
+  function showComputer() {
+    ui.renderComputer();
+    ui.show("computer");
+  }
+
+  function openNotice(projectId) {
+    engine.selectProject(projectId);
+    noticeRead[projectId] = true;
+    ui.renderNotice(project());
+    ui.show("notice");
   }
 
   function enterBidder(index) {
@@ -225,11 +240,21 @@ window.Game = window.Game || {};
       startGame();
     },
 
-    /** 사무실 책상 → 사업 공고 */
-    "office-desk": function () {
-      ui.renderNotice(project());
-      ui.show("notice");
+    /** 사무실 책상 위 컴퓨터 → 바탕화면 */
+    "office-pc": showComputer,
+    "pc-off": function () { showOffice(false); },
+    "open-folder": function (el) { ui.openFolder(el.getAttribute("data-project")); },
+    "close-folder": function () { ui.closeFolder(); },
+    "open-notice": function (el) { openNotice(el.getAttribute("data-project")); },
+    /** 업체 폴더: 공고문을 읽었으면 바로 심사, 아니면 공고문부터 */
+    "open-bidders": function (el) {
+      var id = el.getAttribute("data-project");
+      if (!noticeRead[id]) { openNotice(id); return; }
+      engine.selectProject(id);
+      view = null;
+      enterBidder(0);
     },
+    "back-to-pc": showComputer,
 
     /** 사무실의 문·창문·나르미 → 말풍선 (나르미는 누를 때마다 다음 안내) */
     "office-spot": function (el) {
@@ -406,7 +431,13 @@ window.Game = window.Game || {};
     "intro-next": "pop",
     "intro-skip": "click",
     "begin-review": "paper",
-    "office-desk": "paper",
+    "office-pc": "click",
+    "pc-off": "click",
+    "open-folder": "paper",
+    "close-folder": "click",
+    "open-notice": "paper",
+    "open-bidders": "paper",
+    "back-to-pc": "click",
     "office-spot": "pop",
     "tab": "paper",
     "compare": "paper",

@@ -106,24 +106,51 @@
         eq(tags.sort(), ["coexist", "green", "innovation", "quality", "safety", "stable", "thrift"], "태그 종류");
       });
 
-      test("사업마다 새 사유가 하나씩 등장 (담합 → 정보 불일치 → 브로커 → 복습 → 중대재해)", function () {
+      function playCorrect(E) {
+        var p = E.currentProject();
+        p.bidders.forEach(function (b) { E.judge(b.id, b.verdict, b.reason); });
+        E.award(E.awardCandidates()[0].id);
+        E.nextProject();
+      }
+
+      test("데이터 순서대로 하면 새 사유가 하나씩 등장 (담합 → 정보 불일치 → 브로커 → 복습 → 중대재해)", function () {
         E.reset();
         var got = [];
-        Game.DATA.projects.forEach(function (p, i) {
-          E.state.projectIndex = i;
+        while (!E.isFinished()) {
           got.push([E.newReason(), E.availableReasons().length]);
-        });
+          playCorrect(E);
+        }
         eq(got, [["COLLUSION", 6], ["INFO_MISMATCH", 7], ["BROKER", 8], [null, 8], ["SAFETY", 9]], "사유 등장");
       });
 
-      test("데이터 검증이 아직 등장 안 한 사유를 정답으로 쓴 경우를 잡아냄", function () {
-        var bad = clone(Game.DATA);
-        var c = bad.projects[0].bidders[2];         // 구름가구 (예산 초과)
-        c.reason = "SAFETY";
-        c.docs.status.seriousAccidents = 1;
-        c.docs.quote.unitPrice = 180000; c.docs.quote.total = 36000000;
-        var errors = E.validateData(bad);
-        if (!errors.some(function (m) { return m.indexOf("아직 등장하지 않음") !== -1; })) throw new Error("사유 시점 오류를 못 잡음: " + errors.join(" / "));
+      test("사업은 아무 순서로나 고를 수 있고, 새 사유는 처음 만날 때 소개됨", function () {
+        E.reset();
+        E.selectProject("mask");
+        eq(E.newReasons(), ["INFO_MISMATCH"], "마스크를 먼저 하면 서류 불일치가 새 사유");
+        eq(E.projectNumber(), 1, "사업 1번째");
+        playCorrect(E);
+        eq(E.isDone("mask"), true, "마스크 끝");
+        E.selectProject("chair");
+        eq(E.newReasons(), [], "의자는 서류 불일치를 이미 봐서 새 사유 없음");
+        eq(E.availableReasons().indexOf("INFO_MISMATCH") !== -1, true, "서류 불일치는 계속 선택지에");
+        eq(E.projectNumber(), 2, "사업 2번째");
+        throws(function () { E.selectProject("mask"); }, "끝낸 사업은 다시 못 고름");
+        E.judge(E.currentProject().bidders[0].id, "ok");
+        throws(function () { E.selectProject("desk"); }, "심사 중엔 다른 사업으로 못 바꿈");
+        playCorrect2(E);
+        E.selectProject("gym"); playCorrect(E);
+        E.selectProject("desk"); playCorrect(E);
+        E.selectProject("led"); playCorrect(E);
+        eq(E.isFinished(), true, "5건 끝");
+        eq(E.state.mistakes, 0, "자유 순서로도 정답 플레이 가능");
+        eq(E.summary().projects.map(function (p) { return p.id; }), ["mask", "chair", "gym", "desk", "led"], "기록은 플레이한 순서");
+
+        function playCorrect2(E) {   // 첫 업체를 이미 판정한 상태에서 마저
+          var p = E.currentProject();
+          p.bidders.slice(1).forEach(function (b) { E.judge(b.id, b.verdict, b.reason); });
+          E.award(E.awardCandidates()[0].id);
+          E.nextProject();
+        }
       });
 
       test("5건 연속 정답 플레이 → 실수 0, 낙찰 5건, 태그 5점, 종료", function () {
