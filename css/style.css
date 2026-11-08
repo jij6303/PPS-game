@@ -97,6 +97,11 @@ html, body {
     var(--bg);
 }
 
+.title-actions { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+.btn-continue[hidden] { display: none; }
+.btn-continue { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.btn-continue small { font-size: 0.6em; font-weight: 400; color: var(--ink-soft); }
+
 .title-card {
   position: absolute;
   left: 50%;

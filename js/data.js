@@ -68,6 +68,9 @@ Game.DATA = {
     back: "‹ 바탕화면"
   },
 
+  /* 타이틀 이어하기 버튼 ({n}: 이어서 할 사업 번호). 진행은 사업을 끝낼 때마다 저장된다. */
+  continueLabel: "이어하기 <small>사업 {n}/{total}부터</small>",
+
   speakers: { dali: "달이", narmi: "나르미" },
 
   /* 부적격 사유 (GAME_SPEC 5.2). desc는 나르미가 쉬운 말로 설명할 때 쓴다. */

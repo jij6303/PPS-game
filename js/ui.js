@@ -337,6 +337,13 @@ window.Game = window.Game || {};
     },
 
     /** data-screen 이름으로 화면을 전환한다. */
+    /** 타이틀의 이어하기 버튼 (n: 이어서 할 사업 번호) */
+    renderContinue: function (canContinue, n, total) {
+      var btn = $("continue-btn");
+      btn.hidden = !canContinue;
+      if (canContinue) btn.innerHTML = Game.DATA.continueLabel.replace("{n}", n).replace("{total}", total);
+    },
+
     show: function (name) {
       var screens = document.querySelectorAll(".screen");
       for (var i = 0; i < screens.length; i++) {

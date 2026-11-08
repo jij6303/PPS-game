@@ -380,6 +380,38 @@
         if (Object.keys(orders).length < 5) throw new Error("40판 중 순서가 " + Object.keys(orders).length + "가지뿐 — 잘 안 섞임");
       });
 
+      test("이어하기: 끝낸 사업까지 저장·복원, 진행 중이던 사업은 처음부터, 잘못된 저장은 거부", function () {
+        E.reset();
+        E.selectProject("mask"); playCorrect(E);
+        E.selectProject("desk");
+        var d = E.currentProject();
+        E.judge(d.bidders[2].id, "ok");                 // 부적격 통과 → 실수 1
+        E.judge(d.bidders[0].id, "ok"); E.judge(d.bidders[1].id, "ok");
+        E.judge(d.bidders[3].id, "reject", d.bidders[3].reason); E.judge(d.bidders[4].id, "reject", d.bidders[4].reason);
+        E.award(d.bidders[1].id); E.nextProject();
+        E.selectProject("gym"); E.judge(E.currentProject().bidders[0].id, "ok");   // 진행 중
+        var save = JSON.parse(JSON.stringify(E.exportSave()));
+        var want = { done: E.state.done.slice(), mistakes: E.state.mistakes, tags: JSON.stringify(E.state.tags), seen: E.state.seenReasons.slice() };
+
+        E.reset();
+        eq(E.importSave(save), true, "복원");
+        eq(E.state.done, want.done, "끝낸 사업");
+        eq(E.state.mistakes, 1, "감사 지적");
+        eq(JSON.stringify(E.state.tags), want.tags, "태그");
+        eq(E.state.seenReasons, want.seen, "소개된 사유");
+        eq(E.projectNumber(), 3, "다음은 3번째 사업");
+        eq(E.judgmentsOf("gym"), {}, "진행 중이던 사업 판정은 지워짐");
+        eq(E.summary().projects.map(function (p) { return p.id; }), ["mask", "desk"], "심사 기록");
+        E.selectProject("gym"); playCorrect(E);   // 이어서 진행 가능
+        eq(E.state.done.length, 3, "이어서 진행");
+
+        E.reset();
+        eq(E.importSave(null), false, "저장 없음");
+        eq(E.importSave({ v: 999, state: save.state, projectIds: save.projectIds }), false, "형식 버전 다름");
+        eq(E.importSave({ v: save.v, state: save.state, projectIds: ["x"] }), false, "시나리오 바뀜");
+        eq(E.importSave({ v: save.v, state: { done: [] }, projectIds: save.projectIds }), false, "끝낸 사업 없음");
+      });
+
       var passed = results.filter(function (r) { return r.ok; }).length;
       var total = document.getElementById("total");
       total.textContent = passed + " / " + results.length + " 통과";
