@@ -707,7 +707,8 @@ html, body {
 .tool-clear span { font-size: 14px; }
 
 /* 덧그림 층: 서류 종이 전체를 덮고, 그리기는 doc-area의 Pointer Events가 처리 */
-.paper svg.marks {
+.paper svg.marks,
+.conditions svg.marks {
   position: absolute;
   left: 0;
   top: 0;
@@ -724,6 +725,10 @@ html, body {
 .papers[data-tool="marker"] .desk-paper .paper,
 .papers[data-tool="eraser"] .desk-paper .paper { touch-action: none; cursor: crosshair; }
 .papers[data-tool="eraser"] .desk-paper .paper { cursor: cell; }
+.conditions[data-tool="pen"],
+.conditions[data-tool="marker"],
+.conditions[data-tool="eraser"] { touch-action: none; cursor: crosshair; }
+.conditions[data-tool="eraser"] { cursor: cell; }
 .papers[data-tool="pen"] .desk-paper .paper-head,
 .papers[data-tool="marker"] .desk-paper .paper-head,
 .papers[data-tool="eraser"] .desk-paper .paper-head { cursor: grab; }
@@ -799,6 +804,7 @@ html, body {
 
 .side { display: flex; flex-direction: column; gap: 20px; min-height: 0; }
 .conditions {
+  position: relative;            /* 덧그림 층(svg.marks)의 기준 */
   background: var(--paper);
   border-radius: var(--radius);
   padding: 24px 28px;

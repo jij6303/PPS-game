@@ -474,12 +474,19 @@ window.Game = window.Game || {};
     /**
      * 서류마다 SVG 덧그림 층에 저장된 선을 그린다. paperId를 주면 그 서류만.
      * view.marks: { 서류id: [{ tool: "pen"|"marker", points: [[x, y], …] }] } — 좌표는 서류 종이(.paper) 기준.
+     * 공고 조건표도 그릴 수 있는 면이다 (id "conditions", 좌표는 #conditions 기준).
      */
     renderMarks: function (view, paperId) {
-      var sel = paperId ? '.desk-paper[data-paper="' + paperId + '"]' : ".desk-paper";
-      var els = document.querySelectorAll("#doc-area " + sel);
-      for (var i = 0; i < els.length; i++) {
-        var paper = els[i].querySelector(".paper");
+      var targets = [];
+      if (paperId !== "conditions") {
+        var sel = paperId ? '.desk-paper[data-paper="' + paperId + '"]' : ".desk-paper";
+        var els = document.querySelectorAll("#doc-area " + sel);
+        for (var k = 0; k < els.length; k++) targets.push({ id: els[k].getAttribute("data-paper"), surface: els[k].querySelector(".paper") });
+      }
+      if (!paperId || paperId === "conditions") targets.push({ id: "conditions", surface: $("conditions") });
+      for (var i = 0; i < targets.length; i++) {
+        var paper = targets[i].surface;
+        if (!paper) continue;
         var svg = paper.querySelector("svg.marks");
         if (!svg) {
           paper.insertAdjacentHTML("beforeend", '<svg class="marks" aria-hidden="true"></svg>');
@@ -488,7 +495,7 @@ window.Game = window.Game || {};
         // 종이 전체(스크롤되는 부분 포함)를 덮는 크기
         svg.setAttribute("width", paper.scrollWidth);
         svg.setAttribute("height", paper.scrollHeight);
-        var strokes = (view.marks && view.marks[els[i].getAttribute("data-paper")]) || [];
+        var strokes = (view.marks && view.marks[targets[i].id]) || [];
         svg.innerHTML = strokes.map(strokeHtml).join("");
       }
     },
@@ -496,6 +503,7 @@ window.Game = window.Game || {};
     /** 고른 도구 표시 (책상의 data-tool → 커서·터치 동작은 css가 맡음). */
     setTool: function (tool) {
       document.querySelector(".papers").setAttribute("data-tool", tool);
+      $("conditions").setAttribute("data-tool", tool);
       var btns = document.querySelectorAll(".tool-btn[data-tool]");
       for (var i = 0; i < btns.length; i++) {
         var on = btns[i].getAttribute("data-tool") === tool;
@@ -505,13 +513,12 @@ window.Game = window.Game || {};
     },
 
     /**
-     * 서류 위에 그리기·지우기 (Pointer Events — 마우스·터치 공통).
+     * 서류와 공고 조건표 위에 그리기·지우기 (Pointer Events — 마우스·터치 공통).
      * h.tool(): 지금 도구 ("move"|"pen"|"marker"|"eraser"), h.marks(paperId): 그 서류의 선 배열(없으면 만들어 돌려줌),
      * h.changed(paperId): 지우개로 선이 지워졌을 때 (그 서류 표시를 다시 그림).
      * 서류 머리(잡는 곳)와 버튼은 건드리지 않는다 → 어느 도구든 서류를 옮길 수 있다.
      */
     enablePaperDraw: function (h) {
-      var area = $("doc-area");
       var cur = null;     // { el, paper, id, tool, stroke, path }
 
       function local(e, paper) {
@@ -530,14 +537,24 @@ window.Game = window.Game || {};
         if (list.length !== before) h.changed(cur.id);
       }
 
-      area.addEventListener("pointerdown", function (e) {
+      /** 누른 곳의 그리기 면: 책상 위 서류 종이 또는 공고 조건표. 없으면 null. */
+      function surfaceAt(target) {
+        var el = target.closest(".desk-paper");
+        if (el) return { el: el, paper: el.querySelector(".paper"), id: el.getAttribute("data-paper") };
+        el = target.closest("#conditions");
+        if (el) return { el: el, paper: el, id: "conditions" };
+        return null;
+      }
+
+      function down(e) {
         var tool = h.tool();
         if (tool === "move") return;
-        var el = e.target.closest(".desk-paper");
-        if (!el || e.target.closest("button") || e.target.closest(".paper-head")) return;
-        var paper = el.querySelector(".paper");
+        if (e.target.closest("button") || e.target.closest(".paper-head")) return;
+        var s = surfaceAt(e.target);
+        if (!s) return;
+        var el = s.el, paper = s.paper;
         e.preventDefault();
-        cur = { el: el, paper: paper, id: el.getAttribute("data-paper"), tool: tool };
+        cur = { el: el, paper: paper, id: s.id, tool: tool };
         try { el.setPointerCapture(e.pointerId); } catch (err) { /* 무시 */ }
         var pt = local(e, paper);
         if (tool === "eraser") { erase(pt); return; }
@@ -545,9 +562,9 @@ window.Game = window.Game || {};
         var svg = paper.querySelector("svg.marks");
         svg.insertAdjacentHTML("beforeend", strokeHtml(cur.stroke));
         cur.path = svg.lastElementChild;
-      });
+      }
 
-      area.addEventListener("pointermove", function (e) {
+      function move(e) {
         if (!cur) return;
         var pt = local(e, cur.paper);
         if (cur.tool === "eraser") { erase(pt); return; }
@@ -555,15 +572,19 @@ window.Game = window.Game || {};
         if (Math.abs(pt[0] - last[0]) + Math.abs(pt[1] - last[1]) < 2) return;   // 너무 촘촘한 점은 건너뜀
         pts.push(pt);
         cur.path.setAttribute("d", strokeD(pts));
-      });
+      }
 
       function end() {
         if (!cur) return;
         if (cur.stroke) h.marks(cur.id).push(cur.stroke);
         cur = null;
       }
-      area.addEventListener("pointerup", end);
-      area.addEventListener("pointercancel", end);
+      [$("doc-area"), $("conditions")].forEach(function (area) {
+        area.addEventListener("pointerdown", down);
+        area.addEventListener("pointermove", move);
+        area.addEventListener("pointerup", end);
+        area.addEventListener("pointercancel", end);
+      });
     },
 
     /** 끌기 없이 쌓인 순서만 바꿀 때 (다시 그리지 않아 끌기가 끊기지 않음). */
@@ -660,6 +681,7 @@ window.Game = window.Game || {};
       var hint = Game.engine.hintOf(b.id);
 
       $("conditions").innerHTML = '<h3>공고 조건표</h3>' + rowsHtml(conditionsRows(p));
+      this.renderMarks(view, "conditions");     // 조건표에 그린 표시는 다시 그려도 남는다
 
       // 심사 중 나르미는 조용히 — 힌트를 눌렀을 때만 그 업체의 힌트 한 줄
       var bubble = $("narmi-bubble");
