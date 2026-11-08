@@ -488,7 +488,8 @@ html, body {
   padding: 6px 16px;
   border-radius: 999px;
 }
-.desk-progress { display: flex; gap: 14px; list-style: none; }
+.desk-progress { display: flex; gap: 14px; list-style: none; margin-left: auto; }
+.desk-pc-btn { margin-left: 28px; font-size: 24px; padding: 12px 28px; flex-shrink: 0; }
 .desk-progress li {
   width: 52px;
   height: 52px;
@@ -1393,6 +1394,7 @@ html, body {
 #stage.is-portrait .desk-top { padding: 0 24px 0 104px; }
 #stage.is-portrait .desk-title { font-size: 28px; gap: 12px; }
 #stage.is-portrait .desk-progress { gap: 10px; }
+#stage.is-portrait .desk-pc-btn { margin-left: 16px; font-size: 20px; padding: 10px 18px; }
 #stage.is-portrait .desk-progress li { width: 46px; height: 46px; font-size: 22px; }
 
 #stage.is-portrait .desk-body {
@@ -1958,6 +1960,17 @@ html, body {
 .pc-book i { position: absolute; left: 28%; right: 12%; top: 22%; height: 30%; border-radius: 4px; background: #fff; }
 .pc-book::after { content: "가"; position: absolute; left: 28%; right: 12%; top: 22%; height: 30%; display: grid; place-items: center; font-weight: 700; font-size: 24px; color: #2e5fbf; }
 .pc-icon-badge.is-book { background: var(--primary); }
+
+/* 심사 요령 아이콘: 체크 표시가 있는 클립보드 */
+.pc-guide { position: relative; display: block; width: 96px; height: 116px; border-radius: 10px; background: #fff; box-shadow: 0 0 0 4px #f2a54a inset, 0 6px 12px rgba(45, 49, 66, 0.18); }
+.pc-guide::before { content: ""; position: absolute; left: 30%; right: 30%; top: -8px; height: 18px; border-radius: 6px; background: #f2a54a; }
+.pc-guide i { position: absolute; left: 40%; right: 16%; height: 7px; border-radius: 4px; background: #ffe0b8; }
+.pc-guide i:nth-child(1) { top: 30%; } .pc-guide i:nth-child(2) { top: 50%; } .pc-guide i:nth-child(3) { top: 70%; }
+.pc-guide i::before { content: "✔"; position: absolute; left: -30px; top: -10px; font-size: 18px; font-weight: 700; color: var(--ok); }
+
+/* 심사 중인 사업 폴더 · 그 사업을 끝내기 전엔 못 여는 다른 폴더 */
+.pc-icon-badge.is-active { background: var(--reject); }
+.pc-icon.is-locked { opacity: 0.55; }
 
 /* ===== 조달 용어 사전 창 ===== */
 .glossary-modal { z-index: 115; }  /* 심사 기록 창(110) 위에서 열림 */

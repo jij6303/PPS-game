@@ -373,6 +373,13 @@ window.Game = window.Game || {};
       return Math.min(this.state.done.length + 1, this.data.projects.length);
     },
 
+    /** 심사를 시작했지만(판정 1곳 이상) 아직 안 끝낸 사업 id. 없으면 null. 이 사업을 끝내기 전엔 다른 사업을 못 고른다. */
+    activeProjectId: function () {
+      var cur = this.currentProject();
+      if (!cur || this.isDone(cur.id)) return null;
+      return Object.keys(this.judgmentsOf(cur.id)).length ? cur.id : null;
+    },
+
     /**
      * 할 사업을 고른다 (바탕화면 폴더). 끝낸 사업이나, 심사를 시작한 다른 사업이 있으면 고를 수 없다.
      */
@@ -381,9 +388,9 @@ window.Game = window.Game || {};
       for (var i = 0; i < this.data.projects.length; i++) if (this.data.projects[i].id === projectId) idx = i;
       if (idx === -1) throw new Error("사업을 찾을 수 없습니다: " + projectId);
       if (this.isDone(projectId)) throw new Error("이미 끝낸 사업입니다: " + projectId);
-      var cur = this.currentProject();
-      if (cur && cur.id !== projectId && Object.keys(this.judgmentsOf(cur.id)).length) {
-        throw new Error("심사 중인 사업을 먼저 끝내야 합니다: " + cur.id);
+      var active = this.activeProjectId();
+      if (active && active !== projectId) {
+        throw new Error("심사 중인 사업을 먼저 끝내야 합니다: " + active);
       }
       this.state.projectIndex = idx;
       return this.currentProject();
