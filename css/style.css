@@ -1922,6 +1922,33 @@ html, body {
 .pc-off { font: inherit; font-size: 22px; font-weight: 700; padding: 10px 22px; border: 0; border-radius: 12px; background: var(--primary); color: #fff; cursor: pointer; }
 .pc-off:hover { background: var(--primary-dark); }
 .pc-hint { flex: 1; font-size: 22px; }
+.pc-help { font: inherit; font-size: 20px; font-weight: 700; padding: 8px 18px; border: 2px solid rgba(255, 255, 255, 0.7); border-radius: 12px; background: transparent; color: #fff; cursor: pointer; }
+.pc-help:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* 바탕화면 둘러보기: 덮개(누르기 막음) + 스포트라이트(주변을 어둡게) + 나르미 말풍선 */
+.pc-tour { position: absolute; inset: 0; z-index: 10; }
+.pc-tour[hidden] { display: none; }
+.pc-tour-spot {
+  position: absolute; border-radius: 20px; border: 4px solid #ffe14d;
+  box-shadow: 0 0 0 4000px rgba(30, 36, 56, 0.58); pointer-events: none;
+  transition: left 0.3s ease, top 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+.pc-tour-bubble {
+  position: absolute; width: 640px; padding: 26px 30px 22px 150px; border-radius: 24px;
+  background: #fff; box-shadow: 0 20px 44px rgba(20, 25, 40, 0.35); min-height: 170px;
+}
+.pc-tour-bubble.is-in { animation: text-in 0.3s ease-out; }
+.pc-tour-narmi { position: absolute; left: 14px; top: 50%; width: 120px; transform: translateY(-50%); }
+.pc-tour-text { margin: 0; font-size: 25px; line-height: 1.55; word-break: keep-all; }
+.pc-tour-text b { color: var(--primary-dark); }
+.pc-tour-foot { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+.pc-tour-count { flex: 1; font-size: 20px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.pc-tour-skip { font: inherit; font-size: 20px; padding: 8px 12px; border: 0; background: none; color: var(--ink-soft); cursor: pointer; text-decoration: underline; }
+.pc-tour-skip[hidden] { display: none; }
+.pc-tour-next { font-size: 22px; padding: 10px 26px; }
+#stage.is-portrait .pc-tour-bubble { width: 760px; }
+@media (prefers-reduced-motion: reduce) { .pc-tour-spot { transition: none; } .pc-tour-bubble.is-in { animation: none; } }
+
 .pc-clock { font-size: 22px; font-variant-numeric: tabular-nums; opacity: 0.85; }
 
 .notice-actions { display: flex; gap: 20px; }

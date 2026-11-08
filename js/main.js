@@ -102,7 +102,52 @@ window.Game = window.Game || {};
   function showComputer() {
     ui.renderComputer();
     ui.show("computer");
+    if (!tourSeen()) startTour();      // 처음 켰을 때만 자동으로 둘러보기
   }
+
+  // ===== 바탕화면 둘러보기 (튜토리얼). 한 번 보면 이 브라우저에서는 자동으로 안 나온다 =====
+  var TOUR_KEY = "pps-game-pc-tour";
+  var tourIndex = -1;          // 진행 중인 단계 (-1이면 안 하는 중)
+  var tourOpened = false;      // 둘러보기가 폴더를 열었는지 (끝나면 닫는다)
+  var tourTimer = null;
+  function tourSeen() {
+    try { return window.localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { return false; }
+  }
+  function startTour() {
+    ui.closeFolder();
+    tourOpened = false;
+    tourIndex = -1;
+    nextTour();
+  }
+  function nextTour() {
+    var steps = Game.DATA.computer.tour.steps;
+    clearTimeout(tourTimer);
+    tourIndex++;
+    if (tourIndex >= steps.length) { endTour(); return; }
+    var step = steps[tourIndex];
+    var winOpen = !$pcWindow().hidden;
+    if (step.folder && !winOpen) {
+      // 남은 첫 사업 폴더를 열어 보여 준다 (창이 뜨는 연출이 끝난 뒤 위치를 잰다)
+      var p = Game.DATA.projects.filter(function (x) { return !engine.isDone(x.id); })[0];
+      if (!p) { nextTour(); return; }
+      ui.openFolder(p.id);
+      tourOpened = true;
+      ui.hideTour();
+      tourTimer = setTimeout(function () { if (!ui.renderTour(tourIndex)) nextTour(); }, 260);
+      return;
+    }
+    if (!step.folder && winOpen && tourOpened) { ui.closeFolder(); tourOpened = false; }
+    if (!ui.renderTour(tourIndex)) nextTour();
+  }
+  function endTour() {
+    clearTimeout(tourTimer);
+    tourIndex = -1;
+    ui.hideTour();
+    if (tourOpened) ui.closeFolder();
+    tourOpened = false;
+    try { window.localStorage.setItem(TOUR_KEY, "1"); } catch (e) { /* 저장 못 해도 진행 */ }
+  }
+  function $pcWindow() { return document.getElementById("pc-window"); }
 
   function openNotice(projectId) {
     engine.selectProject(projectId);
@@ -303,7 +348,10 @@ window.Game = window.Game || {};
 
     /** 사무실 책상 위 컴퓨터 → 바탕화면 */
     "office-pc": showComputer,
-    "pc-off": function () { showOffice(false); },
+    "pc-off": function () { endTour(); showOffice(false); },
+    "tour-start": startTour,
+    "tour-next": nextTour,
+    "tour-skip": endTour,
     "open-folder": function (el) { ui.openFolder(el.getAttribute("data-project")); },
     "close-folder": function () { ui.closeFolder(); },
     "open-notice": function (el) { openNotice(el.getAttribute("data-project")); },
@@ -499,6 +547,9 @@ window.Game = window.Game || {};
     "begin-review": "paper",
     "office-pc": "click",
     "pc-off": "click",
+    "tour-start": "pop",
+    "tour-next": "pop",
+    "tour-skip": "click",
     "open-folder": "paper",
     "close-folder": "click",
     "open-notice": "paper",
@@ -556,6 +607,7 @@ window.Game = window.Game || {};
   window.addEventListener("resize", function () {
     var was = ui.portrait;
     ui.fitStage();
+    if (tourIndex >= 0) ui.renderTour(tourIndex);
     // 화면을 돌리면 책상 크기·서류 폭이 바뀌니 서류를 책상 안으로 다시 맞춘다
     if (was !== ui.portrait && view && document.querySelector('[data-screen="desk"].is-active')) {
       ui.renderDesk(view);

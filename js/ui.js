@@ -465,6 +465,7 @@ window.Game = window.Game || {};
           (done ? '<span class="pc-icon-badge">' + esc(C.doneBadge) + "</span>" : "") + "</button>";
       }).join("");
       $("pc-off").textContent = C.off;
+      $("pc-help").textContent = C.help;
       $("pc-hint").textContent = C.hint;
       this.closeFolder();
     },
@@ -508,6 +509,59 @@ window.Game = window.Game || {};
     },
 
     closeFolder: function () { $("pc-window").hidden = true; },
+
+    /*
+     * 바탕화면 둘러보기 한 단계. 비출 요소들의 영역을 합쳐 스포트라이트를 놓고,
+     * 그 아래(자리가 없으면 위)에 나르미 말풍선. 비출 게 없으면 false (그 단계는 건너뜀).
+     */
+    renderTour: function (index) {
+      var T = Game.DATA.computer.tour;
+      var step = T.steps[index];
+      var desk = $("pc-desktop");
+      var els = desk.querySelectorAll(step.target);
+      var shown = [];
+      for (var i = 0; i < els.length; i++) if (els[i].offsetParent) shown.push(els[i]);
+      if (!shown.length) return false;
+      // 화면 좌표 → 바탕화면 좌표 (무대가 축소돼 있으므로 비율로 되돌린다)
+      var d = desk.getBoundingClientRect();
+      var k = desk.offsetWidth / d.width;
+      var box = { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity };
+      shown.forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        box.l = Math.min(box.l, r.left); box.t = Math.min(box.t, r.top);
+        box.r = Math.max(box.r, r.right); box.b = Math.max(box.b, r.bottom);
+      });
+      var PAD = 12;
+      var x = (box.l - d.left) * k - PAD, y = (box.t - d.top) * k - PAD;
+      var w = (box.r - box.l) * k + PAD * 2, h = (box.b - box.t) * k + PAD * 2;
+      var spot = $("pc-tour-spot");
+      spot.style.left = x + "px"; spot.style.top = y + "px";
+      spot.style.width = w + "px"; spot.style.height = h + "px";
+
+      $("pc-tour-text").innerHTML = step.text;    // data.js 문구 (<b> 강조 포함)
+      $("pc-tour-count").textContent = T.counter.replace("{i}", index + 1).replace("{n}", T.steps.length);
+      var last = index === T.steps.length - 1;
+      $("pc-tour-next").textContent = last ? T.done : T.next;
+      $("pc-tour-skip").textContent = T.skip;
+      $("pc-tour-skip").hidden = last;
+
+      var tour = $("pc-tour");
+      tour.hidden = false;
+      var bubble = $("pc-tour-bubble");
+      bubble.classList.remove("is-in");
+      var W = desk.offsetWidth, H = desk.offsetHeight, GAP = 24;
+      var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+      var by = y + h + GAP;
+      if (by + bh > H - 10) by = y - GAP - bh;          // 아래 자리가 없으면 위로
+      if (by < 10) by = Math.max(10, Math.min(H - bh - 10, y + h / 2 - bh / 2));
+      var bx = Math.max(16, Math.min(W - bw - 16, x + w / 2 - bw / 2));
+      bubble.style.left = bx + "px"; bubble.style.top = by + "px";
+      void bubble.offsetWidth;
+      bubble.classList.add("is-in");
+      return true;
+    },
+
+    hideTour: function () { $("pc-tour").hidden = true; },
 
     /**
      * 이야기의 "업무 장소" 장면 배경 = 업무 장소 화면의 방을 복사 (두 곳 그림이 항상 같게).

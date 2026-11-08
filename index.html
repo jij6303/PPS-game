@@ -142,9 +142,22 @@
           <header class="pc-topbar" id="pc-topbar"></header>
           <div class="pc-icons" id="pc-icons"></div>
           <div class="pc-window" id="pc-window" hidden></div>
+          <div class="pc-tour" id="pc-tour" hidden>
+            <div class="pc-tour-spot" id="pc-tour-spot"></div>
+            <div class="pc-tour-bubble" id="pc-tour-bubble">
+              <img class="pc-tour-narmi" src="assets/img/narmi_3d.png" alt="나르미">
+              <p class="pc-tour-text" id="pc-tour-text"></p>
+              <div class="pc-tour-foot">
+                <span class="pc-tour-count" id="pc-tour-count"></span>
+                <button class="pc-tour-skip" type="button" data-action="tour-skip" id="pc-tour-skip"></button>
+                <button class="btn btn-primary pc-tour-next" type="button" data-action="tour-next" id="pc-tour-next"></button>
+              </div>
+            </div>
+          </div>
           <footer class="pc-taskbar">
             <button class="pc-off" type="button" data-action="pc-off" id="pc-off"></button>
             <span class="pc-hint" id="pc-hint"></span>
+            <button class="pc-help" type="button" data-action="tour-start" id="pc-help"></button>
             <span class="pc-clock">09:00</span>
           </footer>
         </div>
