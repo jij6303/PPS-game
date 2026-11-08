@@ -65,7 +65,26 @@ Game.DATA = {
     doneNote: "이 업무는 끝냈어요. 낙찰: <b>{name}</b>",
     failedName: "유찰",
     off: "사무실로",
-    back: "‹ 바탕화면"
+    back: "‹ 바탕화면",
+    help: "? 도움말",
+    /*
+     * 바탕화면 둘러보기 (처음 컴퓨터를 켤 때 한 번, 도움말 버튼으로 다시).
+     * target: 비출 곳 (CSS 선택자, 여러 개면 합친 영역). folder: true면 남은 첫 사업 폴더를 열어 놓고 비춘다.
+     */
+    tour: {
+      next: "다음",
+      done: "알겠어요!",
+      skip: "건너뛰기",
+      counter: "{i} / {n}",
+      steps: [
+        { target: "#pc-topbar", text: "여기는 <b>전자조달 시스템</b>이에요. 공공기관이 필요한 물건을 사는 일을 모두 이 컴퓨터로 해요. 오른쪽 위에서 <b>남은 업무</b> 수를 볼 수 있어요." },
+        { target: ".pc-icon[data-action='open-folder']", text: "노란 <b>폴더</b> 하나가 사업 하나예요. <b>어떤 순서로 해도</b> 괜찮아요. 끝낸 사업에는 ✔ 표시가 붙어요." },
+        { target: ".pc-file[data-action='open-notice']", folder: true, text: "폴더를 열면 <b>입찰공고문</b>이 있어요. <b>예산 상한 · 필수 인증 · 마감일 · 요구 사양</b>을 먼저 읽어 두세요. 이게 심사 기준이에요!" },
+        { target: ".pc-file[data-action='open-bidders']", folder: true, text: "<b>입찰 업체</b> 파일에는 업체들의 서류가 들어 있어요. 공고 조건과 하나씩 비교해서 <b>적격 · 부적격</b> 도장을 찍어요." },
+        { target: ".pc-icon-book", text: "모르는 말이 나오면 <b>용어 사전</b>을 열어 봐요. 일을 할수록 새 용어 카드가 모여요." },
+        { target: "#pc-off, #pc-help", text: "<b>사무실로</b>를 누르면 사무실로 돌아가요. 이 안내는 <b>도움말</b>에서 다시 볼 수 있어요. 그럼 첫 폴더를 열어 볼까요?" }
+      ]
+    }
   },
 
   /* 타이틀 이어하기 버튼 ({n}: 이어서 할 사업 번호). 진행은 사업을 끝낼 때마다 저장된다. */
