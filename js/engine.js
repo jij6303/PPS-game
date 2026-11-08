@@ -217,6 +217,8 @@ window.Game = window.Game || {};
     return codes;
   }
 
+  var SAVE_VERSION = 1;   // 저장 형식이 바뀌면 올린다 (옛 저장은 무시)
+
   // ===== 데이터 검증 =========================================================
 
   /**
@@ -519,6 +521,39 @@ window.Game = window.Game || {};
       }
       this.state.projectIndex = next;
       return this.currentProject();
+    },
+
+    /**
+     * 이어하기용 저장 데이터 (사업을 끝낸 직후에 부른다). 진행 중인 사업의 판정·힌트는 빼서
+     * 이어하면 그 사업을 처음부터 하게 한다.
+     */
+    exportSave: function () {
+      var st = JSON.parse(JSON.stringify(this.state));
+      var done = st.done;
+      ["judgments", "hints", "awards", "bidderOrder"].forEach(function (k) {
+        Object.keys(st[k]).forEach(function (pid) { if (done.indexOf(pid) === -1) delete st[k][pid]; });
+      });
+      return { v: SAVE_VERSION, projectIds: this.data.projects.map(function (p) { return p.id; }), state: st };
+    },
+
+    /**
+     * 저장 데이터로 이어한다. 형식이 다르거나 시나리오가 바뀌었으면 false (저장 무시).
+     * 끝낸 사업이 하나도 없거나 전부 끝냈으면 이어할 게 없으므로 false.
+     */
+    importSave: function (save) {
+      var ids = this.data.projects.map(function (p) { return p.id; });
+      if (!save || save.v !== SAVE_VERSION || !save.state || !Array.isArray(save.state.done)) return false;
+      if (JSON.stringify(save.projectIds) !== JSON.stringify(ids)) return false;
+      var st = save.state;
+      if (!st.done.length || st.done.length >= ids.length) return false;
+      if (!st.done.every(function (id) { return ids.indexOf(id) !== -1; })) return false;
+      var base = { judgments: {}, hints: {}, awards: {}, tags: {}, bidderOrder: {}, seenReasons: [], mistakes: 0 };
+      for (var k in base) if (st[k] === undefined) st[k] = base[k];
+      this.state = st;
+      // 남은 사업 중 첫 번째를 기본으로
+      this.state.projectIndex = ids.length;
+      for (var i = 0; i < ids.length; i++) if (st.done.indexOf(ids[i]) === -1) { this.state.projectIndex = i; break; }
+      return true;
     },
 
     /** 가장 높은 성향 태그. 없거나 동점이면 "balanced" (GAME_SPEC 7.2 제안). */

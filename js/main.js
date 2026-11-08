@@ -19,6 +19,35 @@ window.Game = window.Game || {};
 
   function project() { return engine.currentProject(); }
 
+  // ===== 이어하기 (GAME_SPEC 9장: localStorage는 try/catch, 실패해도 게임 진행) =====
+  var SAVE_KEY = "pps-game-save";
+  function readSave() {
+    try {
+      var raw = window.localStorage.getItem(SAVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function writeSave() {
+    try { window.localStorage.setItem(SAVE_KEY, JSON.stringify(engine.exportSave())); } catch (e) { /* 저장 못 해도 진행 */ }
+  }
+  function clearSave() {
+    try { window.localStorage.removeItem(SAVE_KEY); } catch (e) { /* 무시 */ }
+  }
+  /** 타이틀의 이어하기 버튼: 이어할 수 있는 저장이 있을 때만 */
+  function showTitle() {
+    var save = readSave();
+    var ok = false, n = 0;
+    if (save) {
+      engine.reset();
+      ok = engine.importSave(save);
+      if (ok) n = engine.projectNumber();
+      engine.reset();
+      if (!ok) clearSave();    // 깨졌거나 시나리오가 바뀐 저장은 지움
+    }
+    ui.renderContinue(ok, n, Game.DATA.projects.length);
+    ui.show("title");
+  }
+
   function startIntro() {
     introIndex = 0;
     ui.renderIntro(0);
@@ -109,9 +138,11 @@ window.Game = window.Game || {};
   function nextProjectOrFinish() {
     engine.nextProject();
     if (engine.isFinished()) {
+      clearSave();       // 다 끝났으면 이어할 게 없음
       showResult();
       return;
     }
+    writeSave();         // 사업 하나 끝낼 때마다 저장
     showOffice(false);   // 사무실로 돌아오면 다음 공고가 책상 위에
   }
 
@@ -236,6 +267,13 @@ window.Game = window.Game || {};
   // data-action 버튼 → 동작. 마우스·터치 모두 click으로 들어온다.
   var actions = {
     "start": startIntro,
+    /** 저장된 곳부터: 사무실로 (진행 중이던 사업은 처음부터) */
+    "continue": function () {
+      engine.reset();
+      if (!engine.importSave(readSave())) { clearSave(); showTitle(); return; }
+      noticeRead = {};
+      showOffice(false);
+    },
     "intro-next": nextIntro,
     "intro-skip": function () {
       introIndex = -1;
@@ -416,7 +454,7 @@ window.Game = window.Game || {};
       nextProjectOrFinish();
     },
 
-    "restart": function () { ui.show("title"); },
+    "restart": showTitle,
 
     "toggle-sound": function () {
       sound.setEnabled(!sound.enabled);
@@ -430,6 +468,7 @@ window.Game = window.Game || {};
    */
   var ACTION_SOUNDS = {
     "start": "click",
+    "continue": "click",
     "intro-next": "pop",
     "intro-skip": "click",
     "begin-review": "paper",
@@ -506,5 +545,5 @@ window.Game = window.Game || {};
   ui.setTool(tool);
   ui.buildIntroRoom();
   ui.renderSoundButton(sound.enabled);
-  ui.show("title");
+  showTitle();
 })();
