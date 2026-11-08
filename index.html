@@ -291,6 +291,19 @@
         <button class="btn" type="button" data-action="back-to-ending">칭호로 돌아가기</button>
         <button class="btn btn-primary" type="button" data-action="restart">다시 하기</button>
       </div>
+
+      <!-- 판정 복기: 표시를 누르면 그 업체의 근거 서류와 나르미 설명 -->
+      <div class="modal" id="review-modal" hidden>
+        <div class="modal-card review-card" role="dialog" aria-label="판정 복기">
+          <div id="review-body"></div>
+          <div class="review-nav">
+            <button class="btn" type="button" data-action="review-prev" id="review-prev">‹ 이전 업체</button>
+            <span class="review-pos" id="review-pos"></span>
+            <button class="btn" type="button" data-action="review-next" id="review-next">다음 업체 ›</button>
+            <button class="btn btn-primary" type="button" data-action="close-review">닫기</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 소리 켜기/끄기 (모든 화면 왼쪽 아래) -->

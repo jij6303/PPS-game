@@ -302,6 +302,36 @@
         eq(E.topTag(), "green", "최고 태그");
       });
 
+      test("판정 복기: 상태·근거 서류·조건표 칸 (담합은 두 업체 견적서)", function () {
+        E.reset();
+        var p = E.currentProject();
+        p.bidders.forEach(function (b) {
+          if (b.id === "desk-a") E.judge(b.id, "reject", "OVER_BUDGET");   // 적격을 반려
+          else if (b.verdict === "reject" && b.reason === "OVER_BUDGET") E.judge(b.id, "ok");   // 부적격 통과
+          else E.judge(b.id, b.verdict, b.reason);
+        });
+        var r = E.review("desk", "desk-a");
+        eq(r.status, "wrong", "적격 반려 → 실수");
+        eq(r.picked, "OVER_BUDGET", "고른 사유");
+        eq(r.papers[0].docKey, "quote", "고른 사유의 서류(견적서)");
+        eq(r.condFields.join(), "cond.budget", "조건표 예산 상한");
+
+        var over = p.bidders.filter(function (b) { return b.reason === "OVER_BUDGET"; })[0];
+        r = E.review("desk", over.id);
+        eq(r.status, "wrong", "부적격 통과 → 실수");
+        eq(r.papers[0].fields.join(), "quote.total", "견적 총액에 형광펜");
+
+        var col = p.bidders.filter(function (b) { return b.reason === "COLLUSION"; })[0];
+        r = E.review("desk", col.id);
+        eq(r.status, "right", "담합 정답");
+        eq(r.papers.length, 2, "두 업체 견적서");
+        eq(r.papers[0].bidderId, col.collusionWith, "담합 상대가 먼저");
+
+        r = E.review("desk", "desk-b");
+        eq(r.status, "right", "적격 통과 정답");
+        eq(r.papers.length, 0, "근거 서류 없음");
+      });
+
       var passed = results.filter(function (r) { return r.ok; }).length;
       var total = document.getElementById("total");
       total.textContent = passed + " / " + results.length + " 통과";
