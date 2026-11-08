@@ -1145,6 +1145,13 @@ html, body {
 .ending-dali, .ending-narmi { position: absolute; bottom: 0; height: 480px; pointer-events: none; }
 .ending-dali { left: 40px; }
 .ending-narmi { right: 40px; }
+/* 칭호 카드 이미지 저장 미리보기 */
+.card-preview { width: auto; max-height: 1000px; text-align: center; padding: 36px 48px; }
+.card-preview h3 { margin-bottom: 18px; }
+.card-preview img { display: block; height: 660px; margin: 0 auto; border-radius: 16px; box-shadow: var(--shadow); }
+.card-preview-tip { margin-top: 18px; font-size: 22px; color: var(--ink-soft); }
+.card-preview .modal-actions { justify-content: center; margin-top: 20px; }
+
 .ending-actions {
   position: absolute;
   left: 0;

@@ -271,6 +271,22 @@ window.Game = window.Game || {};
 
     "back-to-ending": function () { ui.show("ending"); },
 
+    /** 칭호 카드를 PNG로 저장하고 미리보기를 띄운다 (GAME_SPEC 7.2 공유용) */
+    "save-card": function (el) {
+      if (el.disabled) return;
+      el.disabled = true;
+      Game.card.save(engine.ending()).then(function (r) {
+        el.disabled = false;
+        document.getElementById("card-preview-img").src = r.dataUrl;
+        document.getElementById("card-modal").hidden = false;
+      }, function (err) {
+        el.disabled = false;
+        console.warn("[Game] 칭호 카드 저장 실패", err);
+      });
+    },
+
+    "close-card": function () { document.getElementById("card-modal").hidden = true; },
+
     "narmi-ok": function () {
       ui.closeNarmiModal();
       afterStamp();
@@ -382,6 +398,8 @@ window.Game = window.Game || {};
     "show-title": "fanfare",
     "show-record": "paper",
     "back-to-ending": "click",
+    "save-card": "paper",
+    "close-card": "click",
     "restart": "click"
   };
 
