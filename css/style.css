@@ -1677,7 +1677,7 @@ html, body {
 
 /* --- 업무 장소 (사무실) — 배치(문·창문·나르미·책상)는 docs/office_layout.png를 따르고 꾸밈을 더함 --- */
 .room { position: absolute; inset: 0; overflow: hidden; background: #f7eee2; }
-.room-door, .room-window, .room-narmi, .room-desk { position: absolute; border: none; padding: 0; font: inherit; color: inherit; background: none; }
+.room-door, .room-window, .room-narmi, .room-desk, .room-shelf { position: absolute; border: none; padding: 0; font: inherit; color: inherit; background: none; }
 
 /* 벽: 은은한 줄무늬 벽지 + 아래쪽 나무 징두리 */
 .room-wall { position: absolute; left: 0; right: 0; top: 0; height: 42%;
@@ -1748,7 +1748,15 @@ html, body {
 .room-clock i:nth-child(1) { height: 26px; transform: rotate(0deg); }                 /* 9시 정각: 시침 */
 .room-clock i:nth-child(2) { height: 34px; width: 4px; margin-left: -2px; transform: rotate(-90deg); background: #e5534b; }
 
-/* 서류 보관함 */
+/* 책장 (누르면 용어 사전) */
+[data-screen="office"] .room-shelf { cursor: pointer; transition: transform 0.15s ease, filter 0.15s ease; }
+[data-screen="office"] .room-shelf:hover { transform: translateY(-4px); filter: brightness(1.05); }
+.shelf-label {
+  position: absolute; right: -6px; top: -46px; z-index: 3;   /* 위쪽 오른편 (서류 상자 옆, 안내 말풍선에 안 가리게) */
+  padding: 6px 18px; border-radius: 999px; background: #1f3a8a; color: #fff;
+  font-size: 18px; font-weight: 700; white-space: nowrap; box-shadow: 0 6px 16px rgba(31, 58, 138, 0.25);
+}
+.scene-office .shelf-label { display: none; }
 .room-shelf { position: absolute; left: 60%; top: 24%; width: 15%; height: 32%; border-radius: 8px 8px 0 0; background: #c99a6b;
   box-shadow: inset 0 0 0 10px #b5855a, 0 8px 18px rgba(90, 60, 30, 0.18); display: flex; flex-direction: column; justify-content: space-around; padding: 14px 16px 10px; }
 .shelf-row { display: flex; align-items: flex-end; gap: 6px; height: 40%; border-bottom: 8px solid #a8784e; padding: 0 4px; }
@@ -1917,6 +1925,63 @@ html, body {
 .pc-clock { font-size: 22px; font-variant-numeric: tabular-nums; opacity: 0.85; }
 
 .notice-actions { display: flex; gap: 20px; }
+
+/* 바탕화면의 용어 사전 아이콘 (책) */
+.pc-book { position: relative; display: block; width: 96px; height: 116px; border-radius: 6px 12px 12px 6px; background: linear-gradient(90deg, #2e5fbf 0 14%, #4f8cf7 14%); box-shadow: 0 6px 12px rgba(45, 49, 66, 0.2); }
+.pc-book i { position: absolute; left: 28%; right: 12%; top: 22%; height: 30%; border-radius: 4px; background: #fff; }
+.pc-book::after { content: "가"; position: absolute; left: 28%; right: 12%; top: 22%; height: 30%; display: grid; place-items: center; font-weight: 700; font-size: 24px; color: #2e5fbf; }
+.pc-icon-badge.is-book { background: var(--primary); }
+
+/* ===== 조달 용어 사전 창 ===== */
+.glossary-modal { z-index: 40; }
+.glossary-card { width: 1500px; max-width: calc(100% - 80px); height: 860px; max-height: calc(100% - 60px); display: flex; flex-direction: column; padding: 30px 40px 34px; }
+.glossary-head { display: flex; align-items: center; gap: 20px; margin-bottom: 18px; }
+.glossary-head h3 { margin: 0; font-size: 40px; }
+.glossary-count { flex: 1; font-size: 24px; color: var(--ink-soft); }
+.glossary-count b { color: var(--primary-dark); font-size: 30px; }
+.glossary-badge { margin-left: 10px; padding: 4px 14px; border-radius: 999px; background: #fff3c4; color: #9a6a00; font-weight: 700; }
+.glossary-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 520px; gap: 30px; }
+.glossary-list { overflow: auto; padding-right: 8px; }
+.g-group + .g-group { margin-top: 22px; }
+.g-group h4 { font-size: 22px; color: var(--ink-soft); margin-bottom: 10px; }
+.g-cards { display: flex; flex-wrap: wrap; gap: 12px; }
+.g-card {
+  font: inherit; font-size: 22px; font-weight: 700; padding: 14px 20px; min-width: 150px;
+  border-radius: 14px; border: 3px solid transparent; cursor: pointer; color: var(--ink);
+  background: var(--sky); box-shadow: 0 4px 0 rgba(45, 49, 66, 0.08); transition: transform 0.12s ease;
+}
+.g-card.is-reasons { background: #fde7e5; }
+.g-card.is-policies { background: #dcf3e8; }
+.g-card:hover { transform: translateY(-2px); }
+.g-card.is-active { border-color: var(--primary); }
+.g-card.is-locked { background: #f0ebe2; color: #b5ab9a; }
+.glossary-detail { position: relative; background: var(--bg); border-radius: 22px; padding: 30px 32px 160px; overflow: auto; }
+.g-empty { font-size: 24px; color: var(--ink-soft); }
+.g-group-name { font-size: 20px; color: var(--ink-soft); }
+.g-name { font-size: 40px; margin: 4px 0 14px; }
+.g-desc { font-size: 25px; line-height: 1.6; }
+.g-more { margin-top: 14px; font-size: 22px; line-height: 1.6; color: var(--ink-soft); }
+.glossary-detail .review-policy { margin-top: 16px; }
+.g-narmi { position: absolute; right: 18px; bottom: 10px; height: 140px; }
+
+/* 알림 (새 용어 카드) */
+.toast {
+  position: absolute; left: 50%; top: 28px; transform: translateX(-50%); z-index: 50;
+  padding: 16px 30px; border-radius: 999px; background: #fff; box-shadow: var(--shadow);
+  font-size: 24px; white-space: nowrap; pointer-events: none; border: 3px solid #ffe14d;
+}
+.toast[hidden] { display: none; }
+.toast b { color: #c98a00; margin-right: 8px; }
+.toast.is-in { animation: toast-in 3.2s ease both; }
+@keyframes toast-in {
+  0% { opacity: 0; transform: translate(-50%, -20px); }
+  10%, 85% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}
+
+#stage.is-portrait .glossary-card { height: 1600px; }
+#stage.is-portrait .glossary-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+#stage.is-portrait .glossary-detail { padding-bottom: 150px; }
 
 /* 서류함 · 도장 · 인주 · 머그컵 · 펜꽂이 · 새싹 화분 · 명패 */
 .desk-tray { position: absolute; left: 6%; top: 14%; width: 15%; height: 46%; border-radius: 8px; background: #8d99ab; box-shadow: inset 0 0 0 6px #6f7b8d; transform: rotate(3deg); }
