@@ -458,11 +458,16 @@ window.Game = window.Game || {};
       var bookIcon = '<button type="button" class="pc-icon pc-icon-book" data-action="glossary">' +
         '<span class="pc-book" aria-hidden="true"><i></i></span><span class="pc-icon-name">' + esc(Game.DATA.glossary.open) + "</span>" +
         '<span class="pc-icon-badge is-book">' + gc.have + "/" + gc.total + "</span></button>";
-      $("pc-icons").innerHTML = bookIcon + Game.DATA.projects.map(function (p) {
+      var guideIcon = '<button type="button" class="pc-icon pc-icon-guide" data-action="guide">' +
+        '<span class="pc-guide" aria-hidden="true"><i></i><i></i><i></i></span><span class="pc-icon-name">' + esc(C.guideIcon) + "</span></button>";
+      var active = E.activeProjectId();
+      $("pc-icons").innerHTML = bookIcon + guideIcon + Game.DATA.projects.map(function (p) {
         var done = E.isDone(p.id);
-        return '<button type="button" class="pc-icon' + (done ? " is-done" : "") + '" data-action="open-folder" data-project="' + p.id + '">' +
-          folderIconHtml(done) + '<span class="pc-icon-name">' + esc(p.folder || p.title) + "</span>" +
-          (done ? '<span class="pc-icon-badge">' + esc(C.doneBadge) + "</span>" : "") + "</button>";
+        var badge = done ? '<span class="pc-icon-badge">' + esc(C.doneBadge) + "</span>"
+          : (p.id === active ? '<span class="pc-icon-badge is-active">' + esc(C.activeBadge) + "</span>" : "");
+        return '<button type="button" class="pc-icon' + (done ? " is-done" : "") + (active && !done && p.id !== active ? " is-locked" : "") +
+          '" data-action="open-folder" data-project="' + p.id + '">' +
+          folderIconHtml(done) + '<span class="pc-icon-name">' + esc(p.folder || p.title) + "</span>" + badge + "</button>";
       }).join("");
       $("pc-off").textContent = C.off;
       $("pc-help").textContent = C.help;
@@ -477,8 +482,14 @@ window.Game = window.Game || {};
       var p = null;
       Game.DATA.projects.forEach(function (x) { if (x.id === projectId) p = x; });
       var done = E.isDone(p.id);
+      var active = E.activeProjectId();
+      var activeP = null;
+      Game.DATA.projects.forEach(function (x) { if (x.id === active) activeP = x; });
       var body;
-      if (done) {
+      if (!done && activeP && activeP.id !== p.id) {
+        // 심사 중인 다른 사업이 있으면 그걸 먼저 끝내야 한다 (engine.selectProject 규칙)
+        body = '<p class="pc-window-note">' + C.lockedNote.replace("{title}", esc(activeP.folder || activeP.title)) + "</p>";
+      } else if (done) {
         var awardedId = E.state.awards[p.id];
         var awarded = awardedId ? findIn(p, awardedId) : null;
         body = '<p class="pc-window-note">' + C.doneNote.replace("{name}", esc(awarded ? awarded.name : C.failedName)) + "</p>";
@@ -495,7 +506,8 @@ window.Game = window.Game || {};
               folderIconHtml(false) + '<span class="pc-icon-name">' + esc(C.biddersFile.replace("{n}", p.bidders.length)) + "</span></button>" +
             '<div class="pc-file-pic">' + itemPictureHtml(p, p.requiredSpec, "is-pc") + "</div>" +
           "</div>" +
-          '<p class="pc-window-note">' + esc(C.folderNote) + (hasNew ? ' <b class="pc-new">' + esc(C.newReasonNote) + "</b>" : "") + "</p>";
+          '<p class="pc-window-note">' + (p.id === active ? C.activeNote : esc(C.folderNote) +
+            (hasNew ? ' <b class="pc-new">' + esc(C.newReasonNote) + "</b>" : "")) + "</p>";
       }
       var win = $("pc-window");
       win.innerHTML =

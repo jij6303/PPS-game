@@ -137,8 +137,11 @@
         eq(E.availableReasons().indexOf("INFO_MISMATCH") !== -1, true, "서류 불일치는 계속 선택지에");
         eq(E.projectNumber(), 2, "사업 2번째");
         throws(function () { E.selectProject("mask"); }, "끝낸 사업은 다시 못 고름");
+        eq(E.activeProjectId(), null, "판정 전에는 심사 중인 사업 없음");
         E.judge(E.currentProject().bidders[0].id, "ok");
+        eq(E.activeProjectId(), "chair", "판정 1곳부터 심사 중");
         throws(function () { E.selectProject("desk"); }, "심사 중엔 다른 사업으로 못 바꿈");
+        eq(E.selectProject("chair").id, "chair", "심사 중인 사업은 다시 고를 수 있음 (이어서 하기)");
         playCorrect2(E);
         E.selectProject("gym"); playCorrect(E);
         E.selectProject("desk"); playCorrect(E);

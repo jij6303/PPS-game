@@ -82,6 +82,7 @@ window.Game = window.Game || {};
 
   function startGame() {
     engine.reset();
+    view = null;
     noticeRead = {};
     syncCards();
     var errors = engine.validateData();
@@ -92,7 +93,8 @@ window.Game = window.Game || {};
   /** 업무 장소(사무실). 책상 위에 이번 사업 공고가 놓여 있고, 책상을 누르면 공고 → 심사. */
   var narmiTipIndex = 0;
   function showOffice(first) {
-    view = null;
+    // 심사 중에 바탕화면·사무실로 나와도 책상(서류 배치·표시)은 그대로 둔다. 끝낸 사업이면 치운다.
+    if (view && engine.isDone(view.project.id)) view = null;
     ui.renderOffice(first);
     ui.show("office");
   }
@@ -155,9 +157,20 @@ window.Game = window.Game || {};
   function guideSeen() {
     try { return window.localStorage.getItem(GUIDE_KEY) === "1"; } catch (e) { return false; }
   }
+  /**
+   * 심사 요령에서 열어 볼 사유: 기본 + 끝낸 사업에서 소개된 것 + 공고를 읽은 지금 사업의 새 사유.
+   * (바탕화면에서 열면 아직 공고를 안 읽은 사업의 새 사유는 잠긴 채로)
+   */
+  function guideReasons() {
+    var cur = project();
+    if (cur && noticeRead[cur.id] && !engine.isDone(cur.id)) return engine.availableReasons();
+    var codes = (Game.DATA.startingReasons || []).slice();
+    engine.state.seenReasons.forEach(function (c) { if (codes.indexOf(c) === -1) codes.push(c); });
+    return codes;
+  }
   function openGuide(page) {
     guidePage = page;
-    ui.openGuide(page, engine.availableReasons());
+    ui.openGuide(page, guideReasons());
   }
   function stepGuide(d) {
     var pages = ui.guidePages();
@@ -165,7 +178,7 @@ window.Game = window.Game || {};
     if (i >= pages.length) { closeGuide(); return; }
     if (i < 0) return;
     guidePage = pages[i];
-    ui.renderGuide(guidePage, engine.availableReasons());
+    ui.renderGuide(guidePage, guideReasons());
   }
   function closeGuide() {
     ui.closeGuide();
@@ -201,6 +214,38 @@ window.Game = window.Game || {};
     ui.renderDesk(view);
     ui.show("desk");
     sound.play("enter", 0.1);   // 새 업체가 창구에 "띵동"
+  }
+
+  /**
+   * 지금 사업 심사를 시작하거나 이어서 한다.
+   * 바탕화면에 다녀왔으면 책상 그대로, 책상이 치워졌으면(사무실을 거쳐 옴) 판정한 업체는 건너뛰고 다음 업체부터.
+   */
+  function startReview() {
+    var p = project();
+    if (view && view.project.id === p.id) {
+      ui.renderDesk(view);
+      ui.show("desk");
+      return;
+    }
+    var judged = engine.judgmentsOf(p.id);
+    var bidders = engine.orderedBidders();
+    var first = 0;
+    while (first < bidders.length - 1 && judged[bidders[first].id]) first++;
+    view = null;
+    enterBidder(first);
+    if (first > 0) {
+      bidders.forEach(function (b) { if (judged[b.id]) view.stamps[b.id] = judged[b.id].verdict; });
+      ui.renderDesk(view);
+    }
+    if (!guideSeen()) openGuide("intro");    // 처음 심사할 때만 자동으로
+  }
+
+  /** 심사 중 → 바탕화면. 진행 상태는 그대로 (같은 사업의 입찰 업체 파일을 열면 이어서) */
+  function leaveDesk() {
+    if (busy) return;           // 도장 찍는 중에는 안 됨
+    pendingReason = null;
+    ui.closeReasons();
+    showComputer();
   }
 
   function afterStamp() {
@@ -358,6 +403,7 @@ window.Game = window.Game || {};
     /** 저장된 곳부터: 사무실로 (진행 중이던 사업은 처음부터) */
     "continue": function () {
       engine.reset();
+      view = null;
       if (!engine.importSave(readSave())) { clearSave(); showTitle(); return; }
       noticeRead = {};
       syncCards();
@@ -383,9 +429,7 @@ window.Game = window.Game || {};
       var id = el.getAttribute("data-project");
       if (!noticeRead[id]) { openNotice(id); return; }
       engine.selectProject(id);
-      view = null;
-      enterBidder(0);
-      if (!guideSeen()) openGuide("intro");
+      startReview();
     },
     "back-to-pc": showComputer,
 
@@ -403,16 +447,13 @@ window.Game = window.Game || {};
       ui.showOfficeTip(spot, html);
     },
 
-    "begin-review": function () {
-      view = null;
-      enterBidder(0);
-      if (!guideSeen()) openGuide("intro");    // 처음 심사할 때만 자동으로
-    },
+    "begin-review": startReview,
+    "desk-to-pc": leaveDesk,
 
     "guide": function () { openGuide("intro"); },
     /** 사유 고르는 창에서: 고른 사유가 있으면 그 페이지부터 (사유 창은 그대로 두고 위에 띄운다) */
     "guide-reason": function () { openGuide(pendingReason || "intro"); },
-    "guide-page": function (el) { guidePage = el.getAttribute("data-page"); ui.renderGuide(guidePage, engine.availableReasons()); },
+    "guide-page": function (el) { guidePage = el.getAttribute("data-page"); ui.renderGuide(guidePage, guideReasons()); },
     "guide-prev": function () { stepGuide(-1); },
     "guide-next": function () { stepGuide(1); },
     "close-guide": closeGuide,
@@ -588,6 +629,7 @@ window.Game = window.Game || {};
     "open-notice": "paper",
     "open-bidders": "paper",
     "back-to-pc": "click",
+    "desk-to-pc": "click",
     "office-spot": "pop",
     "tab": "paper",
     "compare": "paper",

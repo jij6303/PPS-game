@@ -62,6 +62,10 @@ Game.DATA = {
     folderNote: "공고문을 먼저 읽고 심사를 시작해요.",
     newReasonNote: "이 사업에서 새 확인 사항이 나와요!",
     doneBadge: "심사 완료",
+    activeBadge: "심사 중",
+    activeNote: "심사하던 업무예요. <b>입찰 업체</b> 파일을 열면 이어서 해요.",
+    lockedNote: "지금 심사 중인 <b>{title}</b> 업무를 먼저 끝내요. 끝내면 이 폴더를 열 수 있어요.",
+    guideIcon: "심사 요령",
     doneNote: "이 업무는 끝냈어요. 낙찰: <b>{name}</b>",
     failedName: "유찰",
     off: "사무실로",
@@ -81,7 +85,7 @@ Game.DATA = {
         { target: ".pc-icon[data-action='open-folder']", text: "노란 <b>폴더</b> 하나가 사업 하나예요. <b>어떤 순서로 해도</b> 괜찮아요. 끝낸 사업에는 ✔ 표시가 붙어요." },
         { target: ".pc-file[data-action='open-notice']", folder: true, text: "폴더를 열면 <b>입찰공고문</b>이 있어요. <b>예산 상한 · 필수 인증 · 마감일 · 요구 사양</b>을 먼저 읽어 두세요. 이게 심사 기준이에요!" },
         { target: ".pc-file[data-action='open-bidders']", folder: true, text: "<b>입찰 업체</b> 파일에는 업체들의 서류가 들어 있어요. 공고 조건과 하나씩 비교해서 <b>적격 · 부적격</b> 도장을 찍어요." },
-        { target: ".pc-icon-book", text: "모르는 말이 나오면 <b>용어 사전</b>을 열어 봐요. 일을 할수록 새 용어 카드가 모여요." },
+        { target: ".pc-icon-book, .pc-icon-guide", text: "모르는 말이 나오면 <b>용어 사전</b>을, 서류 보는 법이 헷갈리면 <b>심사 요령</b>을 열어 봐요. 심사하다가도 <b>‹ 바탕화면</b>을 눌러 와서 볼 수 있어요." },
         { target: "#pc-off, #pc-help", text: "<b>사무실로</b>를 누르면 사무실로 돌아가요. 이 안내는 <b>도움말</b>에서 다시 볼 수 있어요. 그럼 첫 폴더를 열어 볼까요?" }
       ]
     }
