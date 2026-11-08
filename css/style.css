@@ -1991,6 +1991,59 @@ html, body {
 .glossary-detail .review-policy { margin-top: 16px; }
 .g-narmi { position: absolute; right: 18px; bottom: 10px; height: 140px; }
 
+/* ===== 심사 요령 창 ===== */
+.guide-modal { z-index: 120; }     /* 사유 고르는 창(10)·표시 도구(60)·도장(100) 위에 */
+.guide-card { width: 1500px; max-width: calc(100% - 80px); height: 900px; max-height: calc(100% - 50px); display: flex; flex-direction: column; padding: 30px 40px 28px; }
+.guide-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 28px; }
+.guide-nav { display: flex; flex-direction: column; gap: 8px; overflow: auto; padding-right: 6px; }
+.guide-tab {
+  font: inherit; font-size: 21px; font-weight: 700; text-align: left; padding: 11px 18px; border-radius: 14px;
+  border: 3px solid transparent; background: var(--sky); color: var(--ink); cursor: pointer;
+}
+.guide-tab.is-reason { background: #fde7e5; }
+.guide-tab.is-locked { background: #f0ebe2; color: #b5ab9a; }
+.guide-tab.is-active { border-color: var(--primary); }
+.guide-page { background: var(--bg); border-radius: 22px; padding: 28px 36px; overflow: auto; }
+.guide-h { font-size: 38px; margin: 2px 0 12px; }
+.guide-lead { font-size: 25px; line-height: 1.6; }
+.guide-lead b, .guide-steps b, .guide-note b { color: var(--primary-dark); }
+.guide-sub { font-size: 21px; color: var(--ink-soft); margin: 22px 0 10px; }
+.guide-look { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 23px; font-weight: 700; }
+.guide-look span { padding: 8px 18px; border-radius: 999px; background: #fff; box-shadow: 0 2px 0 rgba(45, 49, 66, 0.08); }
+.guide-look i { font-style: normal; color: var(--ink-soft); }
+.guide-example { display: flex; align-items: stretch; gap: 18px; }
+.guide-doc { flex: 1; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(45, 49, 66, 0.08); }
+.guide-doc-title { font-size: 19px; font-weight: 700; padding: 8px 18px; background: #eef3fb; color: var(--ink-soft); }
+.guide-doc.is-doc .guide-doc-title { background: #fdf3e1; }
+.guide-doc-row { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 14px 18px; font-size: 22px; }
+.guide-doc-row span { color: var(--ink-soft); flex: none; }
+.guide-doc-row b { text-align: right; word-break: keep-all; }
+.guide-doc.is-doc .guide-doc-row b { color: var(--reject); background: linear-gradient(transparent 55%, #ffe98a 55%); }
+.guide-example.is-same .guide-doc-row b { color: var(--reject); background: linear-gradient(transparent 55%, #ffe98a 55%); }
+.guide-vs { align-self: center; font-size: 40px; font-weight: 700; color: var(--reject); }
+.guide-verdict { margin-top: 12px; font-size: 22px; color: var(--ink-soft); }
+.guide-verdict b { color: var(--reject); }
+.guide-steps { margin: 14px 0 0 1.3em; font-size: 24px; line-height: 1.6; }
+.guide-steps li + li { margin-top: 8px; }
+.guide-note { margin-top: 22px; padding: 14px 20px; border-radius: 14px; background: #fff7d6; font-size: 22px; line-height: 1.5; }
+.guide-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.guide-foot .btn:disabled { opacity: 0.4; cursor: default; }
+.guide-dots { font-size: 22px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.narmi-btns { display: flex; gap: 10px; }
+.guide-btn {
+  font: inherit; font-size: 20px; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;
+  border: 3px solid var(--primary); background: #fff; color: var(--primary-dark);
+}
+.guide-btn:hover { background: var(--sky); }
+.guide-link { display: block; margin-top: 20px; font: inherit; font-size: 21px; color: var(--ink-soft); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+.guide-link b { color: var(--primary-dark); }
+#stage.is-portrait .guide-card { height: 1650px; }
+#stage.is-portrait .guide-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+#stage.is-portrait .guide-nav { flex-direction: row; flex-wrap: wrap; overflow: visible; }
+#stage.is-portrait .guide-tab { font-size: 20px; padding: 8px 14px; }
+#stage.is-portrait .guide-example { flex-direction: column; }
+#stage.is-portrait .guide-vs { align-self: center; }
+
 /* 알림 (새 용어 카드) */
 .toast {
   position: absolute; left: 50%; top: 28px; transform: translateX(-50%); z-index: 50;

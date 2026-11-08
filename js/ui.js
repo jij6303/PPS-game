@@ -909,10 +909,76 @@ window.Game = window.Game || {};
           '<span class="reason-policy">' + esc(reasons[c].policy) + "</span></button>";
       }).join("");
       $("confirm-reject").disabled = !selected;
+      $("guide-link").innerHTML = Game.DATA.guide.reasonLink;
       $("reason-modal").hidden = false;
     },
 
     closeReasons: function () { $("reason-modal").hidden = true; },
+
+    // ===== 심사 요령 =====
+    /** 페이지 목록: 심사 순서 → 사유 9개(데이터 순서) → 헷갈릴 때 */
+    guidePages: function () {
+      return ["intro"].concat(Object.keys(Game.DATA.reasons)).concat(["outro"]);
+    },
+
+    /** page: 페이지 id, open: 지금 쓸 수 있는 사유 코드 (나머지 사유는 잠금) */
+    renderGuide: function (page, open) {
+      var G = Game.DATA.guide, R = Game.DATA.reasons;
+      var pages = this.guidePages();
+      var at = pages.indexOf(page);
+      function locked(id) { return R[id] && open.indexOf(id) === -1; }
+      $("guide-title").textContent = G.title;
+      $("guide-nav").innerHTML = pages.map(function (id) {
+        var name = id === "intro" ? G.intro.nav : id === "outro" ? G.outro.nav : (locked(id) ? G.lockedName : R[id].name);
+        var cls = "guide-tab" + (R[id] ? " is-reason" : "") + (locked(id) ? " is-locked" : "") + (id === page ? " is-active" : "");
+        return '<button type="button" class="' + cls + '" data-action="guide-page" data-page="' + id + '">' +
+          (locked(id) ? "🔒 " : "") + esc(name) + "</button>";
+      }).join("");
+
+      var html;
+      function list(steps, ordered) {
+        var tag = ordered ? "ol" : "ul";
+        return "<" + tag + ' class="guide-steps">' + steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</" + tag + ">";
+      }
+      if (page === "intro" || page === "outro") {
+        var P = G[page];
+        html = '<h4 class="guide-h">' + esc(P.title) + "</h4>" +
+          (P.lead ? '<p class="guide-lead">' + P.lead + "</p>" : "") +
+          list(P.steps, page === "intro") +
+          '<p class="guide-note">' + P.note + "</p>";
+      } else if (locked(page)) {
+        html = '<h4 class="guide-h">' + esc(G.lockedName) + '</h4><p class="guide-lead">' + esc(G.lockedText) + "</p>";
+      } else {
+        var r = R[page], g = G.reasons[page], ex = g.example;
+        var cell = function (title, row, cls) {
+          return '<div class="guide-doc ' + cls + '"><div class="guide-doc-title">' + esc(title) + "</div>" +
+            '<div class="guide-doc-row"><span>' + esc(row[0]) + "</span><b>" + esc(row[1]) + "</b></div></div>";
+        };
+        html = '<p class="g-group-name">' + esc(r.policy) + "</p>" +
+          '<h4 class="guide-h">' + esc(r.name) + "</h4>" +
+          '<p class="guide-lead">' + esc(r.desc) + "</p>" +
+          '<h5 class="guide-sub">' + esc(G.lookLabel) + "</h5>" +
+          '<p class="guide-look"><span>' + esc(g.look[0]) + '</span><i aria-hidden="true">⇄</i><span>' + esc(g.look[1]) + "</span></p>" +
+          '<h5 class="guide-sub">' + esc(G.exampleLabel) + "</h5>" +
+          '<div class="guide-example' + (ex.same ? " is-same" : "") + '">' +
+            cell(g.condTitle || G.condTitle, ex.cond, "is-cond") +
+            '<span class="guide-vs" aria-hidden="true">' + (ex.same ? "=" : "≠") + "</span>" +
+            cell(g.docTitle || G.docTitle, ex.doc, "is-doc") +
+          "</div>" +
+          '<p class="guide-verdict">→ 부적격: <b>' + esc(r.name) + "</b></p>" +
+          '<h5 class="guide-sub">' + esc(G.tipsLabel) + "</h5>" + list(g.tips, false);
+      }
+      var pg = $("guide-page");
+      pg.innerHTML = html;
+      pg.scrollTop = 0;
+      $("guide-dots").textContent = (at + 1) + " / " + pages.length;
+      $("guide-prev").textContent = G.prev;
+      $("guide-prev").disabled = at === 0;
+      $("guide-next").textContent = at === pages.length - 1 ? G.close : G.next;
+    },
+
+    openGuide: function (page, open) { this.renderGuide(page, open); $("guide-modal").hidden = false; },
+    closeGuide: function () { $("guide-modal").hidden = true; },
 
     /** 도장 쾅 연출. 끝나면 done() 호출. */
     stamp: function (verdict, done) {
