@@ -246,7 +246,10 @@
             <div class="narmi-talk">
               <!-- 심사 중에는 말하지 않고, 힌트를 눌렀을 때만 힌트 한 줄을 보여 준다 -->
               <div class="bubble bubble-left" id="narmi-bubble" hidden></div>
-              <button class="hint-btn" type="button" data-action="hint" id="hint-btn">힌트</button>
+              <div class="narmi-btns">
+                <button class="guide-btn" type="button" data-action="guide" id="guide-btn">심사 요령</button>
+                <button class="hint-btn" type="button" data-action="hint" id="hint-btn">힌트</button>
+              </div>
             </div>
           </section>
         </aside>
@@ -256,6 +259,7 @@
         <div class="modal-card">
           <h3>부적격 사유를 골라 주세요</h3>
           <div class="reason-list" id="reason-list"></div>
+          <button class="guide-link" type="button" data-action="guide-reason" id="guide-link"></button>
           <div class="modal-actions">
             <button class="btn" type="button" data-action="cancel-reject">취소</button>
             <button class="btn btn-reject" type="button" data-action="confirm-reject" id="confirm-reject" disabled>부적격 도장 찍기</button>
@@ -361,6 +365,26 @@
           <div class="glossary-list" id="glossary-list"></div>
           <article class="glossary-detail" id="glossary-detail"></article>
         </div>
+      </div>
+    </div>
+
+    <!-- 심사 요령 (부적격 사유별 확인 방법) -->
+    <div class="modal guide-modal" id="guide-modal" hidden>
+      <div class="modal-card guide-card" role="dialog" aria-labelledby="guide-title">
+        <header class="glossary-head">
+          <h3 id="guide-title"></h3>
+          <span class="glossary-count"></span>
+          <button class="pc-window-close" type="button" data-action="close-guide" aria-label="심사 요령 닫기">×</button>
+        </header>
+        <div class="guide-body">
+          <nav class="guide-nav" id="guide-nav"></nav>
+          <article class="guide-page" id="guide-page"></article>
+        </div>
+        <footer class="guide-foot">
+          <button class="btn" type="button" data-action="guide-prev" id="guide-prev"></button>
+          <span class="guide-dots" id="guide-dots"></span>
+          <button class="btn btn-primary" type="button" data-action="guide-next" id="guide-next"></button>
+        </footer>
       </div>
     </div>
 

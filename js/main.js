@@ -149,6 +149,29 @@ window.Game = window.Game || {};
   }
   function $pcWindow() { return document.getElementById("pc-window"); }
 
+  // ===== 심사 요령 (부적격 사유별 확인 방법). 한 번 보면 이 브라우저에서는 자동으로 안 나온다 =====
+  var GUIDE_KEY = "pps-game-judge-guide";
+  var guidePage = "intro";
+  function guideSeen() {
+    try { return window.localStorage.getItem(GUIDE_KEY) === "1"; } catch (e) { return false; }
+  }
+  function openGuide(page) {
+    guidePage = page;
+    ui.openGuide(page, engine.availableReasons());
+  }
+  function stepGuide(d) {
+    var pages = ui.guidePages();
+    var i = pages.indexOf(guidePage) + d;
+    if (i >= pages.length) { closeGuide(); return; }
+    if (i < 0) return;
+    guidePage = pages[i];
+    ui.renderGuide(guidePage, engine.availableReasons());
+  }
+  function closeGuide() {
+    ui.closeGuide();
+    try { window.localStorage.setItem(GUIDE_KEY, "1"); } catch (e) { /* 저장 못 해도 진행 */ }
+  }
+
   function openNotice(projectId) {
     engine.selectProject(projectId);
     noticeRead[projectId] = true;
@@ -362,6 +385,7 @@ window.Game = window.Game || {};
       engine.selectProject(id);
       view = null;
       enterBidder(0);
+      if (!guideSeen()) openGuide("intro");
     },
     "back-to-pc": showComputer,
 
@@ -382,7 +406,16 @@ window.Game = window.Game || {};
     "begin-review": function () {
       view = null;
       enterBidder(0);
+      if (!guideSeen()) openGuide("intro");    // 처음 심사할 때만 자동으로
     },
+
+    "guide": function () { openGuide("intro"); },
+    /** 사유 고르는 창에서: 고른 사유가 있으면 그 페이지부터 (사유 창은 그대로 두고 위에 띄운다) */
+    "guide-reason": function () { openGuide(pendingReason || "intro"); },
+    "guide-page": function (el) { guidePage = el.getAttribute("data-page"); ui.renderGuide(guidePage, engine.availableReasons()); },
+    "guide-prev": function () { stepGuide(-1); },
+    "guide-next": function () { stepGuide(1); },
+    "close-guide": closeGuide,
 
     "hint": function () {
       if (busy || engine.hintsLeft() <= 0 || engine.hintOf(view.bidder.id)) return;
@@ -579,6 +612,12 @@ window.Game = window.Game || {};
     "close-card": "click",
     "glossary": "paper",
     "glossary-pick": "pop",
+    "guide": "paper",
+    "guide-reason": "paper",
+    "guide-page": "pop",
+    "guide-prev": "paper",
+    "guide-next": "paper",
+    "close-guide": "click",
     "close-glossary": "click",
     "restart": "click"
   };
