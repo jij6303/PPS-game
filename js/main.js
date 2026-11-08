@@ -68,16 +68,18 @@ window.Game = window.Game || {};
 
   function enterBidder(index) {
     var p = project();
+    var bidders = engine.orderedBidders();   // 판마다 섞인 순서
     view = {
       project: p,
+      bidders: bidders,
       index: index,
-      bidder: p.bidders[index],
+      bidder: bidders[index],
       docKey: "application",
       papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
       pane: "papers",          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
       // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상. 공고 조건표 표시는 같은 사업 동안 남긴다.
       marks: { conditions: (view && view.marks.conditions) || [] },
-      seen: p.bidders.slice(0, index),
+      seen: bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
     openPaper(view.bidder.id, "application");
@@ -89,7 +91,7 @@ window.Game = window.Game || {};
   function afterStamp() {
     busy = false;
     var next = view.index + 1;
-    if (next < project().bidders.length) {
+    if (next < view.bidders.length) {
       enterBidder(next);
       return;
     }

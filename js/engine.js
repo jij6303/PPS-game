@@ -184,6 +184,28 @@ window.Game = window.Game || {};
     return { code: null, docKey: null, fields: [], vars: {} };
   }
 
+  /**
+   * 업체가 창구에 오는 순서를 섞는다 (판마다 다르게).
+   * 단, 담합 업체는 담합 상대보다 뒤에 와야 한다 — 앞서 본 견적서와 나란히 비교해야 찾을 수 있으므로.
+   */
+  function shuffledOrder(project, random) {
+    var ids = project.bidders.map(function (b) { return b.id; });
+    function valid(order) {
+      return project.bidders.every(function (b) {
+        return !b.collusionWith || order.indexOf(b.collusionWith) < order.indexOf(b.id);
+      });
+    }
+    for (var t = 0; t < 50; t++) {
+      var order = ids.slice();
+      for (var i = order.length - 1; i > 0; i--) {
+        var k = Math.floor(random() * (i + 1));
+        var tmp = order[i]; order[i] = order[k]; order[k] = tmp;
+      }
+      if (valid(order)) return order;
+    }
+    return ids;   // 못 찾으면 데이터 순서 (데이터 순서는 항상 조건을 만족)
+  }
+
   /** 이 사업의 부적격 업체들이 쓰는 사유 중 기본 사유가 아닌 것 (사업을 처음 열 때 나르미가 소개). */
   function projectReasons(project, starting) {
     var codes = [];
@@ -278,6 +300,7 @@ window.Game = window.Game || {};
         projectIndex: 0,  // 지금 고른 사업 (data.projects 위치). 다 끝나면 projects.length
         done: [],         // 끝낸 사업 id (끝낸 순서)
         seenReasons: [],  // 끝낸 사업에서 이미 소개된 사유 (기본 사유 제외)
+        bidderOrder: {},  // { projectId: [업체 id…] } — 창구에 오는 순서, 사업을 처음 열 때 섞음
         judgments: {},   // { projectId: { bidderId: 판정 기록 } }
         awards: {},      // { projectId: bidderId | null(유찰) }
         tags: {},        // { tag: 점수 }
@@ -323,6 +346,16 @@ window.Game = window.Game || {};
 
     currentProject: function () {
       return this.data.projects[this.state.projectIndex] || null;
+    },
+
+    /** 업체를 창구에 오는 순서대로 (판마다 섞인 순서). projectId를 안 주면 지금 사업. */
+    orderedBidders: function (projectId) {
+      var p = projectId ? null : this.currentProject();
+      if (projectId) this.data.projects.forEach(function (x) { if (x.id === projectId) p = x; });
+      if (!p) return [];
+      var order = this.state.bidderOrder[p.id];
+      if (!order) order = this.state.bidderOrder[p.id] = shuffledOrder(p, this.random || Math.random);
+      return order.map(function (id) { return findBidder(p, id); });
     },
 
     isFinished: function () {
@@ -437,7 +470,7 @@ window.Game = window.Game || {};
     awardCandidates: function () {
       var p = this.currentProject();
       var j = this.judgmentsOf(p.id);
-      return p.bidders.filter(function (b) { return j[b.id] && j[b.id].verdict === "ok"; });
+      return this.orderedBidders().filter(function (b) { return j[b.id] && j[b.id].verdict === "ok"; });
     },
 
     /**
@@ -573,7 +606,7 @@ window.Game = window.Game || {};
         projects.push({
           id: p.id,
           title: p.title,
-          judgments: p.bidders.map(function (b) {
+          judgments: self.orderedBidders(p.id).map(function (b) {   // 창구에 온 순서
             var r = j[b.id];
             return r ? Object.assign({ name: b.name }, r) : { bidderId: b.id, name: b.name, verdict: null };
           }),

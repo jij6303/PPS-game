@@ -725,7 +725,7 @@ window.Game = window.Game || {};
       var p = view.project, b = view.bidder;
 
       $("desk-title").innerHTML = '<span class="desk-no">사업 ' + projectNo() + "</span>" + esc(p.title);
-      $("desk-progress").innerHTML = p.bidders.map(function (x, i) {
+      $("desk-progress").innerHTML = view.bidders.map(function (x, i) {
         var cls = i === view.index ? "is-current" : (view.stamps[x.id] ? "is-" + view.stamps[x.id] : "");
         return '<li class="' + cls + '">' + (i + 1) + "</li>";
       }).join("");

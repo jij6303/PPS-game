@@ -28,6 +28,8 @@
   <script>
     (function () {
       var E = Game.engine;
+      // 업체 순서 섞기를 끈다 (random이 항상 0.999면 섞어도 데이터 순서 그대로) — 순서를 기대하는 테스트용
+      E.random = function () { return 0.999; };
       var results = [];
 
       function test(name, fn) {
@@ -357,6 +359,25 @@
         r = E.review("desk", "desk-b");
         eq(r.status, "right", "적격 통과 정답");
         eq(r.papers.length, 0, "근거 서류 없음");
+      });
+
+      test("업체 순서는 판마다 섞이고, 담합 업체는 항상 담합 상대 뒤", function () {
+        E.random = Math.random;
+        var orders = {};
+        for (var n = 0; n < 40; n++) {
+          E.reset();
+          Game.DATA.projects.forEach(function (p) {
+            var ids = E.orderedBidders(p.id).map(function (b) { return b.id; });
+            eq(ids.slice().sort(), p.bidders.map(function (b) { return b.id; }).sort(), p.id + " 업체 5곳 그대로");
+            p.bidders.forEach(function (b) {
+              if (b.collusionWith && ids.indexOf(b.collusionWith) > ids.indexOf(b.id)) throw new Error(p.id + ": 담합 업체가 상대보다 먼저 옴 " + ids.join());
+            });
+            eq(E.orderedBidders(p.id).map(function (b) { return b.id; }), ids, p.id + " 한 판 안에서는 순서 고정");
+            if (p.id === "desk") orders[ids.join()] = true;
+          });
+        }
+        E.random = function () { return 0.999; };
+        if (Object.keys(orders).length < 5) throw new Error("40판 중 순서가 " + Object.keys(orders).length + "가지뿐 — 잘 안 섞임");
       });
 
       var passed = results.filter(function (r) { return r.ok; }).length;
