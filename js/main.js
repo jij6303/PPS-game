@@ -19,6 +19,21 @@ window.Game = window.Game || {};
 
   function project() { return engine.currentProject(); }
 
+  /** 용어 카드를 열고, 새로 얻은 게 있으면 알림 */
+  function unlockCards(ids) {
+    var fresh = Game.glossary.unlock(ids);
+    if (fresh.length) {
+      ui.toast('<b>' + Game.DATA.glossary.got + "</b> " + fresh.map(function (e) { return e.name; }).join(" · "));
+      sound.play("hint");
+    }
+  }
+  /** 지금까지 진행에 맞는 카드 (처음 카드 + 소개된 사유 + 끝낸 사업 정책) — 이어하기·새 게임 때 */
+  function syncCards() {
+    unlockCards(Game.glossary.starterIds()
+      .concat(engine.state.seenReasons.map(function (c) { return "reason-" + c; }))
+      .concat(engine.state.done.map(function (id) { return "policy-" + id; })));
+  }
+
   // ===== 이어하기 (GAME_SPEC 9장: localStorage는 try/catch, 실패해도 게임 진행) =====
   var SAVE_KEY = "pps-game-save";
   function readSave() {
@@ -68,6 +83,7 @@ window.Game = window.Game || {};
   function startGame() {
     engine.reset();
     noticeRead = {};
+    syncCards();
     var errors = engine.validateData();
     if (errors.length) console.warn("[Game] 시나리오 데이터 검증 오류", errors);
     showOffice(true);
@@ -93,6 +109,8 @@ window.Game = window.Game || {};
     noticeRead[projectId] = true;
     ui.renderNotice(project());
     ui.show("notice");
+    // 이 사업에서 처음 소개되는 사유 카드
+    unlockCards(engine.newReasons().map(function (c) { return "reason-" + c; }));
   }
 
   function enterBidder(index) {
@@ -136,7 +154,9 @@ window.Game = window.Game || {};
 
   /** 다음 사업 공고로, 마지막 사업이면 전체 결과로. 판정 결과는 끝날 때까지 공개하지 않는다 (GAME_SPEC 4.2). */
   function nextProjectOrFinish() {
+    var finished = project();
     engine.nextProject();
+    unlockCards(["policy-" + finished.id]);   // 끝낸 사업의 정책 카드
     if (engine.isFinished()) {
       clearSave();       // 다 끝났으면 이어할 게 없음
       showResult();
@@ -272,6 +292,7 @@ window.Game = window.Game || {};
       engine.reset();
       if (!engine.importSave(readSave())) { clearSave(); showTitle(); return; }
       noticeRead = {};
+      syncCards();
       showOffice(false);
     },
     "intro-next": nextIntro,
@@ -456,6 +477,10 @@ window.Game = window.Game || {};
 
     "restart": showTitle,
 
+    "glossary": function () { ui.openGlossary(); },
+    "glossary-pick": function (el) { ui.renderGlossary(el.getAttribute("data-entry")); },
+    "close-glossary": function () { ui.closeGlossary(); },
+
     "toggle-sound": function () {
       sound.setEnabled(!sound.enabled);
       ui.renderSoundButton(sound.enabled);
@@ -501,6 +526,9 @@ window.Game = window.Game || {};
     "close-review": "click",
     "save-card": "paper",
     "close-card": "click",
+    "glossary": "paper",
+    "glossary-pick": "pop",
+    "close-glossary": "click",
     "restart": "click"
   };
 

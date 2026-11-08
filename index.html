@@ -100,12 +100,13 @@
         </button>
         <div class="room-valance"></div>
         <div class="room-clock"><i></i><i></i></div>
-        <!-- 서류 보관함 -->
-        <div class="room-shelf">
+        <!-- 책장: 누르면 조달 용어 사전 -->
+        <button class="room-shelf" type="button" data-action="glossary" aria-label="책장 — 조달 용어 사전">
           <span class="shelf-row"><i></i><i></i><i></i><i></i><i></i><i></i></span>
           <span class="shelf-row"><i></i><i></i><i></i><i></i><i></i></span>
           <span class="shelf-top"></span>
-        </div>
+          <span class="shelf-label" id="shelf-label"></span>
+        </button>
         <!-- 나르미: 작은 AI 받침대 위에 -->
         <button class="room-narmi" type="button" data-action="office-spot" data-spot="narmi" aria-label="나르미에게 묻기">
           <span class="narmi-pad">AI</span>
@@ -317,6 +318,7 @@
       </div>
       <div class="result-actions">
         <button class="btn" type="button" data-action="back-to-ending">칭호로 돌아가기</button>
+        <button class="btn" type="button" data-action="glossary">용어 사전</button>
         <button class="btn btn-primary" type="button" data-action="restart">다시 하기</button>
       </div>
 
@@ -334,6 +336,24 @@
       </div>
     </section>
 
+    <!-- 조달 용어 사전 (어느 화면에서나 열 수 있는 창) -->
+    <div class="modal glossary-modal" id="glossary-modal" hidden>
+      <div class="modal-card glossary-card" role="dialog" aria-labelledby="glossary-title">
+        <header class="glossary-head">
+          <h3 id="glossary-title"></h3>
+          <span class="glossary-count" id="glossary-count"></span>
+          <button class="pc-window-close" type="button" data-action="close-glossary" aria-label="용어 사전 닫기">×</button>
+        </header>
+        <div class="glossary-body">
+          <div class="glossary-list" id="glossary-list"></div>
+          <article class="glossary-detail" id="glossary-detail"></article>
+        </div>
+      </div>
+    </div>
+
+    <!-- 새 용어 카드 알림 -->
+    <div class="toast" id="toast" hidden></div>
+
     <!-- 소리 켜기/끄기 (모든 화면 왼쪽 아래) -->
     <button class="sound-btn" id="sound-btn" type="button" data-action="toggle-sound" aria-pressed="true" title="소리 끄기">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -349,6 +369,7 @@
   <script src="js/data.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/sound.js"></script>
+  <script src="js/glossary.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/card_images.js"></script>
   <script src="js/card.js"></script>

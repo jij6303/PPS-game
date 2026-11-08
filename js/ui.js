@@ -337,6 +337,59 @@ window.Game = window.Game || {};
     },
 
     /** data-screen 이름으로 화면을 전환한다. */
+    // ===== 조달 용어 사전 =====
+    /** 사전 창을 그린다. selectedId: 설명을 보여 줄 카드 (없으면 안내). */
+    renderGlossary: function (selectedId) {
+      var G = Game.DATA.glossary, gl = Game.glossary;
+      var entries = gl.entries();
+      var c = gl.count();
+      $("glossary-title").textContent = G.title;
+      $("glossary-count").innerHTML = "<b>" + c.have + "</b> / " + c.total + " 모음" +
+        (c.have >= c.total ? ' <span class="glossary-badge">🎓 ' + esc(G.complete) + "</span>" : "");
+
+      $("glossary-list").innerHTML = Object.keys(G.groups).map(function (g) {
+        var cards = entries.filter(function (e) { return e.group === g; }).map(function (e) {
+          var on = gl.isUnlocked(e.id);
+          return '<button type="button" class="g-card is-' + g + (on ? "" : " is-locked") + (e.id === selectedId ? " is-active" : "") +
+            '" data-action="glossary-pick" data-entry="' + e.id + '"' + (on ? "" : ' aria-label="아직 못 모은 카드"') + ">" +
+            esc(on ? e.name : G.lockedName) + "</button>";
+        }).join("");
+        return '<section class="g-group"><h4>' + esc(G.groups[g]) + "</h4><div class=\"g-cards\">" + cards + "</div></section>";
+      }).join("");
+
+      var sel = null;
+      entries.forEach(function (e) { if (e.id === selectedId) sel = e; });
+      var detail;
+      if (!sel) {
+        detail = c.have >= c.total ? '<p class="g-empty">' + esc(G.completeNote) + "</p>" : '<p class="g-empty">' + esc(G.pick) + "</p>";
+      } else if (!gl.isUnlocked(sel.id)) {
+        detail = '<p class="g-group-name">' + esc(G.groups[sel.group]) + '</p><h4 class="g-name">' + esc(G.lockedName) + "</h4>" +
+          '<p class="g-desc">' + esc(G.lockedHint) + "</p>";
+      } else {
+        detail = '<p class="g-group-name">' + esc(G.groups[sel.group]) + '</p><h4 class="g-name">' + esc(sel.name) + "</h4>" +
+          '<p class="g-desc">' + esc(sel.desc) + "</p>" +
+          (sel.more ? '<p class="g-more">' + esc(sel.more) + "</p>" : "") +
+          (sel.policy ? '<p class="review-policy"><span>연결 정책</span>' + esc(sel.policy) + "</p>" : "") +
+          '<img class="g-narmi" src="assets/img/narmi_3d.png" alt="">';
+      }
+      $("glossary-detail").innerHTML = detail;
+    },
+
+    openGlossary: function () { this.renderGlossary(null); $("glossary-modal").hidden = false; },
+    closeGlossary: function () { $("glossary-modal").hidden = true; },
+
+    /** 화면 위쪽에 잠깐 알림 (새 용어 카드 등) */
+    toast: function (html) {
+      var t = $("toast");
+      t.innerHTML = html;
+      t.hidden = false;
+      t.classList.remove("is-in");
+      void t.offsetWidth;
+      t.classList.add("is-in");
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
+    },
+
     /** 타이틀의 이어하기 버튼 (n: 이어서 할 사업 번호) */
     renderContinue: function (canContinue, n, total) {
       var btn = $("continue-btn");
@@ -390,6 +443,7 @@ window.Game = window.Game || {};
         return folderIconHtml(Game.engine.isDone(p.id));
       }).join("");
       $("desk-label").textContent = O.pcLabel;
+      $("shelf-label").textContent = Game.DATA.glossary.shelfLabel;
       $("office-prompt").textContent = first ? O.prompt.first : O.prompt.next;
       this.hideOfficeTip();
     },
@@ -400,7 +454,11 @@ window.Game = window.Game || {};
       var E = Game.engine;
       $("pc-topbar").innerHTML = '<span class="pc-app">' + esc(C.title) + "</span>" +
         '<span class="pc-user">' + esc(C.user) + " · 남은 업무 " + (E.data.projects.length - E.state.done.length) + "건</span>";
-      $("pc-icons").innerHTML = Game.DATA.projects.map(function (p) {
+      var gc = Game.glossary.count();
+      var bookIcon = '<button type="button" class="pc-icon pc-icon-book" data-action="glossary">' +
+        '<span class="pc-book" aria-hidden="true"><i></i></span><span class="pc-icon-name">' + esc(Game.DATA.glossary.open) + "</span>" +
+        '<span class="pc-icon-badge is-book">' + gc.have + "/" + gc.total + "</span></button>";
+      $("pc-icons").innerHTML = bookIcon + Game.DATA.projects.map(function (p) {
         var done = E.isDone(p.id);
         return '<button type="button" class="pc-icon' + (done ? " is-done" : "") + '" data-action="open-folder" data-project="' + p.id + '">' +
           folderIconHtml(done) + '<span class="pc-icon-name">' + esc(p.folder || p.title) + "</span>" +
