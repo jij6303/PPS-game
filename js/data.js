@@ -28,28 +28,44 @@ Game.DATA = {
     { scene: "office", speaker: "narmi", text: "안녕하세요, 달이 조달관님! 저는 AI 조달 비서 <b>나르미</b>예요. 조달청은 학교 책상, 도서관 조명처럼 나라에 필요한 물건과 공사를 <b>국민 세금</b>으로 사는 곳이에요." },
     { scene: "office", speaker: "narmi", text: "업체들이 서류를 내면 공고 조건과 꼼꼼히 비교해 주세요. 조건에 안 맞으면 <b>부적격</b>, 맞으면 <b>적격</b> 도장을 쾅!" },
     { scene: "office", speaker: "narmi", text: "심사를 통과한 업체들 중에서 낙찰할 한 곳을 골라요. 그때는 정답이 없어요 — <b>무엇을 더 소중히 여길지</b> 고르는 거예요." },
-    { scene: "office", speaker: "dali", text: "좋아, 공정하게! <b>책상</b>에 올라온 첫 사업 공고부터 볼게!" }
+    { scene: "office", speaker: "dali", text: "좋아, 공정하게! 책상 위 <b>컴퓨터</b>를 켜서 첫 업무를 골라 볼게!" }
   ],
   /* 장면 이름표 (화면 왼쪽 위) */
   scenes: { home: "달이의 집 · 아침 7:30", street: "출근길", building: "조달청 · 일하는 곳", office: "업무 장소" },
 
-  /* 업무 장소(사무실) — 책상을 누르면 공고 → 심사. 배치는 docs/office_layout.png 기준 */
+  /* 업무 장소(사무실) — 책상 위 컴퓨터를 누르면 바탕화면 → 사업 폴더 → 공고 → 심사. 배치는 docs/office_layout.png 기준 */
   office: {
     prompt: {
-      first: "책상을 눌러 첫 사업 공고를 확인해요!",
-      next: "새 사업 공고가 책상에 올라왔어요. 책상을 눌러 주세요!"
+      first: "책상 위 컴퓨터를 눌러 오늘 할 업무를 골라요!",
+      next: "다음 업무를 골라 볼까요? 컴퓨터를 눌러 주세요!"
     },
-    deskLabel: "책상 · 서류를 펼쳐 보고 판정하는 곳",
+    pcLabel: "컴퓨터 · 업무 고르기",
     spots: {
       door: "업체 대표들이 서류를 들고 이 문으로 들어와요.",
       window: "오늘도 맑음! 공정한 조달로 나라 살림을 지켜요.",
       narmi: [
-        "책상을 누르면 사업 공고를 볼 수 있어요. 조건을 잘 기억해 두세요!",
+        "컴퓨터를 켜면 사업마다 폴더가 있어요. 어떤 사업부터 해도 괜찮아요!",
         "서류는 탭을 눌러 펼치고, 펜·형광펜으로 표시하면서 공고 조건과 비교해 보세요.",
         "헷갈리면 심사 중에 <b>힌트</b>를 눌러요. 사업마다 두 번 도와드릴게요.",
         "통과한 업체 중 낙찰할 곳을 고를 때는 정답이 없어요. 무엇을 더 소중히 여길지 골라요."
       ]
     }
+  },
+
+  /* 컴퓨터 바탕화면 (전자조달 시스템) — 폴더 하나가 사업 하나 */
+  computer: {
+    title: "전자조달 시스템",
+    user: "신입 조달관 달이",
+    hint: "폴더를 열어 할 업무를 골라요. 어떤 순서로 해도 괜찮아요!",
+    noticeFile: "입찰공고문",
+    biddersFile: "입찰 업체 ({n}곳)",
+    folderNote: "공고문을 먼저 읽고 심사를 시작해요.",
+    newReasonNote: "이 사업에서 새 확인 사항이 나와요!",
+    doneBadge: "심사 완료",
+    doneNote: "이 업무는 끝냈어요. 낙찰: <b>{name}</b>",
+    failedName: "유찰",
+    off: "사무실로",
+    back: "‹ 바탕화면"
   },
 
   speakers: { dali: "달이", narmi: "나르미" },
@@ -67,7 +83,8 @@ Game.DATA = {
     SAFETY:        { name: "중대재해 이력",       policy: "안전 — 중대재해 기업 낙찰 제한", desc: "일하던 사람이 크게 다친 사고 기록이 있어요." }
   },
 
-  /* 첫 사업부터 쓸 수 있는 사유. 이후 사업마다 introducesReason이 하나씩 추가된다 (GAME_SPEC 5.2). */
+  /* 처음부터 쓸 수 있는 사유. 나머지(담합·서류 불일치·브로커·중대재해)는 그 사유가 필요한 사업을
+     처음 열 때 나르미가 소개하고 선택지에 추가된다 — 사업을 어떤 순서로 골라도 된다 (GAME_SPEC 5.2). */
   startingReasons: ["OVER_BUDGET", "LATE", "CERT_MISSING", "CERT_EXPIRED", "SPEC_MISMATCH"],
 
   /* 사양서 항목 이름 (화면 표시용) */
@@ -133,6 +150,7 @@ Game.DATA = {
   projects: [
     {
       id: "desk",
+      folder: "교실 책상",         // 컴퓨터 바탕화면 폴더 이름
       picture: "desk",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○초등학교 교실 책상 구매",
       agency: "○○초등학교",
@@ -142,7 +160,6 @@ Game.DATA = {
       requiredCerts: ["KC"],
       deadline: "2026-03-10",
       requiredSpec: { size: "600×400mm", heightAdjustable: true },
-      introducesReason: "COLLUSION",
       dilemma: "검증된 안정과 새로운 혁신 — 나라가 새 기술의 첫 구매자가 되어 줄 수도 있어요. 무엇을 더 소중히 여길까요?",
 
       bidders: [
@@ -213,6 +230,7 @@ Game.DATA = {
     /* ── 사업 2: 딜레마 #1 가격 vs 품질 ─────────────────────────────── */
     {
       id: "chair",
+      folder: "민원실 의자",         // 컴퓨터 바탕화면 폴더 이름
       picture: "chair",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○시청 민원실 의자 구매",
       agency: "○○시청",
@@ -222,7 +240,6 @@ Game.DATA = {
       requiredCerts: ["KC"],
       deadline: "2026-04-15",
       requiredSpec: { seatHeight: "45cm", armrest: true },
-      introducesReason: "INFO_MISMATCH",
       dilemma: "지금 아끼는 돈과 오래 쓰는 튼튼함 — 어느 쪽이 진짜 알뜰한 선택일까요?",
 
       bidders: [
@@ -292,6 +309,7 @@ Game.DATA = {
     /* ── 사업 3: 딜레마 #4 일반 제품 vs 친환경 제품 ──────────────────── */
     {
       id: "led",
+      folder: "도서관 LED 조명",         // 컴퓨터 바탕화면 폴더 이름
       picture: "led",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○도서관 LED 조명 교체",
       agency: "○○시립도서관",
@@ -301,7 +319,6 @@ Game.DATA = {
       requiredCerts: ["KC", "고효율"],
       deadline: "2026-05-20",
       requiredSpec: { power: "40W", colorTemp: "5000K" },
-      introducesReason: "BROKER",
       dilemma: "오늘의 가격과 지구의 내일 — 환경을 위해 돈을 조금 더 쓸까요?",
 
       bidders: [
@@ -384,6 +401,7 @@ Game.DATA = {
     /* ── 사업 4: 딜레마 #5 빠른 납기 vs 사회적 가치 ───────────────────── */
     {
       id: "mask",
+      folder: "보건소 방역 마스크",         // 컴퓨터 바탕화면 폴더 이름
       picture: "mask",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○보건소 방역 마스크 구매",
       agency: "○○보건소",
@@ -393,7 +411,6 @@ Game.DATA = {
       requiredCerts: ["식약처 허가"],
       deadline: "2026-06-10",
       requiredSpec: { grade: "KF94", packaging: "개별 포장" },
-      introducesReason: null,
       dilemma: "빠른 납품과 함께 사는 사회 — 속도와 사회적 가치 중 무엇을 고를까요?",
 
       bidders: [
@@ -463,6 +480,7 @@ Game.DATA = {
     /* ── 사업 5: 딜레마 #7 싼 시공 vs 안전 ─────────────────────────────── */
     {
       id: "gym",
+      folder: "체육관 지붕 공사",         // 컴퓨터 바탕화면 폴더 이름
       picture: "gym",          // 납품 물건 그림 종류 (ui.js의 ITEM_PICTURES)
       title: "○○중학교 체육관 지붕 보수 공사",
       agency: "○○중학교",
@@ -473,7 +491,6 @@ Game.DATA = {
       requiredCerts: ["건설업 면허"],
       deadline: "2026-07-15",
       requiredSpec: { roofPanel: "단열 샌드위치 패널", period: "45일 이내" },
-      introducesReason: "SAFETY",
       dilemma: "아끼는 비용과 지키는 안전 — 아이들이 쓸 체육관, 무엇을 먼저 볼까요?",
 
       bidders: [

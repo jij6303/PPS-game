@@ -108,22 +108,44 @@
           <span class="narmi-pad">AI</span>
           <img src="assets/img/narmi_3d.png" alt="나르미">
         </button>
-        <!-- 책상 -->
-        <button class="room-desk" type="button" data-action="office-desk" aria-label="책상 — 사업 공고 확인">
+        <!-- 책상: 위에 컴퓨터(모니터·키보드·마우스). 컴퓨터를 누르면 바탕화면에서 업무 고르기 -->
+        <div class="room-desk">
           <span class="desk-tray"><i></i><i></i><i></i></span>
           <span class="desk-stamp"></span>
           <span class="desk-ink"></span>
-          <span class="desk-notice" id="desk-notice"></span>
           <span class="desk-mug"></span>
           <span class="desk-pens"><i></i><i></i><i></i></span>
           <span class="desk-sprout"></span>
           <span class="desk-nameplate">신입 조달관 달이</span>
-          <span class="desk-label" id="desk-label"></span>
-        </button>
+          <button class="desk-pc" type="button" data-action="office-pc" aria-label="컴퓨터 — 업무 고르기">
+            <span class="pc-monitor"><span class="pc-screen" id="pc-mini"></span></span>
+            <span class="pc-stand"></span>
+            <span class="pc-keyboard"></span>
+            <span class="pc-mouse"></span>
+            <span class="desk-label" id="desk-label"></span>
+          </button>
+        </div>
       </div>
       <p class="scene-tag">업무 장소</p>
       <div class="office-prompt" id="office-prompt"></div>
       <div class="office-tip" id="office-tip" hidden></div>
+    </section>
+
+    <!-- 컴퓨터 바탕화면: 사업 폴더를 골라 업무 시작 (어떤 순서로든) -->
+    <section class="screen" data-screen="computer">
+      <div class="pc-frame">
+        <div class="pc-desktop" id="pc-desktop">
+          <header class="pc-topbar" id="pc-topbar"></header>
+          <div class="pc-icons" id="pc-icons"></div>
+          <div class="pc-window" id="pc-window" hidden></div>
+          <footer class="pc-taskbar">
+            <button class="pc-off" type="button" data-action="pc-off" id="pc-off"></button>
+            <span class="pc-hint" id="pc-hint"></span>
+            <span class="pc-clock">09:00</span>
+          </footer>
+        </div>
+      </div>
+      <div class="pc-base"></div>
     </section>
 
     <!-- ① 사업 공고 -->
@@ -138,7 +160,10 @@
             <img class="narmi-img" src="assets/img/narmi_3d.png" alt="나르미">
             <div class="bubble bubble-left" id="notice-narmi-bubble"></div>
           </div>
-          <button class="btn btn-primary" type="button" data-action="begin-review">심사 시작</button>
+          <div class="notice-actions">
+            <button class="btn" type="button" data-action="back-to-pc" id="back-to-pc">‹ 바탕화면</button>
+            <button class="btn btn-primary" type="button" data-action="begin-review">심사 시작</button>
+          </div>
         </div>
       </div>
     </section>

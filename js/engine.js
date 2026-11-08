@@ -3,7 +3,8 @@
  * 화면(DOM)에는 손대지 않는다. 시나리오 데이터는 Game.DATA(js/data.js)에서만 읽는다.
  *
  * 사업 1건의 흐름 (GAME_SPEC 4장)
- *   reset() → currentProject() → judge(...) × 업체 수 → awardCandidates() → award(id) → nextProject()
+ *   reset() → selectProject(id) → judge(...) × 업체 수 → awardCandidates() → award(id) → nextProject()
+ *   사업은 아무 순서로나 고를 수 있다 (컴퓨터 바탕화면의 폴더). selectProject를 안 부르면 남은 사업 중 첫 번째.
  *   모든 사업이 끝나면 isFinished() === true, summary()로 결과를 받는다.
  */
 window.Game = window.Game || {};
@@ -183,6 +184,17 @@ window.Game = window.Game || {};
     return { code: null, docKey: null, fields: [], vars: {} };
   }
 
+  /** 이 사업의 부적격 업체들이 쓰는 사유 중 기본 사유가 아닌 것 (사업을 처음 열 때 나르미가 소개). */
+  function projectReasons(project, starting) {
+    var codes = [];
+    project.bidders.forEach(function (b) {
+      if (b.verdict === "reject" && b.reason && starting.indexOf(b.reason) === -1 && codes.indexOf(b.reason) === -1) {
+        codes.push(b.reason);
+      }
+    });
+    return codes;
+  }
+
   // ===== 데이터 검증 =========================================================
 
   /**
@@ -199,17 +211,14 @@ window.Game = window.Game || {};
       if (reasonCodes.indexOf(code) === -1) err("startingReasons", "알 수 없는 사유 " + code);
     });
 
-    var available = (data.startingReasons || []).slice();
+    var projectIds = data.projects.map(function (p) { return p.id; });
+    if (uniq(projectIds).length !== projectIds.length) err("projects", "사업 id 중복");
 
     data.projects.forEach(function (p) {
       var where = "사업 " + p.id;
-      if (p.introducesReason && available.indexOf(p.introducesReason) === -1) available.push(p.introducesReason);
       var ids = p.bidders.map(function (b) { return b.id; });
       var okCount = 0;
 
-      if (p.introducesReason && reasonCodes.indexOf(p.introducesReason) === -1) {
-        err(where, "알 수 없는 introducesReason " + p.introducesReason);
-      }
       if (uniq(ids).length !== ids.length) err(where, "업체 id 중복");
 
       p.bidders.forEach(function (b) {
@@ -227,7 +236,6 @@ window.Game = window.Game || {};
           if (!p.news || !p.news[b.id]) err(bw, "적격 업체의 뉴스 문구가 없음");
         } else if (b.verdict === "reject") {
           if (reasonCodes.indexOf(b.reason) === -1) err(bw, "알 수 없는 사유 " + b.reason);
-          else if (available.indexOf(b.reason) === -1) err(bw, "정답 사유 " + b.reason + "가 이 사업 시점엔 아직 등장하지 않음");
           else if (!locate(p, b, b.reason)) err(bw, "정답 사유 " + b.reason + "의 근거 위치를 힌트로 찾을 수 없음");
           else if (issues.indexOf(b.reason) === -1) {
             err(bw, "정답 사유 " + b.reason + "의 근거가 서류에 없음 (발견: " + (issues.join(", ") || "없음") + ")");
@@ -267,7 +275,9 @@ window.Game = window.Game || {};
     reset: function (data) {
       this.data = data || Game.DATA;
       this.state = {
-        projectIndex: 0,
+        projectIndex: 0,  // 지금 고른 사업 (data.projects 위치). 다 끝나면 projects.length
+        done: [],         // 끝낸 사업 id (끝낸 순서)
+        seenReasons: [],  // 끝낸 사업에서 이미 소개된 사유 (기본 사유 제외)
         judgments: {},   // { projectId: { bidderId: 판정 기록 } }
         awards: {},      // { projectId: bidderId | null(유찰) }
         tags: {},        // { tag: 점수 }
@@ -316,23 +326,54 @@ window.Game = window.Game || {};
     },
 
     isFinished: function () {
-      return this.state.projectIndex >= this.data.projects.length;
+      return this.state.done.length >= this.data.projects.length;
     },
 
-    /** 현재 사업까지 등장한 부적격 사유 코드 (도장 선택지). */
+    isDone: function (projectId) {
+      return this.state.done.indexOf(projectId) !== -1;
+    },
+
+    /** 몇 번째로 하는 사업인지 (1부터). 화면의 "사업 n/5" 표시용. */
+    projectNumber: function () {
+      return Math.min(this.state.done.length + 1, this.data.projects.length);
+    },
+
+    /**
+     * 할 사업을 고른다 (바탕화면 폴더). 끝낸 사업이나, 심사를 시작한 다른 사업이 있으면 고를 수 없다.
+     */
+    selectProject: function (projectId) {
+      var idx = -1;
+      for (var i = 0; i < this.data.projects.length; i++) if (this.data.projects[i].id === projectId) idx = i;
+      if (idx === -1) throw new Error("사업을 찾을 수 없습니다: " + projectId);
+      if (this.isDone(projectId)) throw new Error("이미 끝낸 사업입니다: " + projectId);
+      var cur = this.currentProject();
+      if (cur && cur.id !== projectId && Object.keys(this.judgmentsOf(cur.id)).length) {
+        throw new Error("심사 중인 사업을 먼저 끝내야 합니다: " + cur.id);
+      }
+      this.state.projectIndex = idx;
+      return this.currentProject();
+    },
+
+    /** 지금 쓸 수 있는 부적격 사유 코드 (도장 선택지): 기본 + 끝낸 사업에서 소개된 것 + 이 사업에 필요한 것. */
     availableReasons: function () {
       var codes = (this.data.startingReasons || []).slice();
-      for (var i = 0; i <= this.state.projectIndex && i < this.data.projects.length; i++) {
-        var intro = this.data.projects[i].introducesReason;
-        if (intro && codes.indexOf(intro) === -1) codes.push(intro);
-      }
+      this.state.seenReasons.concat(this.newReasons()).forEach(function (c) {
+        if (codes.indexOf(c) === -1) codes.push(c);
+      });
       return codes;
     },
 
-    /** 현재 사업에서 처음 등장하는 사유 (나르미 자동 설명용). 없으면 null. */
-    newReason: function () {
+    /** 이 사업에서 처음 보는 사유들 (나르미 자동 설명용). 어떤 순서로 사업을 골라도 처음 만날 때 소개된다. */
+    newReasons: function () {
       var p = this.currentProject();
-      return (p && p.introducesReason) || null;
+      if (!p) return [];
+      var seen = this.state.seenReasons;
+      return projectReasons(p, this.data.startingReasons || []).filter(function (c) { return seen.indexOf(c) === -1; });
+    },
+
+    /** newReasons의 첫 번째 (없으면 null). */
+    newReason: function () {
+      return this.newReasons()[0] || null;
     },
 
     judgmentsOf: function (projectId) {
@@ -426,14 +467,24 @@ window.Game = window.Game || {};
       return b;
     },
 
-    /** 다음 사업으로 넘어간다. 낙찰(또는 유찰)을 마쳐야 한다. */
+    /**
+     * 지금 사업을 끝낸다 (낙찰 또는 유찰을 마쳐야 한다). 소개된 사유를 기억하고,
+     * 남은 사업 중 첫 번째를 기본으로 골라 둔다 (바탕화면에서 다른 폴더를 고르면 바뀐다).
+     */
     nextProject: function () {
       var p = this.currentProject();
-      if (!p) throw new Error("모든 사업이 끝났습니다.");
+      if (!p || this.isFinished()) throw new Error("모든 사업이 끝났습니다.");
       if (!Object.prototype.hasOwnProperty.call(this.state.awards, p.id)) {
         throw new Error("낙찰을 마친 뒤 다음 사업으로 넘어갈 수 있습니다.");
       }
-      this.state.projectIndex++;
+      var seen = this.state.seenReasons;
+      this.newReasons().forEach(function (c) { seen.push(c); });
+      this.state.done.push(p.id);
+      var next = this.data.projects.length;
+      for (var i = 0; i < this.data.projects.length; i++) {
+        if (!this.isDone(this.data.projects[i].id)) { next = i; break; }
+      }
+      this.state.projectIndex = next;
       return this.currentProject();
     },
 
@@ -508,7 +559,13 @@ window.Game = window.Game || {};
     summary: function () {
       var self = this;
       var projects = [];
-      this.data.projects.forEach(function (p) {
+      // 끝낸 순서대로, 그다음 진행 중인 사업 (뉴스·심사 기록도 플레이한 순서)
+      var done = this.state.done;
+      var ordered = this.data.projects.slice().sort(function (a, b) {
+        var ia = done.indexOf(a.id), ib = done.indexOf(b.id);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+      ordered.forEach(function (p) {
         if (!self.state.judgments[p.id] && !self.state.hints[p.id]) return;
         var j = self.state.judgments[p.id] || {};
         var awardedId = Object.prototype.hasOwnProperty.call(self.state.awards, p.id) ? self.state.awards[p.id] : undefined;

@@ -27,9 +27,14 @@ window.Game = window.Game || {};
   /** 수량 단위 (기본 "개", 공사처럼 개수가 아닌 품목은 데이터의 unit). */
   function unitOf(project) { return project.unit || "개"; }
 
-  /** "사업 2/5" 같은 진행 표시. */
+  /** "사업 2/5" 같은 진행 표시 (몇 번째로 하는 사업인지 — 사업은 아무 순서로나 고른다). */
   function projectNo() {
-    return (Game.engine.state.projectIndex + 1) + "/" + Game.engine.data.projects.length;
+    return Game.engine.projectNumber() + "/" + Game.engine.data.projects.length;
+  }
+
+  /** 폴더 아이콘 (CSS 그림). done이면 완료 표시. */
+  function folderIconHtml(done) {
+    return '<span class="pc-folder' + (done ? " is-done" : "") + '"><i></i>' + (done ? '<b aria-hidden="true">✔</b>' : "") + "</span>";
   }
 
   function yesNo(v) { return v ? "있음" : "없음"; }
@@ -371,16 +376,73 @@ window.Game = window.Game || {};
 
     // ===== 업무 장소 (사무실 — 책상을 누르면 공고 → 심사) =====
     /** first: 첫 사업이면 true (안내 문구가 다름). 책상 위에는 이번 사업 공고 카드가 놓인다. */
-    renderOffice: function (project, first) {
+    renderOffice: function (first) {
       var O = Game.DATA.office;
-      $("desk-notice").innerHTML =
-        '<span class="desk-notice-badge">입찰 공고 · 사업 ' + projectNo() + "</span>" +
-        '<span class="desk-notice-title">' + esc(project.title) + "</span>" +
-        itemPictureHtml(project, project.requiredSpec, "is-desk");
-      $("desk-label").textContent = O.deskLabel;
+      // 모니터 속 작은 바탕화면: 사업 폴더 (끝낸 건 완료 표시)
+      $("pc-mini").innerHTML = Game.DATA.projects.map(function (p) {
+        return folderIconHtml(Game.engine.isDone(p.id));
+      }).join("");
+      $("desk-label").textContent = O.pcLabel;
       $("office-prompt").textContent = first ? O.prompt.first : O.prompt.next;
       this.hideOfficeTip();
     },
+
+    // ===== 컴퓨터 바탕화면 (사업 폴더 고르기) =====
+    renderComputer: function () {
+      var C = Game.DATA.computer;
+      var E = Game.engine;
+      $("pc-topbar").innerHTML = '<span class="pc-app">' + esc(C.title) + "</span>" +
+        '<span class="pc-user">' + esc(C.user) + " · 남은 업무 " + (E.data.projects.length - E.state.done.length) + "건</span>";
+      $("pc-icons").innerHTML = Game.DATA.projects.map(function (p) {
+        var done = E.isDone(p.id);
+        return '<button type="button" class="pc-icon' + (done ? " is-done" : "") + '" data-action="open-folder" data-project="' + p.id + '">' +
+          folderIconHtml(done) + '<span class="pc-icon-name">' + esc(p.folder || p.title) + "</span>" +
+          (done ? '<span class="pc-icon-badge">' + esc(C.doneBadge) + "</span>" : "") + "</button>";
+      }).join("");
+      $("pc-off").textContent = C.off;
+      $("pc-hint").textContent = C.hint;
+      this.closeFolder();
+    },
+
+    /** 폴더 창: 입찰공고문 · 입찰 업체. 끝낸 사업이면 결과 한 줄. */
+    openFolder: function (projectId) {
+      var C = Game.DATA.computer;
+      var E = Game.engine;
+      var p = null;
+      Game.DATA.projects.forEach(function (x) { if (x.id === projectId) p = x; });
+      var done = E.isDone(p.id);
+      var body;
+      if (done) {
+        var awardedId = E.state.awards[p.id];
+        var awarded = awardedId ? findIn(p, awardedId) : null;
+        body = '<p class="pc-window-note">' + C.doneNote.replace("{name}", esc(awarded ? awarded.name : C.failedName)) + "</p>";
+      } else {
+        // 이 사업을 열면 새로 소개될 사유가 있는지 (끝낸 사업에서 이미 본 건 빼고)
+        var starting = Game.DATA.startingReasons || [];
+        var hasNew = p.bidders.some(function (b) {
+          return b.reason && starting.indexOf(b.reason) === -1 && E.state.seenReasons.indexOf(b.reason) === -1;
+        });
+        body = '<div class="pc-files">' +
+            '<button type="button" class="pc-file" data-action="open-notice" data-project="' + p.id + '">' +
+              '<span class="pc-doc"><i></i><i></i><i></i></span><span class="pc-icon-name">' + esc(C.noticeFile) + "</span></button>" +
+            '<button type="button" class="pc-file" data-action="open-bidders" data-project="' + p.id + '">' +
+              folderIconHtml(false) + '<span class="pc-icon-name">' + esc(C.biddersFile.replace("{n}", p.bidders.length)) + "</span></button>" +
+            '<div class="pc-file-pic">' + itemPictureHtml(p, p.requiredSpec, "is-pc") + "</div>" +
+          "</div>" +
+          '<p class="pc-window-note">' + esc(C.folderNote) + (hasNew ? ' <b class="pc-new">' + esc(C.newReasonNote) + "</b>" : "") + "</p>";
+      }
+      var win = $("pc-window");
+      win.innerHTML =
+        '<header class="pc-window-bar">' + folderIconHtml(done) + '<span class="pc-window-title">' + esc(p.title) + "</span>" +
+          '<button type="button" class="pc-window-close" data-action="close-folder" aria-label="폴더 닫기">×</button></header>' +
+        '<div class="pc-window-body">' + body + "</div>";
+      win.hidden = false;
+      win.classList.remove("is-in");
+      void win.offsetWidth;
+      win.classList.add("is-in");
+    },
+
+    closeFolder: function () { $("pc-window").hidden = true; },
 
     /**
      * 이야기의 "업무 장소" 장면 배경 = 업무 장소 화면의 방을 복사 (두 곳 그림이 항상 같게).
@@ -425,15 +487,17 @@ window.Game = window.Game || {};
         rowsHtml(conditionsRows(project)) +
         '<div class="notice-foot"><span>공정하고 투명한 조달</span>' +
         '<img class="pps-symbol" src="assets/img/pps_symbol_h.jpg" alt="조달청"></div>';
-      var first = Game.engine.state.projectIndex === 0;
+      var first = Game.engine.state.done.length === 0;
       $("notice-bubble").innerHTML = (first ? "첫 사업 공고가 도착했어요! " : "다음 사업 공고예요! ") +
         "업체 <b>" + project.bidders.length + "곳</b>이 입찰했대요. 조건을 잘 기억해 두세요.";
 
       // 나르미 안내는 심사 전에만: 새 확인 사항이 생긴 사업이면 그 설명(GAME_SPEC 5.3), 첫 사업이면 조작 방법
-      var code = Game.engine.newReason();
       var parts = [];
       if (first) parts.push(Game.DATA.narmi.howTo);
-      if (code) parts.push(fill(Game.DATA.narmi.newReason, Game.DATA.reasons[code]));
+      // 이 사업에서 처음 만나는 사유 (어떤 순서로 골라도 처음 만날 때 소개)
+      Game.engine.newReasons().forEach(function (code) {
+        parts.push(fill(Game.DATA.narmi.newReason, Game.DATA.reasons[code]));
+      });
       var note = parts.join("<br><br>");
       $("notice-narmi-bubble").innerHTML = note;
       $("notice-narmi").hidden = !note;
