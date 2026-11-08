@@ -60,7 +60,8 @@ window.Game = window.Game || {};
       docKey: "application",
       papers: [],              // 책상 위 서류 (새 업체가 오면 신청서 한 장부터)
       pane: "papers",          // 세로 화면에서 보이는 쪽: "papers"(서류) | "conditions"(조건표)
-      marks: {},               // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상
+      // 펜·형광펜 표시 { 서류id: [선…] } — 새 업체가 오면 빈 책상. 공고 조건표 표시는 같은 사업 동안 남긴다.
+      marks: { conditions: (view && view.marks.conditions) || [] },
       seen: p.bidders.slice(0, index),
       stamps: view ? view.stamps : {}
     };
